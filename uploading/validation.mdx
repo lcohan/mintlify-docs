@@ -1,0 +1,170 @@
+---
+title: "Validation Rules and Upload Modes"
+sidebarTitle: "Validation & modes"
+description: "Every validation rule Alphacast runs against an uploaded CSV, and how the deleteMissingFromDB / onConflictUpdateDB / acceptNewColumns flags control row-level conflict resolution."
+---
+
+Once the [manifest](/uploading/manifest) is in place, every upload runs through a fixed sequence of validations, then applies the merge logic governed by three flags. This page documents both — what causes an upload to fail, and what happens to each row when it succeeds.
+
+## Validation rules
+
+The processor runs these checks in order. The first failure aborts the upload and records the error message in the process's `statusDescription`.
+
+### 1. Date column must exist and parse
+
+If the manifest declares a date column, the CSV must contain it. Every value must parse against the dataset's configured date format.
+
+| Failure | Error message |
+|---|---|
+| Missing date column | `Data has not Date column` |
+| Unparseable date | `Date should be formatted as <format>` |
+
+Alphacast tries the configured format, then a lowercased variant, then splits on whitespace and retries — so `2024-01-01 00:00:00` parses fine against `%Y-%m-%d`.
+
+### 2. All entity columns must exist
+
+Every column with `isEntity: true` in the manifest must appear in the CSV header.
+
+| Failure | Error message |
+|---|---|
+| Missing entity column | `Data has not required '<column>' column. If you need to change entities, please specify new entitiesColumnNames during upload` |
+
+### 3. The CSV must not be empty
+
+| Failure | Error message |
+|---|---|
+| Empty file | `Data is empty` |
+
+A header-only CSV with zero data rows counts as empty.
+
+### 4. Entity columns must not contain null values
+
+After Alphacast strips whitespace from entity values, every entity column must have a value on every row. Empty cells are first replaced by the literal string `'none'`, but if a value is genuinely missing — for example, NaN propagated from a prior calculation — the upload fails.
+
+| Failure | Error message |
+|---|---|
+| Null in entity column | `Entity column '<column>' has empty values` |
+
+### 5. New columns require explicit opt-in
+
+If the CSV contains columns the dataset has never seen before **and** the dataset already has a manifest from a prior upload **and** you did not pass `acceptNewColumns=true`, the upload fails.
+
+| Failure | Error message |
+|---|---|
+| Unknown column without opt-in | `Unknown column(s): X. Missing column(s): Y - consider renaming to original names or add 'AcceptNewColumn' parameter to confirm adding new column(s)` |
+
+To add columns intentionally, pass `acceptNewColumns=true`. To rename a column instead, use the manifest's `destinationName` field — see [Manifest](/uploading/manifest#column-fields).
+
+### 6. Column names must be unique (case-insensitive)
+
+After Alphacast normalizes column names (lowercases, removes whitespace, strips accents), no two columns may collide.
+
+| Failure | Error message |
+|---|---|
+| Duplicate columns | `Duplicated columns: <list>` |
+
+Watch out for `gdp` vs `GDP`, or `País` vs `Pais` — both pairs collide.
+
+### 7. No duplicate rows by entity key
+
+Two rows with the same combination of entity-column values (including the date column) are treated as duplicates. The upload fails and reports the count plus the first ten offending key combinations.
+
+| Failure | Error message |
+|---|---|
+| Duplicate rows | `<N> rows are duplicated. First 10 rows as example: [...]` |
+
+If your data legitimately has multiple measurements per `Date + Country`, you need an additional entity column (e.g. `Sector` or `Source`) to disambiguate them.
+
+### 8. Short Integer values must fit Int16
+
+Columns marked `Short Integer` in the manifest must hold values in the `[-32768, 32767]` range. Decimals, NaNs after coercion, or out-of-range integers all fail.
+
+| Failure | Error message |
+|---|---|
+| Out-of-range Short Integer | `Column '<column>' cannot be cast to Short Integer (Int16): <details>` |
+
+For values larger than 32,767, use `Decimal` instead.
+
+### 9. Decimal columns need ≥80% numeric content
+
+Columns declared `Decimal` go through automatic numeric inference (handles `1,200.50`, `1.200,50`, `12.5%`). If fewer than 80% of non-null values parse as numeric, Alphacast silently downgrades the column to `String`. There is no error in this case, but the column won't behave as a measurement — inspect the column types after the first upload to catch this.
+
+## Upload modes
+
+Once validation passes, the processor merges the new rows with the existing dataset. Three flags on the request control the merge behavior:
+
+### `acceptNewColumns`
+
+| Value | Behavior |
+|---|---|
+| `false` (default) | Columns in the CSV that are not in the manifest cause the upload to fail (validation rule 5). |
+| `true` | Unknown columns are added to the dataset's schema. Use this when you intentionally extend a dataset. |
+
+`acceptNewColumns` is forced to `false` when the [manifest is locked](/uploading/manifest#manifest-locking).
+
+### `deleteMissingFromDB`
+
+| Value | Behavior |
+|---|---|
+| `false` (default) | Rows present in the dataset but **missing** from the upload are kept untouched. Use this for incremental uploads that only add or update recent data. |
+| `true` | Rows present in the dataset but missing from the upload are **deleted**. Use this when the upload is the new authoritative state of the dataset (a full replace). |
+
+<Warning>
+  `deleteMissingFromDB=true` permanently deletes any existing row whose entity key does not appear in the upload. Verify your CSV contains every row you want to keep before setting this flag.
+</Warning>
+
+`deleteMissingFromDB` is forced to `false` when the manifest is locked.
+
+### `onConflictUpdateDB`
+
+A **conflict** is a row whose entity key matches an existing row but where at least one value column differs.
+
+| Value | Behavior |
+|---|---|
+| `false` (default) | Conflicts are resolved by **keeping the existing value** in the dataset. The upload's value is discarded for those rows. |
+| `true` | Conflicts are resolved by **overwriting the existing value** with the upload's value. Use this when the upload is meant to be the latest correct version of the data. |
+
+If more than 10% of values changed during a conflicting upload, the process appends a warning to `statusDescription` (`WARNING: More than 10% of values changed. This may indicate a problem with the data.`).
+
+## How the three flags combine
+
+| Scenario | `acceptNewColumns` | `deleteMissingFromDB` | `onConflictUpdateDB` | Result |
+|---|---|---|---|---|
+| Add fresh data, never overwrite | `false` | `false` | `false` | Append-only. New rows are inserted; existing rows are never touched. |
+| Update recent values | `false` | `false` | `true` | Inserts new rows, updates existing rows with new values, leaves old rows alone. |
+| Full replacement | `false` | `true` | `true` | Dataset becomes exactly what the upload contains. |
+| Add a new column to an existing dataset | `true` | `false` | `false` | Same as scenario #1 but allows the schema to grow. |
+| Restore a backup that should not change unrelated rows | `false` | `false` | `false` | Safe default: nothing existing is overwritten or deleted. |
+
+## What you get back: process stats
+
+After every successful upload, the process record's `stats` field contains the row-level breakdown:
+
+| Field | Meaning |
+|---|---|
+| `rows` | Rows in the uploaded CSV (after manifest renames and ignores). |
+| `columns` | Columns in the uploaded CSV (after manifest renames and ignores). |
+| `minDate`, `maxDate` | Date range of the upload. |
+| `entitiesCount` | Object with the number of distinct values per entity column. |
+| `insertedValues` | Cell-level count of values added to the dataset. |
+| `updatedValues` | Cell-level count of values overwritten (only when `onConflictUpdateDB=true`). |
+| `deletedValues` | Cell-level count of values removed (only when `deleteMissingFromDB=true`). |
+| `changedValues` | Conflicts detected, regardless of resolution. |
+| `missingValues` | Cell-level count of values present in the dataset but missing from the upload. |
+| `preservedHistoricalRows` | Rows outside the upload's date range, kept without comparison (an optimization for incremental uploads). |
+| `finalRows`, `finalColumns` | Final shape of the dataset after the merge. |
+| `versionId` | S3 version ID of the new dataset snapshot. Use this for point-in-time downloads. |
+| `contentHash` | MD5 of the upload's normalized content. Identical hashes against the same flags trigger the [skip-on-identical optimization](/uploading/overview#idempotency-identical-content-is-skipped). |
+
+If the upload failed, `stats` may be empty and the error appears in `statusDescription` instead.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Manifest reference" icon="table-columns" href="/uploading/manifest">
+    Define columns, types, the date format, renames, and ignored columns.
+  </Card>
+  <Card title="Upload API reference" icon="code" href="/api/datasets/upload">
+    Endpoint, parameters, code samples, and HTTP status codes.
+  </Card>
+</CardGroup>

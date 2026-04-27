@@ -36,19 +36,20 @@
             ]
           },
           {
+            "group": "Uploading Data",
+            "pages": [
+              "uploading/overview",
+              "uploading/manifest",
+              "uploading/validation"
+            ]
+          },
+          {
             "group": "Data Providers",
             "pages": [
               "providers/overview",
               "providers/fred",
               "providers/yahoo-finance",
               "providers/world-bank"
-            ]
-          },
-          {
-            "group": "Integrations",
-            "pages": [
-              "integrations/excel",
-              "integrations/google-drive"
             ]
           }
         ]

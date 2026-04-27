@@ -1,10 +1,14 @@
 ---
 title: "PUT /datasets/{id}/data — Upload Data to a Dataset"
 sidebarTitle: "Upload data"
-description: "Upload a CSV or gzip-compressed CSV file to replace or merge with existing dataset data. Supports manifest for column type configuration."
+description: "Upload a CSV or gzip-compressed CSV file to add, update, or replace dataset rows. Supports a column manifest, conflict resolution flags, and async processing."
 ---
 
-Use this endpoint to load rows into a dataset by uploading a CSV file. You can upload a plain CSV or a gzip-compressed CSV. The optional manifest lets you explicitly declare each column's data type and whether it acts as an entity (dimension) column or a value column. By default, new uploads are merged with existing data; use the `deleteMissingFromDB` and `onConflictUpdateDB` flags to control conflict resolution behavior.
+Use this endpoint to load rows into a dataset by uploading a CSV file. The upload is processed asynchronously: the request returns immediately with a process record, and the rows become available in the dataset once the background job completes.
+
+<Note>
+  This page is the API reference. For the concepts behind the request — what a manifest is, what gets validated, and how the conflict-resolution flags interact — see the [Uploading Data](/uploading/overview) section.
+</Note>
 
 ## Authentication
 
@@ -29,77 +33,38 @@ Authenticate using HTTP Basic Auth. Pass your API key as the username and leave 
 </ParamField>
 
 <ParamField body="manifest" type="string">
-  A JSON string describing the type and role of each column in the uploaded file. When provided, the manifest overrides any automatic type inference. See the [Manifest format](#manifest-format) section below for the full schema.
+  A JSON string declaring each column's data type and entity flag. Required on the dataset's first upload (or set the manifest beforehand from the web UI). On subsequent uploads it is optional — pass it only when you want to replace the dataset's stored manifest. See the [Manifest reference](/uploading/manifest) for the full schema.
 </ParamField>
 
-<ParamField query="deleteMissingFromDB" type="boolean">
-  When `true`, rows present in the existing dataset but absent from the uploaded file are deleted. Use this to perform a full replacement of the dataset's contents.
+## Query parameters
+
+<ParamField query="deleteMissingFromDB" type="boolean" default="false">
+  When `true`, rows present in the existing dataset but absent from the upload are deleted. Use this to perform a full replacement. Forced to `false` if the dataset's manifest is locked. See [Upload modes](/uploading/validation#upload-modes).
 </ParamField>
 
-<ParamField query="onConflictUpdateDB" type="boolean">
-  When `true`, rows in the uploaded file that match existing rows by their entity key columns are updated in place rather than rejected or duplicated.
+<ParamField query="onConflictUpdateDB" type="boolean" default="false">
+  When `true`, rows whose entity key matches an existing row are updated with the new value. When `false`, the existing value is kept and the upload's value is discarded for those rows.
 </ParamField>
 
-<ParamField query="acceptNewColumns" type="boolean">
-  When `true`, columns present in the uploaded file that do not already exist in the dataset schema are added as new columns. When `false` or omitted, unrecognized columns are ignored.
+<ParamField query="acceptNewColumns" type="boolean" default="false">
+  When `true`, columns in the CSV that are not in the dataset's existing schema are added. When `false`, unknown columns cause the upload to fail with `Unknown column(s): ...`. Forced to `false` if the manifest is locked.
 </ParamField>
-
-## Manifest format
-
-The manifest is a JSON array where each element describes one column. You only need to include columns you want to explicitly configure; any columns not listed will be inferred automatically.
-
-```json
-[
-  {
-    "sourceName": "Date",
-    "dataType": "Date",
-    "isEntity": true
-  },
-  {
-    "sourceName": "Country",
-    "dataType": "String",
-    "isEntity": true
-  },
-  {
-    "sourceName": "GDP",
-    "dataType": "Decimal",
-    "isEntity": false
-  }
-]
-```
-
-Each object in the array must contain the following fields:
-
-<ResponseField name="sourceName" type="string" required>
-  The exact column name as it appears in the CSV header row.
-</ResponseField>
-
-<ResponseField name="dataType" type="string" required>
-  The data type for this column. Must be one of:
-  - `Date` — a date value
-  - `String` — a text/categorical value
-  - `Decimal` — a numeric value
-</ResponseField>
-
-<ResponseField name="isEntity" type="boolean" required>
-  Set to `true` for dimension/index columns that identify a row (such as `Date` or `Country`). Set to `false` for value columns that contain measurements. Entity columns form the composite key used to match rows during conflict resolution.
-</ResponseField>
 
 ## Response
 
-Returns `201 Created` with a process object describing the background upload job that was started.
+Returns `201 Created` with a process object describing the background upload job.
 
 <ResponseField name="id" type="string">
-  The ID of the upload process. You can use this to track the status of the upload.
+  The ID of the upload process. Use this to poll the dataset processes endpoint and inspect status, stats, and any error message.
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Initial status of the upload process.
+  Initial status — typically `Requested`. Transitions to `Processing` → `Processed` (or `Error`) as the background worker runs. See the [upload lifecycle](/uploading/overview#the-upload-lifecycle).
 </ResponseField>
 
 ## Example
 
-**Upload a CSV file with a manifest:**
+Upload a CSV file with a manifest:
 
 <RequestExample>
 
@@ -153,7 +118,7 @@ const process = await response.json();
 
 </RequestExample>
 
-**Upload a gzip-compressed CSV and replace existing rows not in the file:**
+Upload a gzip-compressed CSV and replace any existing row not present in the file:
 
 ```bash
 curl -u YOUR_API_KEY: \
@@ -161,7 +126,7 @@ curl -u YOUR_API_KEY: \
   -F "data=@gdp_data.csv.gz"
 ```
 
-**Upload a plain CSV accepting new columns:**
+Upload a plain CSV and allow new columns to extend the schema:
 
 ```bash
 curl -u YOUR_API_KEY: \
@@ -171,16 +136,21 @@ curl -u YOUR_API_KEY: \
 
 ## Error responses
 
+The API surfaces validation errors via the upload process record (status `Error`, `statusDescription` set to the message). The HTTP response itself uses standard codes:
+
 | Status | Cause |
-|--------|-------|
-| `400 Bad Request` | The manifest is malformed — check that every column object includes `sourceName` (string), `dataType` (one of `Date`, `String`, `Decimal`), and `isEntity` (boolean). |
+|---|---|
+| `400 Bad Request` | The manifest is malformed, or required form fields are missing. |
 | `401 Unauthorized` | Missing or invalid API key. |
 | `403 Forbidden` | You do not have `Write` permission on this dataset. |
+| `404 Not Found` | No dataset with the given ID exists or is accessible to your account. |
+
+For row-level validation failures (`Data has not Date column`, duplicate rows, out-of-range Short Integer, etc.) the HTTP call returns `201` with a process record, and the failure surfaces when the process transitions to `Error`. See [Validation rules](/uploading/validation#validation-rules) for the complete list.
 
 <Warning>
-  When `deleteMissingFromDB` is `true`, any row in the existing dataset whose key does not appear in the uploaded file is permanently deleted. Verify your file contains all rows you wish to keep before setting this flag.
+  When `deleteMissingFromDB` is `true`, any row in the existing dataset whose key does not appear in the uploaded file is permanently deleted. Verify your file contains every row you wish to keep before setting this flag.
 </Warning>
 
 <Note>
-  Uploads are processed asynchronously. The API returns immediately with a process object, and the data becomes available in the dataset once the background job completes.
+  Uploads are processed asynchronously. The API returns immediately with a process object, and the data becomes available in the dataset once the background job completes. Identical re-uploads (same content + same flags as the previous successful run) are detected via a content hash and skipped — see [Idempotency](/uploading/overview#idempotency-identical-content-is-skipped).
 </Note>

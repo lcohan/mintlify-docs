@@ -57,7 +57,7 @@ Streamable HTTP can be sensitive to intermediaries that buffer responses.
 
 ### Downloads return a URL instead of rows
 
-Some endpoints (CSV downloads, drafts) return an S3 pre-signed URL as the body instead of streaming the bytes. The MCP server detects this case and follows the URL transparently — but if you are inspecting raw HTTP traffic, you'll see the URL pattern. Nothing to fix; this is expected.
+CSV downloads return an S3 pre-signed URL as the body instead of streaming the bytes. The MCP server detects this case and follows the URL transparently — but if you are inspecting raw HTTP traffic, you'll see the URL pattern. Nothing to fix; this is expected.
 
 ### IDs in errors look like strings
 

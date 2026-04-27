@@ -1,0 +1,83 @@
+---
+title: "Uploading Data: Overview"
+sidebarTitle: "Overview"
+description: "How dataset uploads work in Alphacast — the manifest, the upload lifecycle, and what to expect after a CSV is processed."
+---
+
+Alphacast stores tabular data in **datasets**, which live inside repositories. To put rows into a dataset, you upload a CSV (plain or gzip-compressed) through the [`PUT /datasets/{id}/data`](/api/datasets/upload) endpoint. The upload is processed asynchronously by a background job that validates the file, merges it with existing data, and updates the dataset's column schema, date range, and inferred frequency.
+
+This section explains every requirement before, during, and after an upload — what the manifest is, why it matters, what gets validated, and how the merge logic decides whether to insert, update, or delete rows.
+
+<Note>
+  Looking for the API reference? See [`PUT /datasets/{id}/data`](/api/datasets/upload) for the request shape, parameters, and example payloads. The pages in this section explain the **concepts** behind those parameters.
+</Note>
+
+## Before you upload: initialize the dataset
+
+A dataset must already exist and have a **manifest** before its first upload. The manifest is the column schema that tells Alphacast what every column in your CSV means: which one carries the date, which ones identify a row (entities), which ones hold the actual measurements, and what data type each column has.
+
+There are two ways to provide a manifest:
+
+1. **In the upload request itself** — pass a `manifest` form field on the first `PUT /datasets/{id}/data` call. Alphacast saves the manifest against the dataset and uses it for that upload and all subsequent ones (until you replace it).
+2. **From the Alphacast web UI** — open the dataset and configure its columns visually before any upload happens.
+
+If you call `PUT /datasets/{id}/data` without a manifest **and** the dataset has never had one, the upload fails with `Dataset has no manifest`. The next page covers the [manifest schema](/uploading/manifest) in detail.
+
+## The upload lifecycle
+
+Every upload creates an **upload process** record that moves through four states:
+
+<Steps>
+  <Step title="Requested">
+    The API receives your `PUT /datasets/{id}/data` request, validates basic permissions, stores the CSV in temporary cloud storage, and returns a process object with an `id` and `status: "Requested"`. The HTTP call returns immediately — the actual processing happens in the background.
+  </Step>
+
+  <Step title="Processing">
+    A background worker picks up the request. Only **one process per dataset** can run at a time. If another upload for the same dataset is already in flight, the new request waits in `Requested` until the in-flight job finishes.
+
+    During processing, Alphacast:
+    - Loads the CSV from storage and applies the manifest (rename, ignore columns).
+    - Runs every [validation rule](/uploading/validation).
+    - Compares the incoming rows with the dataset's existing rows by their entity key.
+    - Computes the final dataset using the [conflict-resolution flags](/uploading/validation#upload-modes) you passed.
+    - Writes the merged dataset back to storage and updates the dataset's metadata (date range, inferred frequency, last-edited timestamp).
+  </Step>
+
+  <Step title="Processed">
+    The upload completed successfully. The process's `stats` field is populated with row counts (`insertedValues`, `updatedValues`, `deletedValues`, `changedValues`, `totalValues`, `minDate`, `maxDate`, etc.) and a `statusDescription` summarizing what happened. Subscribers to the dataset receive a notification (rate-limited to one per dataset per four hours).
+  </Step>
+
+  <Step title="Error">
+    Validation failed or processing raised an exception. The `statusDescription` field contains the error message — for example, `Data has not Date column`, `Entity column 'Country' has empty values`, or `42 rows are duplicated`. Fix the CSV (or the manifest) and retry.
+  </Step>
+</Steps>
+
+<Tip>
+  The `stats` field on the process record is the source of truth for what changed. After a successful upload, fetch the process by ID to see the row-level breakdown — useful for logging, alerting, or building your own upload dashboard.
+</Tip>
+
+## Idempotency: identical content is skipped
+
+If you upload the **exact same content** with the **exact same parameters** (`manifest`, `deleteMissingFromDB`, `onConflictUpdateDB`) as the most recent successful upload, Alphacast detects this via a content hash and skips the merge entirely. The process is still recorded, but with `skippedReason: "identical_content"` and zero inserts/updates/deletes.
+
+This makes scheduled re-uploads safe and cheap — pushing the same file every hour from a cron job will not generate spurious change notifications or re-write storage.
+
+## File formats
+
+| Format | Extension | Notes |
+|---|---|---|
+| Plain CSV | `.csv` | First row must be the header. UTF-8 or latin1 encoding. |
+| Gzip-compressed CSV | `.csv.gz` | Same content as plain CSV, gzip-encoded. Reduces upload time for large files. |
+
+The upload endpoint accepts the file as a `multipart/form-data` field named `data`. Anything else in the form (such as the `manifest` JSON string) is treated as a parameter, not file content.
+
+## What you'll find in this section
+
+<CardGroup cols={2}>
+  <Card title="The manifest" icon="table-columns" href="/uploading/manifest">
+    Column definitions: entity vs value columns, data types, date format, ignored and renamed columns, manifest locking.
+  </Card>
+  <Card title="Validation & upload modes" icon="shield-check" href="/uploading/validation">
+    Every validation rule the processor enforces, plus the three flags that control how new data is merged with existing rows.
+  </Card>
+</CardGroup>

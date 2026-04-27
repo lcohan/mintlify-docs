@@ -1,0 +1,142 @@
+---
+title: "The Dataset Manifest"
+sidebarTitle: "Manifest"
+description: "How to define column types, entity columns, date format, and renames in the dataset manifest that drives every Alphacast upload."
+---
+
+The manifest is the column schema attached to a dataset. It tells Alphacast how to interpret every column in an uploaded CSV: which one carries the date, which ones identify a row, which ones hold measurements, and what type each column has. Every upload validates the incoming file against the manifest, so getting the manifest right is the single most important step before pushing data.
+
+The manifest is stored on the dataset and reused on every upload until you replace it. You can supply it via the `manifest` form field on `PUT /datasets/{id}/data`, or configure it from the Alphacast web UI.
+
+## Manifest shape
+
+A manifest is a JSON array of column definitions. Each element describes one column:
+
+```json
+[
+  { "sourceName": "Date",     "dataType": "Date",          "isEntity": true },
+  { "sourceName": "Country",  "dataType": "String",        "isEntity": true },
+  { "sourceName": "GDP_USD",  "dataType": "Decimal",       "isEntity": false, "destinationName": "GDP" },
+  { "sourceName": "Year",     "dataType": "Short Integer", "isEntity": false },
+  { "sourceName": "Notes",    "dataType": "String",        "isEntity": false },
+  { "sourceName": "Internal", "ignore": true }
+]
+```
+
+## Column fields
+
+<ParamField body="sourceName" type="string" required>
+  The exact column name as it appears in the **CSV header row**. Whitespace at the edges is trimmed automatically; embedded newlines are converted to spaces. Comparison against the CSV header is case-insensitive and accent-insensitive (`País` matches `pais`), so minor casing inconsistencies in the source file are tolerated — Alphacast normalizes the column to the manifest's canonical name.
+</ParamField>
+
+<ParamField body="dataType" type="string" required>
+  The data type for this column. One of:
+
+  - `Date` — a date value, parsed using the dataset's [date format](#date-format). There must be exactly **one** `Date` column in the manifest, and it acts implicitly as an entity column.
+  - `String` — text or categorical value. Used for both **entity** dimensions (e.g. `Country`) and **value** strings (e.g. `Notes`).
+  - `Decimal` — numeric value with arbitrary precision. The default for any value column that is not explicitly String or Short Integer.
+  - `Short Integer` — an `Int16` integer (range −32,768 to 32,767). Use this only when you know every value fits — uploads fail with `Column 'X' cannot be cast to Short Integer (Int16)` if any row exceeds the range.
+</ParamField>
+
+<ParamField body="isEntity" type="boolean" required>
+  Whether the column is part of the row identity (a dimension) or a measurement.
+
+  - `true` — **entity column**. Together with the `Date` column, entity columns form the **composite key** Alphacast uses to match rows during merges. Typical entities: `Country`, `Sector`, `Ticker`, `Region`.
+  - `false` — **value column**. Holds the actual measurements that get inserted, updated, or deleted.
+
+  The `Date` column is always treated as an entity, even though it has its own `dataType: "Date"`.
+</ParamField>
+
+<ParamField body="destinationName" type="string">
+  Optional. If provided, Alphacast renames the column from `sourceName` to `destinationName` before applying any other logic. Useful when the upstream file uses a different name from the one you want to expose in Alphacast (e.g. CSV column `GDP_USD_Billions` → dataset column `GDP`).
+</ParamField>
+
+<ParamField body="ignore" type="boolean">
+  Optional. When `true`, Alphacast drops the column from the upload before validation. Use this for ad-hoc columns in the CSV that you do not want to import.
+</ParamField>
+
+## Entity vs value columns
+
+Understanding the entity / value split is the key concept of the manifest:
+
+- **Entity columns** identify a row uniquely. Two rows with the same `Date` + same combination of entity values represent the same observation. If your CSV contains two rows with `Date = 2024-01-01, Country = USA`, the upload fails with a duplicate-rows error.
+- **Value columns** hold the data that changes between observations. When the same entity key appears in both the upload and the existing dataset but a value column differs, Alphacast treats that as a **conflict** and resolves it according to your [upload modes](/uploading/validation#upload-modes).
+
+Empty values in entity columns are filled with the literal string `'none'` so they still participate in the composite key. Entity values are also stripped of surrounding whitespace.
+
+## The date column
+
+Exactly one column should have `dataType: "Date"` and `isEntity: true`. This column drives:
+
+- The dataset's `minDate` and `maxDate` metadata.
+- The inferred `frequency` (`D`, `M`, `Q`, `A`, or `null` if Alphacast cannot detect a regular cadence).
+- Date-range optimizations during merges — historical rows outside the upload's date window are preserved without comparison, which keeps incremental uploads fast.
+
+### Date format
+
+Each dataset has a `date_format` property — a Python `strftime` string such as `%Y-%m-%d`, `%d/%m/%Y`, or `%Y-%m`. Every value in the date column must match this format, or the upload fails with `Date should be formatted as <format>`.
+
+Alphacast tries the configured format first, then a lowercased variant, and finally splits on whitespace and tries again (so timestamps like `2024-01-01 00:00:00` parse against a `%Y-%m-%d` format). Anything still unrecognized is rejected.
+
+<Tip>
+  If your source data has a fixed but non-ISO format (for example, `%d/%m/%Y` from a Latin American statistical agency), set the dataset's date format **once** and let every upload use it directly — there is no need to pre-process dates client-side.
+</Tip>
+
+## Numeric type inference
+
+For value columns marked as `Decimal`, Alphacast does not require pre-cleaned numbers. The processor:
+
+1. Strips a trailing `%` and remembers it (so `12.5%` becomes `0.125`).
+2. Tries an English-number parse (`1,200.50` → `1200.5`).
+3. Falls back to a continental-Europe parse (`1.200,50` → `1200.5`).
+4. Picks whichever interpretation parses cleanly — and if at least **80%** of the column's non-null values are numeric, the column is accepted as `Decimal`. Otherwise it is downgraded to `String` automatically.
+
+This means you can usually upload raw CSVs from spreadsheets without sanitizing the numbers. The exceptions are:
+
+- **`Short Integer`** columns: there is no fallback. Every value must fit in `Int16` after parsing, or the upload fails.
+- Columns with mixed numeric and non-numeric content where the numeric share is below 80%: they will silently become strings, which is rarely what you want. Inspect the process's `stats.entitiesCount` and column types after the first upload to confirm the inference.
+
+## Manifest locking
+
+A dataset can have its manifest **locked** (`manifestLocked = true`). When locked:
+
+- The `manifest` form field on uploads is **ignored** — the dataset's existing manifest is the only one used.
+- `deleteMissingFromDB` is forced to `false` regardless of what you pass.
+- `acceptNewColumns` is forced to `false` regardless of what you pass.
+
+Locking is a safety mechanism for production datasets where the schema must not drift. Unlock it from the Alphacast web UI before changing the manifest.
+
+## Renaming and ignoring columns: a worked example
+
+Suppose your CSV looks like this:
+
+```csv
+Fecha,País,PIB_USD_Mil_Millones,Notas_Internas,Categoría
+2024-01-01,Argentina,621.4,reviewed,Economy
+2024-01-01,Brasil,2173.7,pending,Economy
+```
+
+And your dataset uses English column names with `Notas_Internas` excluded:
+
+```json
+[
+  { "sourceName": "Fecha", "destinationName": "Date",      "dataType": "Date",   "isEntity": true },
+  { "sourceName": "País",  "destinationName": "Country",   "dataType": "String", "isEntity": true },
+  { "sourceName": "PIB_USD_Mil_Millones", "destinationName": "GDP_USD_Billions", "dataType": "Decimal", "isEntity": false },
+  { "sourceName": "Notas_Internas", "ignore": true },
+  { "sourceName": "Categoría", "destinationName": "Category", "dataType": "String", "isEntity": false }
+]
+```
+
+After the upload, the dataset has columns `Date`, `Country`, `GDP_USD_Billions`, `Category`. The original CSV column names never appear anywhere downstream.
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Validation & upload modes" icon="shield-check" href="/uploading/validation">
+    The validation rules every upload runs through, plus the three flags that control conflict resolution.
+  </Card>
+  <Card title="Upload API reference" icon="code" href="/api/datasets/upload">
+    Request shape, form fields, error codes, and code samples for `PUT /datasets/{id}/data`.
+  </Card>
+</CardGroup>
