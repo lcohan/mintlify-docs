@@ -125,10 +125,35 @@ String values must be enclosed in single quotes. Date values must use `YYYY-MM-D
 
 **Basic download — returns a 302 redirect to a pre-signed CSV URL:**
 
-```bash
-curl -u YOUR_API_KEY: \
-  https://api.alphacast.io/datasets/123/data
+<RequestExample>
+
+```bash cURL
+curl -u YOUR_API_KEY: -L \
+  https://api.alphacast.io/datasets/123/data \
+  --output data.csv
 ```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/datasets/123/data",
+    auth=("YOUR_API_KEY", ""),
+    allow_redirects=True,
+)
+with open("data.csv", "wb") as f:
+    f.write(response.content)
+```
+
+```javascript Node.js
+const response = await fetch("https://api.alphacast.io/datasets/123/data", {
+  headers: { Authorization: "Basic " + btoa("YOUR_API_KEY:") },
+  redirect: "follow",
+});
+const csv = await response.text();
+```
+
+</RequestExample>
 
 **Filter by country:**
 

@@ -1,6 +1,6 @@
 ---
 title: "GET /datasets — List All Datasets"
-sidebarTitle: "List"
+sidebarTitle: "List datasets"
 description: "Retrieve all datasets accessible to the authenticated user across all repositories. Returns an array of dataset objects with metadata."
 ---
 
@@ -67,11 +67,34 @@ Returns a JSON array of dataset objects. Each object represents one dataset acce
 
 ## Example
 
-```bash
+<RequestExample>
+
+```bash cURL
 curl -u YOUR_API_KEY: https://api.alphacast.io/datasets
 ```
 
-```json
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/datasets",
+    auth=("YOUR_API_KEY", ""),
+)
+datasets = response.json()
+```
+
+```javascript Node.js
+const response = await fetch("https://api.alphacast.io/datasets", {
+  headers: { Authorization: "Basic " + btoa("YOUR_API_KEY:") },
+});
+const datasets = await response.json();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200
 [
   {
     "id": 123,
@@ -99,6 +122,8 @@ curl -u YOUR_API_KEY: https://api.alphacast.io/datasets
   }
 ]
 ```
+
+</ResponseExample>
 
 <Note>
   This endpoint returns only datasets your account has at least `Read` permission on. Datasets in repositories you cannot access are not included in the response.

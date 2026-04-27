@@ -257,7 +257,7 @@ Every pipeline step has a `type` field that determines what it does and what con
 
   <Accordion title="AI">
 
-    AI steps use large language models to generate transformation code or produce human-readable summaries of your data. See [AI-powered features](/pipelines/ai-features) for the full API reference.
+    AI steps use large language models to generate transformation code or produce human-readable summaries of your data.
 
     ### `ai-transform`
 
@@ -265,7 +265,7 @@ Every pipeline step has a `type` field that determines what it does and what con
 
     | Configuration field | Type | Description |
     |---|---|---|
-    | `code` | string | The AI-generated Python code. Updated automatically when you call the `generateCode` endpoint. |
+    | `code` | string | The AI-generated Python code. Updated automatically when you regenerate the step from a chat prompt. |
 
     ### `ai-summary`
 
@@ -393,6 +393,3 @@ Every pipeline step has a `type` field that determines what it does and what con
 
 </AccordionGroup>
 
-<Tip>
-You can clone any step to duplicate it within the same pipeline by calling `POST /pipelines/{id}/steps/{step_id}/clone`. The cloned step is inserted immediately after the original.
-</Tip>

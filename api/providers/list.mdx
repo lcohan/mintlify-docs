@@ -1,6 +1,6 @@
 ---
 title: "GET /providers — List and Browse Data Providers"
-sidebarTitle: "List"
+sidebarTitle: "List providers"
 description: "List all available data providers, browse their hierarchical categories, search for series, and save provider API keys for authenticated access."
 ---
 
@@ -26,9 +26,30 @@ Most listing and browse endpoints work without authentication, but authenticated
 
 Returns the full catalog of available data providers. Use this to discover slugs, understand each provider's capabilities, and check licensing terms before fetching data.
 
-```bash
+<RequestExample>
+
+```bash cURL
 curl -u YOUR_API_KEY: https://api.alphacast.io/providers
 ```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/providers",
+    auth=("YOUR_API_KEY", ""),
+)
+providers = response.json()
+```
+
+```javascript Node.js
+const response = await fetch("https://api.alphacast.io/providers", {
+  headers: { Authorization: "Basic " + btoa("YOUR_API_KEY:") },
+});
+const providers = await response.json();
+```
+
+</RequestExample>
 
 **Response fields**
 
@@ -442,7 +463,9 @@ Saves or deletes your API key for a specific provider. Send the key as `api_key`
   Your API key for the upstream provider. Pass `null` or omit the field to delete the stored key.
 </ParamField>
 
-```bash
+<RequestExample>
+
+```bash cURL
 # Save a FRED API key
 curl -u YOUR_API_KEY: \
   -X PUT https://api.alphacast.io/user-keys/fred \
@@ -455,6 +478,48 @@ curl -u YOUR_API_KEY: \
   -H "Content-Type: application/json" \
   -d '{"api_key": null}'
 ```
+
+```python Python
+import requests
+
+# Save a FRED API key
+requests.put(
+    "https://api.alphacast.io/user-keys/fred",
+    auth=("YOUR_API_KEY", ""),
+    json={"api_key": "your-fred-api-key-here"},
+)
+
+# Remove the stored FRED API key
+requests.put(
+    "https://api.alphacast.io/user-keys/fred",
+    auth=("YOUR_API_KEY", ""),
+    json={"api_key": None},
+)
+```
+
+```javascript Node.js
+// Save a FRED API key
+await fetch("https://api.alphacast.io/user-keys/fred", {
+  method: "PUT",
+  headers: {
+    Authorization: "Basic " + btoa("YOUR_API_KEY:"),
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ api_key: "your-fred-api-key-here" }),
+});
+
+// Remove the stored FRED API key
+await fetch("https://api.alphacast.io/user-keys/fred", {
+  method: "PUT",
+  headers: {
+    Authorization: "Basic " + btoa("YOUR_API_KEY:"),
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ api_key: null }),
+});
+```
+
+</RequestExample>
 
 **Response fields**
 

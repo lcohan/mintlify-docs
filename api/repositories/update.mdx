@@ -1,6 +1,6 @@
 ---
 title: "PUT /repositories/{id} — Update a Repository"
-sidebarTitle: "Update"
+sidebarTitle: "Update a repository"
 description: "Update an existing repository's name, description, or privacy. Requires Owner permission. Returns the updated repository object on success."
 ---
 
@@ -46,7 +46,7 @@ Send a JSON body with the `Content-Type: application/json` header.
 
 ## Response
 
-Returns `201` with the updated repository object.
+Returns `200` with the updated repository object.
 
 <ResponseField name="id" type="integer">
   Unique numeric identifier for the repository.
@@ -95,11 +95,42 @@ curl -u YOUR_API_KEY: \
   https://api.alphacast.io/repositories/101
 ```
 
+```python Python
+import requests
+
+response = requests.put(
+    "https://api.alphacast.io/repositories/101",
+    auth=("YOUR_API_KEY", ""),
+    json={
+        "name": "EM Macro — Archived",
+        "description": "Historical GDP, inflation, and rates for EM economies",
+        "privacy": "Public",
+    },
+)
+repository = response.json()
+```
+
+```javascript Node.js
+const response = await fetch("https://api.alphacast.io/repositories/101", {
+  method: "PUT",
+  headers: {
+    Authorization: "Basic " + btoa("YOUR_API_KEY:"),
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    name: "EM Macro — Archived",
+    description: "Historical GDP, inflation, and rates for EM economies",
+    privacy: "Public",
+  }),
+});
+const repository = await response.json();
+```
+
 </RequestExample>
 
 <ResponseExample>
 
-```json 201
+```json 200
 {
   "id": 101,
   "name": "EM Macro — Archived",

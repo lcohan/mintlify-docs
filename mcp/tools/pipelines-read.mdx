@@ -1,0 +1,111 @@
+---
+title: "Pipeline Read Tools"
+sidebarTitle: "Pipelines (read)"
+description: "Tools for inspecting pipeline definitions, runs, and intermediate step output without making changes."
+---
+
+Five read-only tools for understanding pipelines. Use these to explore an existing pipeline before you change it, or to debug a failed run.
+
+## `list_pipelines`
+
+List every pipeline the API key can access.
+
+No input parameters. Returns `id`, `name`, `repositoryId`, and slug per pipeline.
+
+**Example prompt**
+
+> "List my pipelines and group them by repository."
+
+**Underlying endpoint:** `GET /pipelines`.
+
+---
+
+## `get_pipeline`
+
+Retrieve the full definition of a pipeline plus the status of its last run.
+
+<ParamField body="pipelineId" type="number" required>
+  Numeric pipeline ID.
+</ParamField>
+
+Returns a formatted text block with the pipeline's `id`, `name`, `repositoryId`, and every step (with its `id`, `type`, `order`, configuration, and validation status). Includes the URL to the pipeline editor and the last run's status and timestamps.
+
+**Example prompt**
+
+> "Show me pipeline 4321 and tell me whether the last run failed."
+
+**Underlying endpoints:** `GET /pipelines/{id}` + `GET /pipelines/{id}/runs/last` (called in parallel).
+
+---
+
+## `get_pipeline_run`
+
+Inspect a specific run by ID.
+
+<ParamField body="pipelineId" type="number" required>
+  Numeric pipeline ID.
+</ParamField>
+
+<ParamField body="runId" type="number" required>
+  Numeric run ID.
+</ParamField>
+
+Returns the run's status (`new`, `processing`, `completed`, `failed`, `cancelled`), timestamps, and per-step logs.
+
+**Example prompt**
+
+> "Get the logs of run 9999 on pipeline 4321 and explain why step 2 failed."
+
+**Underlying endpoint:** `GET /pipelines/{id}/runs/{runId}`.
+
+---
+
+## `get_step_data`
+
+Fetch the cached output of a step without triggering a new run. Useful when you want to inspect data the pipeline has already produced.
+
+<ParamField body="pipelineId" type="number" required>
+  Numeric pipeline ID.
+</ParamField>
+
+<ParamField body="stepId" type="number" required>
+  Numeric step ID (the server-assigned ID, not the `order` field).
+</ParamField>
+
+<ParamField body="format" type="string" default="csv">
+  `csv` or `json`.
+</ParamField>
+
+The server transparently follows S3 redirects so the model receives the data directly.
+
+**Example prompt**
+
+> "Show me the output of step 5001 on pipeline 4321 as JSON."
+
+**Underlying endpoint:** `GET /pipelines/{id}/steps/{stepId}/data?$format=...`.
+
+---
+
+## `get_step_preview`
+
+Run the pipeline up to a specific step and return that step's output. Use this to debug a step's logic without publishing the full pipeline.
+
+<ParamField body="pipelineId" type="number" required>
+  Numeric pipeline ID.
+</ParamField>
+
+<ParamField body="stepOrder" type="number" required>
+  Zero-based order of the step to preview up to.
+</ParamField>
+
+The tool triggers a partial run, polls for completion (up to 60 seconds), and returns the resulting CSV. Output is truncated to ~10,000 characters to keep responses manageable.
+
+<Note>
+  If the run does not finish within 60 seconds, the tool returns a timeout. Retry, or call `get_step_data` to read whatever cached output already exists.
+</Note>
+
+**Example prompt**
+
+> "Preview step 2 of pipeline 4321 and show me the first 20 rows."
+
+**Underlying endpoints:** `POST /pipelines/{id}/runs` (with `previewStep`) → polled `GET /pipelines/{id}/runs/{runId}` → fetched draft output.

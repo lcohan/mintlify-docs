@@ -1,0 +1,86 @@
+---
+title: "MCP Troubleshooting"
+sidebarTitle: "Troubleshooting"
+description: "Common errors and fixes when connecting clients to the Alphacast MCP server, authenticating, or running tools."
+---
+
+This page covers the failures you'll most likely run into. If your issue isn't here, check your client's MCP logs first — they almost always reveal the underlying HTTP status code or message.
+
+## Authentication errors
+
+### `401 Unauthorized` on every tool call
+
+The `Authorization` header is missing or the API key is invalid.
+
+**Fixes:**
+- Verify the header is `Authorization: Bearer YOUR_API_KEY` — not `Bearer base64(YOUR_API_KEY)`. The MCP server takes the raw API key, unlike the REST API's HTTP Basic Auth.
+- Regenerate the key in [Alphacast → Settings → API Keys](https://www.alphacast.io/settings/api-keys) if the original was rotated, leaked, or revoked.
+- For Claude Code, run `claude mcp list` and confirm the URL and headers match exactly.
+- For Cursor, open Settings → MCP and re-paste the header. The UI sometimes drops trailing whitespace.
+
+### `403 Forbidden` on a specific tool call
+
+The API key authenticated successfully but does not have the permission required for this action.
+
+**Fixes:**
+- Read access required: ensure the API key's account has at least Read permission on the target repository.
+- Write access required (any pipeline write tool): the account must have Write or Admin on the target repository.
+- Have the repository owner grant your account the missing permission level.
+
+## Pipeline errors
+
+### `402 Payment Required` when creating or running a pipeline
+
+The action exceeds your plan's quota — typically pipeline runs per month or paid-tier provider usage.
+
+**Fix:** upgrade your subscription, or remove an existing pipeline to free quota. See [Error codes](/api/errors#402-payment-required).
+
+### `409 Conflict` when adding or editing a step
+
+Another concurrent request is mutating the same pipeline (e.g., a previous run is still in flight, or you and a teammate edited the pipeline at the same time).
+
+**Fix:** call `get_pipeline` to read the current state, then retry the mutation. Each successful write cancels in-progress runs and starts a fresh one, so the retry is safe.
+
+### `get_step_preview` times out after 60 seconds
+
+The partial run did not complete within the polling window. The pipeline is still running on the server — your client just stopped waiting.
+
+**Fixes:**
+- Retry `get_step_preview` — long-running steps often complete on the second attempt because the partial result is now cached.
+- Use `get_step_data` instead. It returns whatever output the step has cached without triggering a new run.
+- Inspect the run with `get_pipeline_run` to see if a specific step is stuck.
+
+## Connection errors
+
+### Client says "MCP server failed to start" or shows a red status
+
+The client could not connect to `https://mcp.alphacast.io`.
+
+**Fixes:**
+- Confirm DNS and TCP reachability: `curl -I https://mcp.alphacast.io`. You should get an HTTP response (any status); `curl: (6) Could not resolve host` means a DNS or network issue.
+- If you're behind a corporate proxy or VPN, allow-list `mcp.alphacast.io` on port 443.
+- For Claude Desktop using `mcp-remote`, ensure Node.js 18+ is on `PATH` so `npx` can run.
+
+### Tool calls hang or stream nothing
+
+Streamable HTTP can be sensitive to intermediaries that buffer responses.
+
+**Fixes:**
+- Disable HTTP/2 in your client if it has the option (some proxies mishandle h2 streaming).
+- Bypass the proxy temporarily to confirm whether the proxy is the source.
+
+## Data quirks
+
+### Downloads return a URL instead of rows
+
+Some endpoints (CSV downloads, drafts) return an S3 pre-signed URL as the body instead of streaming the bytes. The MCP server detects this case and follows the URL transparently — but if you are inspecting raw HTTP traffic, you'll see the URL pattern. Nothing to fix; this is expected.
+
+### IDs in errors look like strings
+
+Error messages may show IDs as strings even though the API expects integers. The MCP server coerces strings to integers automatically when calling tools, so passing `"42"` instead of `42` works the same way.
+
+## Where to get help
+
+- For server-side issues, contact Alphacast support with the time of failure and the tool name. Server logs include the request ID.
+- For protocol-level questions about MCP itself, see the [official MCP spec](https://modelcontextprotocol.io/).
+- For client-specific issues (Claude Desktop, Cursor, etc.), check that client's documentation — the way each client surfaces tool-call errors varies.

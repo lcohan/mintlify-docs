@@ -71,6 +71,26 @@ curl -u YOUR_API_KEY: \
   --output data.xlsx
 ```
 
+## Pagination
+
+Most listing endpoints (`GET /repositories`, `GET /datasets`, `GET /providers`) return the full set of results your API key can access, without server-side paging. Filter the response client-side using the fields described on each endpoint page.
+
+Two endpoints expose explicit pagination controls:
+
+| Endpoint | Parameters | Notes |
+|---|---|---|
+| `GET /datasets/{id}/data` | `$top`, `$last`, `$filter` | When `$top` or `$last` is set, the response includes a `Row-Count` header with the total row count before truncation. Use it to drive pagination UI. |
+| `GET /providers/{slug}/browse?series=true` | `limit` (max `1000`, default `200`), `offset` | Standard limit/offset paging when listing series under a provider category. |
+
+## Idempotency
+
+Idempotency follows standard HTTP semantics:
+
+- **`GET`**, **`PUT`**, and **`DELETE`** are idempotent. Repeating the same request produces the same final state.
+- **`POST`** is **not** idempotent. Retrying a `POST /repositories` or `POST /datasets` creates a new resource each time. Treat client-side retries with care; on network errors, prefer `GET` to verify whether the previous request succeeded before retrying.
+
+The API does not currently honor an `Idempotency-Key` header. If you need at-most-once semantics for a `POST`, deduplicate at the client by checking for an existing resource with the same name before retrying.
+
 ## Rate limits
 
 Alphacast does not enforce a global rate limit on the API. However, some third-party data providers impose their own restrictions. For example, the BLS (Bureau of Labor Statistics) provider allows up to **25 requests per day** without a registered BLS API key. If you exceed this, requests to BLS-sourced data will fail until the limit resets.
@@ -81,7 +101,7 @@ Alphacast does not enforce a global rate limit on the API. However, some third-p
 
 ## API resources
 
-The Alphacast API is organized into four main resource groups. Each group has its own reference page with full endpoint listings, parameters, and example responses.
+The Alphacast API is organized into the resource groups below. Each group has its own reference page with full endpoint listings, parameters, and example responses.
 
 <CardGroup cols={2}>
   <Card title="Repositories" icon="folder" href="/api/repositories/list">
@@ -90,10 +110,11 @@ The Alphacast API is organized into four main resource groups. Each group has it
   <Card title="Datasets" icon="table" href="/api/datasets/list">
     Upload, query, and manage datasets — including column configuration, data versioning, and export formats.
   </Card>
-  <Card title="Pipelines" icon="workflow" href="/api/pipelines/list">
-    Build and run data transformation pipelines, manage pipeline steps, and retrieve run logs.
-  </Card>
   <Card title="Data providers" icon="database" href="/api/providers/list">
     Browse and query external financial data providers such as FRED, BLS, and market data sources.
   </Card>
 </CardGroup>
+
+<Note>
+  Programmatic pipeline operations (create, edit steps, run, monitor) are available through the Alphacast MCP server. See the [MCP](/mcp/overview) tab for setup and tool reference.
+</Note>

@@ -1,0 +1,121 @@
+---
+title: "Pipeline Write Tools"
+sidebarTitle: "Pipelines (write)"
+description: "Tools for creating pipelines and adding, editing, or removing pipeline steps. Every write triggers an automatic validation and run."
+---
+
+Four tools that mutate pipeline definitions. Every successful call **auto-validates the resulting pipeline and queues a run** — there is no separate "run" tool to call afterwards.
+
+<Warning>
+  Deleting an entire pipeline is intentionally not exposed. To remove a pipeline, do it from the Alphacast web UI.
+</Warning>
+
+## `create_pipeline`
+
+Create a new pipeline, optionally with an initial step list. When `steps` is non-empty, the pipeline auto-validates and auto-runs immediately.
+
+<ParamField body="repositoryId" type="number" required>
+  Numeric ID of the repository to create the pipeline in. The API key must have Write or higher access.
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  Display name for the pipeline.
+</ParamField>
+
+<ParamField body="steps" type="array">
+  Optional initial step list. Each element has `type`, `order`, and `configuration`. If provided, the pipeline auto-runs.
+</ParamField>
+
+**Example prompt**
+
+> "Create a pipeline named 'Argentina CPI Monitor' in repository 1042 that fetches FRED CPI and publishes to dataset 5801."
+
+**Underlying endpoint:** `POST /pipelines`.
+
+---
+
+## `add_pipeline_step`
+
+Append a step to an existing pipeline. Auto-validates and auto-runs.
+
+<ParamField body="pipelineId" type="number" required>
+  Numeric pipeline ID.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Step type. See [Step types](/pipelines/step-types) for the full list.
+</ParamField>
+
+<ParamField body="order" type="number" required>
+  Zero-based position in the pipeline. Existing steps at or after this position shift down.
+</ParamField>
+
+<ParamField body="configuration" type="object" required>
+  Step-specific configuration. The schema depends on `type`.
+</ParamField>
+
+**Example prompt**
+
+> "Add a `filter-rows` step at position 1 on pipeline 4321 to keep only rows where `Country` equals 'Argentina'."
+
+**Underlying endpoint:** `POST /pipelines/{id}/steps`.
+
+---
+
+## `edit_pipeline_step`
+
+Edit the configuration (and optionally the order) of an existing step. Auto-validates and auto-runs.
+
+<ParamField body="pipelineId" type="number" required>
+  Numeric pipeline ID.
+</ParamField>
+
+<ParamField body="stepId" type="number" required>
+  Server-assigned step ID. Get it from `get_pipeline`.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Step type. Must match the existing step's type — to change types, delete the step and add a new one.
+</ParamField>
+
+<ParamField body="order" type="number" required>
+  New zero-based position.
+</ParamField>
+
+<ParamField body="configuration" type="object" required>
+  Replacement configuration object. Pass the complete config; the API does not merge fields.
+</ParamField>
+
+**Example prompt**
+
+> "Update step 5002 on pipeline 4321 to publish to dataset 5900 instead of 5801."
+
+**Underlying endpoint:** `PUT /pipelines/{id}/steps/{stepId}`.
+
+---
+
+## `delete_pipeline_step`
+
+Remove a single step. Auto-validates remaining steps and auto-runs.
+
+<ParamField body="pipelineId" type="number" required>
+  Numeric pipeline ID.
+</ParamField>
+
+<ParamField body="stepId" type="number" required>
+  Server-assigned step ID.
+</ParamField>
+
+**Example prompt**
+
+> "Delete step 5003 from pipeline 4321."
+
+**Underlying endpoint:** `DELETE /pipelines/{id}/steps/{stepId}`.
+
+---
+
+## Common gotchas
+
+- **Use server-assigned `stepId`, not `order`** when editing or deleting. `order` is a position; `stepId` is the immutable identifier returned in `get_pipeline`.
+- **Configuration is not merged**: `edit_pipeline_step` replaces the entire `configuration` object. Read the current config with `get_pipeline` first if you only want to change one field.
+- **Auto-run on every write**: if a step you add or edit is invalid, the call returns the validation error and no run is queued. Fix the configuration and retry.

@@ -1,6 +1,6 @@
 ---
 title: "POST /repositories — Create a Repository"
-sidebarTitle: "Create"
+sidebarTitle: "Create a repository"
 description: "Create a new repository to organize datasets and pipelines. Requires name and privacy. Optionally specify description and team for collaboration."
 ---
 
@@ -81,6 +81,39 @@ curl -u YOUR_API_KEY: \
     "team": "research"
   }' \
   https://api.alphacast.io/repositories
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.alphacast.io/repositories",
+    auth=("YOUR_API_KEY", ""),
+    json={
+        "name": "Emerging Markets Macro",
+        "description": "GDP, inflation, and rates for EM economies",
+        "privacy": "Private",
+        "team": "research",
+    },
+)
+repository = response.json()
+```
+
+```javascript Node.js
+const response = await fetch("https://api.alphacast.io/repositories", {
+  method: "POST",
+  headers: {
+    Authorization: "Basic " + btoa("YOUR_API_KEY:"),
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    name: "Emerging Markets Macro",
+    description: "GDP, inflation, and rates for EM economies",
+    privacy: "Private",
+    team: "research",
+  }),
+});
+const repository = await response.json();
 ```
 
 </RequestExample>

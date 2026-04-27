@@ -1,6 +1,6 @@
 ---
 title: "Fetch Series Data from External Providers"
-sidebarTitle: "Series"
+sidebarTitle: "Fetch series data"
 description: "Preview or download complete time-series data from FRED, BLS, World Bank, Yahoo Finance, and 10+ other providers using the Alphacast provider API."
 ---
 
@@ -38,10 +38,32 @@ Use this endpoint to confirm you have the right series before fetching the full 
   The series identifier as recognized by the upstream provider. Format varies by provider — for example, `UNRATE` for FRED, `CUUR0000SA0` for BLS, or `NY.GDP.PCAP.CD` for World Bank.
 </ParamField>
 
-```bash
+<RequestExample>
+
+```bash cURL
 curl -u YOUR_API_KEY: \
   https://api.alphacast.io/providers/fred/series/UNRATE
 ```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/providers/fred/series/UNRATE",
+    auth=("YOUR_API_KEY", ""),
+)
+preview = response.json()
+```
+
+```javascript Node.js
+const response = await fetch(
+  "https://api.alphacast.io/providers/fred/series/UNRATE",
+  { headers: { Authorization: "Basic " + btoa("YOUR_API_KEY:") } },
+);
+const preview = await response.json();
+```
+
+</RequestExample>
 
 **Response fields**
 
@@ -160,13 +182,43 @@ Returns the full historical time series. This endpoint accepts provider-specific
   | World Bank | `date_range` | `"2000:2024"` |
 </ParamField>
 
-```bash
+<RequestExample>
+
+```bash cURL
 # Fetch full FRED unemployment data, resampled to annual % change
 curl -u YOUR_API_KEY: \
   -X POST https://api.alphacast.io/providers/fred/series/UNRATE/data \
   -H "Content-Type: application/json" \
   -d '{"params": {"units": "pc1", "frequency": "a"}}'
 ```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.alphacast.io/providers/fred/series/UNRATE/data",
+    auth=("YOUR_API_KEY", ""),
+    json={"params": {"units": "pc1", "frequency": "a"}},
+)
+series = response.json()
+```
+
+```javascript Node.js
+const response = await fetch(
+  "https://api.alphacast.io/providers/fred/series/UNRATE/data",
+  {
+    method: "POST",
+    headers: {
+      Authorization: "Basic " + btoa("YOUR_API_KEY:"),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ params: { units: "pc1", frequency: "a" } }),
+  },
+);
+const series = await response.json();
+```
+
+</RequestExample>
 
 **Response fields**
 

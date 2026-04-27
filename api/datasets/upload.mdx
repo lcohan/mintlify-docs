@@ -101,12 +101,57 @@ Returns `201 Created` with a process object describing the background upload job
 
 **Upload a CSV file with a manifest:**
 
-```bash
+<RequestExample>
+
+```bash cURL
 curl -u YOUR_API_KEY: \
   -X PUT https://api.alphacast.io/datasets/123/data \
   -F "data=@gdp_data.csv" \
   -F 'manifest=[{"sourceName":"Date","dataType":"Date","isEntity":true},{"sourceName":"Country","dataType":"String","isEntity":true},{"sourceName":"GDP","dataType":"Decimal","isEntity":false}]'
 ```
+
+```python Python
+import json
+import requests
+
+manifest = [
+    {"sourceName": "Date", "dataType": "Date", "isEntity": True},
+    {"sourceName": "Country", "dataType": "String", "isEntity": True},
+    {"sourceName": "GDP", "dataType": "Decimal", "isEntity": False},
+]
+
+with open("gdp_data.csv", "rb") as f:
+    response = requests.put(
+        "https://api.alphacast.io/datasets/123/data",
+        auth=("YOUR_API_KEY", ""),
+        files={"data": ("gdp_data.csv", f, "text/csv")},
+        data={"manifest": json.dumps(manifest)},
+    )
+process = response.json()
+```
+
+```javascript Node.js
+import fs from "node:fs";
+
+const manifest = [
+  { sourceName: "Date", dataType: "Date", isEntity: true },
+  { sourceName: "Country", dataType: "String", isEntity: true },
+  { sourceName: "GDP", dataType: "Decimal", isEntity: false },
+];
+
+const form = new FormData();
+form.append("data", new Blob([fs.readFileSync("gdp_data.csv")]), "gdp_data.csv");
+form.append("manifest", JSON.stringify(manifest));
+
+const response = await fetch("https://api.alphacast.io/datasets/123/data", {
+  method: "PUT",
+  headers: { Authorization: "Basic " + btoa("YOUR_API_KEY:") },
+  body: form,
+});
+const process = await response.json();
+```
+
+</RequestExample>
 
 **Upload a gzip-compressed CSV and replace existing rows not in the file:**
 

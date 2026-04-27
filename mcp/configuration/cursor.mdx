@@ -1,0 +1,48 @@
+---
+title: "Connect Cursor"
+sidebarTitle: "Cursor"
+description: "Configure Cursor to use the Alphacast MCP server via .cursor/mcp.json."
+---
+
+Cursor supports remote MCP servers natively. You configure the server in `.cursor/mcp.json` either at the project root (shared with collaborators) or in your user directory (private to you).
+
+## Configuration file location
+
+| Scope | Path |
+|---|---|
+| Project | `<project_root>/.cursor/mcp.json` |
+| User | `~/.cursor/mcp.json` |
+
+Project-scoped configuration takes precedence when both exist. Use the user-scoped path when you want the server available across every project on your machine.
+
+## Add the server
+
+```json .cursor/mcp.json
+{
+  "mcpServers": {
+    "alphacast": {
+      "url": "https://mcp.alphacast.io",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+<Warning>
+  Do not commit a real API key to a project-scoped file. Either rely on the user-scoped path, or wire up a secrets manager and document the setup in your project README.
+</Warning>
+
+## Apply the change
+
+1. Save `.cursor/mcp.json`.
+2. Open Cursor's settings → **Features → MCP** and click **Refresh**, or reload the window (`Cmd/Ctrl + Shift + P` → **Developer: Reload Window**).
+
+## Verify
+
+Open the MCP panel in Cursor's settings. The `alphacast` server should appear with a green dot and 22 tools listed. In the chat, try:
+
+> "Use the alphacast tools to list my repositories."
+
+If the server fails to connect, the most common causes are an invalid API key in the `Authorization` header or a corporate proxy that blocks outbound traffic to `mcp.alphacast.io`.

@@ -1,0 +1,88 @@
+---
+title: "Other MCP Clients"
+sidebarTitle: "Other clients"
+description: "Connect VS Code, Zed, Windsurf, and any custom MCP client to the Alphacast MCP server."
+---
+
+The Alphacast MCP server speaks the standard MCP streamable HTTP transport, so any client that implements the protocol can connect. The exact configuration format varies by client, but the values are always the same:
+
+| Field | Value |
+|---|---|
+| Transport | `http` (streamable) |
+| URL | `https://mcp.alphacast.io` |
+| Headers | `Authorization: Bearer YOUR_API_KEY` |
+
+## VS Code (GitHub Copilot Chat / Continue)
+
+VS Code MCP support lives in `.vscode/mcp.json` for project scope or in user settings for global scope.
+
+```json .vscode/mcp.json
+{
+  "servers": {
+    "alphacast": {
+      "type": "http",
+      "url": "https://mcp.alphacast.io",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+Reload VS Code after saving the file.
+
+## Zed
+
+Zed configures MCP servers in its `settings.json` under `context_servers`. Use Zed's HTTP MCP support if available in your version, or fall back to `mcp-remote` as a local adapter.
+
+```json
+{
+  "context_servers": {
+    "alphacast": {
+      "command": {
+        "path": "npx",
+        "args": [
+          "-y",
+          "mcp-remote",
+          "https://mcp.alphacast.io",
+          "--header",
+          "Authorization: Bearer YOUR_API_KEY"
+        ]
+      }
+    }
+  }
+}
+```
+
+## Windsurf
+
+Windsurf MCP servers are configured in `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "alphacast": {
+      "serverUrl": "https://mcp.alphacast.io",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+## Stdio fallback for clients without HTTP support
+
+A handful of clients still launch MCP servers as local processes only. For those, use the `mcp-remote` adapter to bridge stdio to streamable HTTP:
+
+```bash
+npx -y mcp-remote https://mcp.alphacast.io \
+  --header "Authorization: Bearer YOUR_API_KEY"
+```
+
+Plug that command (with the appropriate `command` / `args` keys for your client) into the configuration. Claude Desktop already uses this approach — see its [configuration guide](/mcp/configuration/claude-desktop).
+
+## Custom clients
+
+If you're building your own MCP client with the [official SDKs](https://modelcontextprotocol.io/clients), pass the URL and `Authorization` header to the SDK's HTTP transport constructor. The Alphacast server requires no other handshake or registration step.

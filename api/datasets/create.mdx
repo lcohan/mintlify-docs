@@ -1,6 +1,6 @@
 ---
 title: "POST /datasets — Create a Dataset"
-sidebarTitle: "Create"
+sidebarTitle: "Create a dataset"
 description: "Create a new dataset in a repository to store tabular or time-series data. Requires name and repositoryId. Optionally add source metadata."
 ---
 
@@ -71,17 +71,61 @@ Returns `201 Created` with the newly created dataset object.
 
 ## Example
 
-```bash
+<RequestExample>
+
+```bash cURL
 curl -u YOUR_API_KEY: \
   -X POST https://api.alphacast.io/datasets \
-  -d "name=US GDP Quarterly" \
-  -d "repositoryId=45" \
-  -d "description=Quarterly US GDP figures from BEA" \
-  -d "sourceName=Bureau of Economic Analysis" \
-  -d "sourceUrl=https://www.bea.gov/data/gdp"
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "US GDP Quarterly",
+    "repositoryId": 45,
+    "description": "Quarterly US GDP figures from BEA",
+    "sourceName": "Bureau of Economic Analysis",
+    "sourceUrl": "https://www.bea.gov/data/gdp"
+  }'
 ```
 
-```json
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.alphacast.io/datasets",
+    auth=("YOUR_API_KEY", ""),
+    json={
+        "name": "US GDP Quarterly",
+        "repositoryId": 45,
+        "description": "Quarterly US GDP figures from BEA",
+        "sourceName": "Bureau of Economic Analysis",
+        "sourceUrl": "https://www.bea.gov/data/gdp",
+    },
+)
+dataset = response.json()
+```
+
+```javascript Node.js
+const response = await fetch("https://api.alphacast.io/datasets", {
+  method: "POST",
+  headers: {
+    Authorization: "Basic " + btoa("YOUR_API_KEY:"),
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    name: "US GDP Quarterly",
+    repositoryId: 45,
+    description: "Quarterly US GDP figures from BEA",
+    sourceName: "Bureau of Economic Analysis",
+    sourceUrl: "https://www.bea.gov/data/gdp",
+  }),
+});
+const dataset = await response.json();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 201
 {
   "id": 123,
   "name": "US GDP Quarterly",
@@ -95,6 +139,8 @@ curl -u YOUR_API_KEY: \
   "maxDate": null
 }
 ```
+
+</ResponseExample>
 
 ## Error responses
 

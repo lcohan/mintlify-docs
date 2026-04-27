@@ -1,6 +1,6 @@
 ---
 title: "GET /datasets/{id} — Get a Dataset"
-sidebarTitle: "Get"
+sidebarTitle: "Get a dataset"
 description: "Retrieve a single dataset by numeric ID, including its name, repository, description, column schema, date range, and your permission level."
 ---
 
@@ -25,9 +25,30 @@ Authenticate using HTTP Basic Auth. Pass your API key as the username and leave 
 
 ## Get dataset metadata
 
-```bash
+<RequestExample>
+
+```bash cURL
 curl -u YOUR_API_KEY: https://api.alphacast.io/datasets/123
 ```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/datasets/123",
+    auth=("YOUR_API_KEY", ""),
+)
+dataset = response.json()
+```
+
+```javascript Node.js
+const response = await fetch("https://api.alphacast.io/datasets/123", {
+  headers: { Authorization: "Basic " + btoa("YOUR_API_KEY:") },
+});
+const dataset = await response.json();
+```
+
+</RequestExample>
 
 ### Response
 

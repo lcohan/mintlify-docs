@@ -39,10 +39,7 @@
           {
             "group": "Pipelines",
             "pages": [
-              "pipelines/overview",
-              "pipelines/step-types",
-              "pipelines/running",
-              "pipelines/ai-features"
+              "pipelines/step-types"
             ]
           },
           {
@@ -95,20 +92,49 @@
             ]
           },
           {
-            "group": "Pipelines",
-            "pages": [
-              "api/pipelines/list",
-              "api/pipelines/get",
-              "api/pipelines/create",
-              "api/pipelines/run",
-              "api/pipelines/steps"
-            ]
-          },
-          {
             "group": "Data Providers",
             "pages": [
               "api/providers/list",
               "api/providers/series"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "MCP",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "mcp/overview",
+              "mcp/quickstart",
+              "mcp/authentication"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "mcp/configuration/claude-desktop",
+              "mcp/configuration/claude-code",
+              "mcp/configuration/cursor",
+              "mcp/configuration/other-clients"
+            ]
+          },
+          {
+            "group": "Tools",
+            "pages": [
+              "mcp/tools/overview",
+              "mcp/tools/search-and-datasets",
+              "mcp/tools/pipelines-read",
+              "mcp/tools/pipelines-write",
+              "mcp/tools/providers"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "mcp/examples",
+              "mcp/troubleshooting"
             ]
           }
         ]

@@ -1,0 +1,163 @@
+---
+title: "Provider Tools"
+sidebarTitle: "Providers"
+description: "Tools for discovering external data providers (FRED, BLS, World Bank, Yahoo Finance, and more), browsing their catalogs, fetching series, and managing third-party API keys."
+---
+
+Seven tools for working with the 15+ external data providers Alphacast integrates with. Six are read-only; `set_user_key` writes a stored credential.
+
+## `list_providers`
+
+List every available provider, or search the top 5 by keyword.
+
+<ParamField body="query" type="string">
+  Optional keyword. Omit to list every provider. With a keyword, returns the top 5 matches scored across slug, name, and description.
+</ParamField>
+
+**Example prompt**
+
+> "Which providers cover Latin American economic data?"
+
+**Underlying endpoints:** `GET /providers` (no query) or `GET /providers/match?q=...` (with query).
+
+---
+
+## `get_provider`
+
+Get full metadata for one provider, including its tunable parameters and curated popular series.
+
+<ParamField body="slug" type="string" required>
+  Provider slug. Examples: `fred`, `bls`, `worldbank`, `yahoo`, `bcra`, `inegi`, `banxico`.
+</ParamField>
+
+Response includes `parameters` (tunable knobs like FRED's `units` or `frequency`), `popular_series`, key requirements, and the `browse_root_label` for hierarchical navigation.
+
+**Example prompt**
+
+> "Tell me about the FRED provider — does it require a key?"
+
+**Underlying endpoint:** `GET /providers/{slug}`.
+
+---
+
+## `browse_provider`
+
+Walk a provider's hierarchical catalog by path. Only available for providers with the `hierarchical` capability.
+
+<ParamField body="slug" type="string" required>
+  Provider slug.
+</ParamField>
+
+<ParamField body="path" type="string">
+  Slash-separated path inside the provider's tree. Omit to start at the root.
+</ParamField>
+
+<ParamField body="depth" type="number" default="1">
+  How many levels of children to return in one call. Maximum is 3.
+</ParamField>
+
+<ParamField body="series" type="boolean">
+  When `true`, return paginated series at the current path instead of subfolders.
+</ParamField>
+
+<ParamField body="limit" type="number">
+  Page size when `series=true`.
+</ParamField>
+
+<ParamField body="offset" type="number">
+  Pagination offset when `series=true`.
+</ParamField>
+
+**Example prompt**
+
+> "Browse the World Bank Economy & Growth category two levels deep."
+
+**Underlying endpoint:** `GET /providers/{slug}/browse`.
+
+---
+
+## `search_provider`
+
+Search series within a single provider by keyword. Only for providers with the `search` capability.
+
+<ParamField body="slug" type="string" required>
+  Provider slug.
+</ParamField>
+
+<ParamField body="query" type="string" required>
+  Search query.
+</ParamField>
+
+<ParamField body="limit" type="number">
+  Maximum number of results.
+</ParamField>
+
+**Example prompt**
+
+> "Search FRED for unemployment rate series and return the top 10."
+
+**Underlying endpoint:** `GET /providers/{slug}/search`.
+
+---
+
+## `get_series`
+
+Preview or fetch the full data of one provider series. Defaults to a preview (last ~24 observations) to keep responses small.
+
+<ParamField body="slug" type="string" required>
+  Provider slug.
+</ParamField>
+
+<ParamField body="series_id" type="string" required>
+  The provider's series identifier. Format varies: `UNRATE` for FRED, `CUUR0000SA0` for BLS, `NY.GDP.PCAP.CD` for World Bank.
+</ParamField>
+
+<ParamField body="full_data" type="boolean" default="false">
+  When `true`, returns the full historical series instead of a preview.
+</ParamField>
+
+<ParamField body="params" type="object">
+  Provider-specific parameters (FRED `units`, BLS `startyear`, etc.). Only used when `full_data=true`. See `get_provider` for valid keys.
+</ParamField>
+
+**Example prompt**
+
+> "Fetch the full FRED CPIAUCSL series as year-over-year percent change."
+
+**Underlying endpoints:** `GET /providers/{slug}/series/{series_id}` (preview) or `POST /providers/{slug}/series/{series_id}/data` (full).
+
+---
+
+## `list_user_keys`
+
+Show which third-party providers have a stored API key for the current user.
+
+No input parameters. Returns a list of `{slug, configured}` pairs.
+
+**Example prompt**
+
+> "Do I have a FRED API key saved?"
+
+**Underlying endpoint:** `GET /user-keys`.
+
+---
+
+## `set_user_key`
+
+Save or remove your third-party API key for a provider.
+
+<ParamField body="slug" type="string" required>
+  Provider slug.
+</ParamField>
+
+<ParamField body="api_key" type="string | null" required>
+  The key to store. Pass `null` to remove a previously stored key.
+</ParamField>
+
+After saving, every subsequent call to `get_series` for that provider transparently uses the key. You do not pass it manually each time.
+
+**Example prompt**
+
+> "Save my FRED API key — it's `abc123`."
+
+**Underlying endpoint:** `PUT /user-keys/{slug}`.

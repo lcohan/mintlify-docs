@@ -1,6 +1,6 @@
 ---
 title: "DELETE /repositories/{id} — Delete a Repository"
-sidebarTitle: "Delete"
+sidebarTitle: "Delete a repository"
 description: "Permanently delete a repository and all its assets including datasets and pipelines. Requires Owner permission. This action cannot be undone."
 ---
 
@@ -49,6 +49,24 @@ Returns `204 No Content` on success. The response body is empty.
 curl -u YOUR_API_KEY: \
   -X DELETE \
   https://api.alphacast.io/repositories/101
+```
+
+```python Python
+import requests
+
+response = requests.delete(
+    "https://api.alphacast.io/repositories/101",
+    auth=("YOUR_API_KEY", ""),
+)
+assert response.status_code == 204
+```
+
+```javascript Node.js
+const response = await fetch("https://api.alphacast.io/repositories/101", {
+  method: "DELETE",
+  headers: { Authorization: "Basic " + btoa("YOUR_API_KEY:") },
+});
+// response.status === 204
 ```
 
 </RequestExample>

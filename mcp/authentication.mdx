@@ -1,0 +1,43 @@
+---
+title: "MCP Authentication"
+sidebarTitle: "Authentication"
+description: "How the Alphacast MCP server authenticates clients with your Alphacast API key over a Bearer token."
+---
+
+The Alphacast MCP server reuses the same API key as the REST API. There is no separate token to manage and no OAuth flow.
+
+## Bearer token
+
+Every MCP request must include an `Authorization` header in this exact form:
+
+```
+Authorization: Bearer YOUR_ALPHACAST_API_KEY
+```
+
+Your client sets this header once during configuration. The MCP runtime forwards it on every call to the server.
+
+<Note>
+  The token is **your raw API key**, not a base64-encoded value. The REST API accepts the key as the username in HTTP Basic Auth; the MCP server accepts the same key as a Bearer token. Both authenticate as the same Alphacast account.
+</Note>
+
+## Permissions
+
+The MCP server inherits whatever permissions the API key has on the underlying account:
+
+| Account permission | What MCP can do |
+|---|---|
+| Read on a repository | List, search, and download datasets in that repository. |
+| Write on a repository | All Read operations, plus create datasets and create or edit pipelines. |
+| Owner / Admin on a repository | All Write operations. Repository deletion is intentionally not exposed. |
+
+If a tool call returns `403 Forbidden`, the API key does not have the required permission on the target repository. Generate a new key under an account with the right access, or have the repository owner grant you write access.
+
+## Where to manage your key
+
+- View, create, and revoke keys: [alphacast.io/settings/api-keys](https://www.alphacast.io/settings/api-keys).
+- Reference for the same key in the REST API: [Authentication](/authentication).
+- Rotate immediately if a key was exposed; rotation invalidates the previous value.
+
+## What the server does *not* see
+
+The server only ever sees the Bearer token you send. It does not store the conversation history of your MCP client, the prompts you wrote, or the responses the model generated. Tool inputs and outputs travel only between your client, the Alphacast MCP server, and the Alphacast REST API.

@@ -1,0 +1,135 @@
+---
+title: "Search & Datasets Tools"
+sidebarTitle: "Search & datasets"
+description: "Tools for discovering content in the Alphacast catalog and reading dataset metadata, schemas, and rows."
+---
+
+These six tools cover discovery and read access. None of them mutate state, so you can safely chain them together to explore Alphacast.
+
+## `search_catalog`
+
+Search the curated Alphacast and Seido catalogs (default) or every public repository.
+
+<ParamField body="query" type="string" required>
+  Search query. Tokenized server-side; multi-word queries score every term.
+</ParamField>
+
+<ParamField body="asset" type="string" default="datasets">
+  Type of asset to return. One of `datasets`, `charts`, `insights`, `repositories`, `accounts`, `dashboards`, `series`, `tickers`.
+</ParamField>
+
+<ParamField body="limit" type="number" default="10">
+  Maximum number of results.
+</ParamField>
+
+<ParamField body="offset" type="number" default="0">
+  Pagination offset.
+</ParamField>
+
+<ParamField body="tags" type="string[]">
+  Optional list of tag slugs to filter by.
+</ParamField>
+
+<ParamField body="repositoryId" type="number">
+  Optional repository ID to scope the search to a single repo.
+</ParamField>
+
+<ParamField body="searchAllAlphacast" type="boolean" default="false">
+  Set to `true` to search every public repository instead of just the curated catalog.
+</ParamField>
+
+<ParamField body="excludeDeprecated" type="boolean" default="false">
+  When `true`, deprecated datasets are excluded from results.
+</ParamField>
+
+**Example prompt**
+
+> "Find Argentina inflation series in the curated catalog."
+
+**Underlying endpoint:** `GET /api/search`.
+
+---
+
+## `get_dataset`
+
+Retrieve dataset metadata and the column schema.
+
+<ParamField body="datasetId" type="number" required>
+  Numeric dataset ID. Strings are coerced.
+</ParamField>
+
+Returns the dataset's name, description, repository, last update timestamp, and the column array (`name`, `dataType`, `isEntity`).
+
+**Example prompt**
+
+> "Show me the schema of dataset 12345."
+
+**Underlying endpoints:** `GET /datasets/{id}` + `GET /datasets/{id}/columns` (called in parallel).
+
+---
+
+## `download_dataset`
+
+Download the current rows of a dataset.
+
+<ParamField body="datasetId" type="number" required>
+  Numeric dataset ID.
+</ParamField>
+
+<ParamField body="format" type="string" default="json">
+  `json` returns an array of objects. `csv` returns a CSV string.
+</ParamField>
+
+Internally follows S3 redirects so the model receives the raw rows directly.
+
+**Example prompt**
+
+> "Download dataset 12345 as CSV and tell me the date range."
+
+**Underlying endpoint:** `GET /datasets/{id}/data?$format=...`.
+
+---
+
+## `list_datasets`
+
+List every dataset the API key can read.
+
+No input parameters. Returns one row per dataset with `id`, `name`, `repositoryId`, and `frequency`.
+
+**Example prompt**
+
+> "List all datasets I have access to and pick the ones tagged 'Argentina'."
+
+**Underlying endpoint:** `GET /datasets`.
+
+---
+
+## `list_repositories`
+
+List repositories where the API key can publish (Owner, Admin, or Write).
+
+No input parameters. Filtered server-side; read-only repositories are excluded so the model does not propose pipelines it cannot run.
+
+**Example prompt**
+
+> "Which repos can I publish into?"
+
+**Underlying endpoint:** `GET /repositories` (with client-side permission filter).
+
+---
+
+## `get_repository`
+
+Retrieve a single repository's metadata.
+
+<ParamField body="repositoryId" type="number" required>
+  Numeric repository ID.
+</ParamField>
+
+Returns name, description, privacy, your permission level, and timestamps.
+
+**Example prompt**
+
+> "What's the description of repository 1042 and who owns it?"
+
+**Underlying endpoint:** `GET /repositories/{id}`.

@@ -1,0 +1,47 @@
+---
+title: "MCP Quickstart"
+sidebarTitle: "Quickstart"
+description: "Connect Claude Code or Cursor to the Alphacast MCP server in three steps and run your first prompt."
+---
+
+The Alphacast MCP server is a hosted endpoint at `https://mcp.alphacast.io`. There is no installer or binary — you just point your client at the URL and authenticate with your Alphacast API key.
+
+<Steps>
+  <Step title="Get your API key">
+    Sign in to [alphacast.io](https://www.alphacast.io/settings/api-keys) and generate a new key (or copy an existing one). The same key you use for the REST API works for the MCP server.
+
+    <Warning>
+      Treat the key like a password. It grants the same permissions as your account. Store it in a secrets manager or an environment variable, not in source control.
+    </Warning>
+  </Step>
+
+  <Step title="Add the server to your client">
+    Run the command for your client. The example below uses Claude Code.
+
+    ```bash
+    claude mcp add --transport http alphacast https://mcp.alphacast.io \
+      --header "Authorization: Bearer YOUR_API_KEY"
+    ```
+
+    For Claude Desktop, Cursor, and others, see the [configuration guides](/mcp/configuration/claude-desktop).
+  </Step>
+
+  <Step title="Run your first prompt">
+    Restart the client so it picks up the new server, then try a prompt that uses one of the tools:
+
+    > "List my Alphacast repositories."
+
+    The client should call `list_repositories` and display the result. If you see an authentication error, double-check the `Authorization` header in step 2.
+  </Step>
+</Steps>
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Tools reference" icon="wrench" href="/mcp/tools/overview">
+    Browse all 22 tools and their input schemas.
+  </Card>
+  <Card title="Examples" icon="lightbulb" href="/mcp/examples">
+    See full prompts that combine search, download, and pipeline tools.
+  </Card>
+</CardGroup>

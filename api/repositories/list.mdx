@@ -1,6 +1,6 @@
 ---
 title: "GET /repositories — List All Repositories"
-sidebarTitle: "List"
+sidebarTitle: "List repositories"
 description: "Retrieve all repositories accessible to the authenticated user. Returns an array of repository objects with id, name, privacy, and permission fields."
 ---
 
@@ -59,6 +59,23 @@ The endpoint returns a JSON array. Each element is a repository object.
 ```bash cURL
 curl -u YOUR_API_KEY: \
   https://api.alphacast.io/repositories
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/repositories",
+    auth=("YOUR_API_KEY", ""),
+)
+repositories = response.json()
+```
+
+```javascript Node.js
+const response = await fetch("https://api.alphacast.io/repositories", {
+  headers: { Authorization: "Basic " + btoa("YOUR_API_KEY:") },
+});
+const repositories = await response.json();
 ```
 
 </RequestExample>

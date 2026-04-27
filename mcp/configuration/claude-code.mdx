@@ -1,0 +1,64 @@
+---
+title: "Connect Claude Code"
+sidebarTitle: "Claude Code"
+description: "Add the Alphacast MCP server to Claude Code with the claude mcp add command or by editing .mcp.json directly."
+---
+
+Claude Code supports streamable HTTP MCP servers natively. You can add the Alphacast server with a single CLI command, or by editing the project-level `.mcp.json` file.
+
+## CLI (recommended)
+
+Run this from any directory inside your project. The server is added at the user scope by default — pass `--scope project` to share it with collaborators via a checked-in `.mcp.json`.
+
+```bash
+claude mcp add --transport http alphacast https://mcp.alphacast.io \
+  --header "Authorization: Bearer YOUR_API_KEY"
+```
+
+To remove it later:
+
+```bash
+claude mcp remove alphacast
+```
+
+To list configured servers and their status:
+
+```bash
+claude mcp list
+```
+
+## `.mcp.json` (project-scoped, checked into the repo)
+
+If you want the server available to anyone who clones the project, create or edit `.mcp.json` at the repo root:
+
+```json .mcp.json
+{
+  "mcpServers": {
+    "alphacast": {
+      "type": "http",
+      "url": "https://mcp.alphacast.io",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+<Warning>
+  Do **not** commit a real API key to a project-scoped `.mcp.json`. Use an environment variable expansion in the header value (e.g. `"Authorization": "Bearer ${ALPHACAST_API_KEY}"`) and document the variable in your project README.
+</Warning>
+
+## Verify
+
+Open a new Claude Code session and run:
+
+```
+/mcp
+```
+
+The `alphacast` server should appear with 22 tools and a green `connected` status. If it shows red, run `claude mcp list` to inspect the configured URL and headers.
+
+Try a prompt that hits a read-only tool to confirm the connection end-to-end:
+
+> "Use the alphacast MCP to list my repositories."

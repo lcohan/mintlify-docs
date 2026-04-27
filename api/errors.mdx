@@ -1,6 +1,6 @@
 ---
 title: "API Error Codes and Troubleshooting"
-description: "Reference for every HTTP error code returned by the Alphacast API — 400, 401, 403, 404, 409, and 500 — with causes, example responses, and fixes."
+description: "Reference for every HTTP error code returned by the Alphacast API — 400, 401, 402, 403, 404, 409, 500, 503, 504 — with causes, example responses, and fixes."
 ---
 
 When an API request fails, Alphacast returns a standard HTTP error status code and, where possible, a JSON body that describes what went wrong. This page covers every error code you may encounter, what typically causes it, and how to fix it.
@@ -66,6 +66,26 @@ Your request did not include valid credentials, or no credentials were provided 
 
 ---
 
+### 402 Payment Required
+
+The action you attempted requires a higher membership tier than your current plan provides.
+
+```json
+{
+  "error": "This action requires a membership upgrade."
+}
+```
+
+**Common causes:**
+
+- Creating an additional private repository beyond your plan's limit.
+- Triggering a pipeline run on a paid-tier provider while on a free plan.
+- Downloading data that exceeds your plan's monthly export quota.
+
+**Fix:** upgrade your Alphacast subscription, or remove an existing resource to free up quota.
+
+---
+
 ### 403 Forbidden
 
 Your credentials are valid, but you do not have permission to perform this action on the requested resource.
@@ -99,7 +119,19 @@ The resource you requested does not exist.
 
 The request could not be completed because it conflicts with an existing resource.
 
-**Common cause:** You are trying to create a resource (such as a dataset) with a name that already exists in the same repository. Rename the resource or delete the existing one before retrying.
+```json
+{
+  "error": "A dataset named 'CPI Monthly' already exists in repository 45."
+}
+```
+
+**Common causes:**
+
+- Creating a dataset with a name that already exists in the same repository.
+- Uploading data with a column manifest that conflicts with the dataset's existing column types.
+- Saving a provider API key while another concurrent request is updating the same key.
+
+**Fix:** rename the resource, delete the existing one, or retry once the conflicting request completes.
 
 ---
 
@@ -115,6 +147,25 @@ An unexpected error occurred on the server. This is not caused by your request.
 <Note>
   A `500` response is never caused by invalid input in your request. If you see one consistently for the same request, it is a server-side issue worth reporting.
 </Note>
+
+---
+
+### 503 Service Unavailable
+
+The API is temporarily unable to handle the request, typically because of a deploy in progress or an overloaded backend dependency.
+
+**What to do:** retry with exponential backoff. Most `503` responses clear within a few seconds.
+
+---
+
+### 504 Gateway Timeout
+
+The request took longer than the gateway timeout to complete. Most often this happens on long-running operations such as fetching the full history of a large provider series, or downloading a very wide dataset.
+
+**What to do:**
+
+- Narrow the response: pass `$top`, `$last`, or `$filter` to `GET /datasets/{id}/data`, or restrict the date range when fetching provider series.
+- Retry the same request after a short delay — transient timeouts often resolve.
 
 ## Debugging checklist
 

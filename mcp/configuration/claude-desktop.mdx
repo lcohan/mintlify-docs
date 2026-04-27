@@ -1,0 +1,54 @@
+---
+title: "Connect Claude Desktop"
+sidebarTitle: "Claude Desktop"
+description: "Configure Claude Desktop to use the Alphacast MCP server via the mcp-remote adapter."
+---
+
+Claude Desktop loads MCP servers defined in `claude_desktop_config.json`. Because Claude Desktop currently launches MCP servers as local processes, you connect to the remote Alphacast server through the `mcp-remote` adapter, which proxies stdio to streamable HTTP.
+
+## Configuration file location
+
+| OS | Path |
+|---|---|
+| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
+| Linux | `~/.config/Claude/claude_desktop_config.json` |
+
+If the file does not exist, create it with an empty `{}` and add the snippet below.
+
+## Add the server
+
+```json claude_desktop_config.json
+{
+  "mcpServers": {
+    "alphacast": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.alphacast.io",
+        "--header",
+        "Authorization: Bearer YOUR_API_KEY"
+      ]
+    }
+  }
+}
+```
+
+<Note>
+  `npx` ships with Node.js. If `npx mcp-remote` fails, install Node 18 or later from [nodejs.org](https://nodejs.org/) and try again.
+</Note>
+
+## Apply the change
+
+1. Save `claude_desktop_config.json`.
+2. Quit Claude Desktop completely (right-click the menu bar / system tray icon → **Quit**, not just close the window).
+3. Relaunch Claude Desktop.
+
+## Verify
+
+In a new chat, open the tools menu (the slider icon). You should see the **alphacast** server listed with its 22 tools enabled. Try:
+
+> "List my Alphacast repositories."
+
+If the tools menu shows a red dot or the server is missing, open Claude Desktop's **Developer → Open MCP Logs** menu to inspect the failure. The most common causes are an invalid API key in the `Authorization` header or a network policy blocking outbound traffic to `mcp.alphacast.io`.

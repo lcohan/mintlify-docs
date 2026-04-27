@@ -5,3 +5,9 @@
 # Draft content
 drafts/
 *.draft.mdx
+
+# Hidden pipeline content (kept on disk for easy re-enable; pipeline access is via the MCP server only)
+api/pipelines/
+pipelines/overview.mdx
+pipelines/running.mdx
+pipelines/ai-features.mdx

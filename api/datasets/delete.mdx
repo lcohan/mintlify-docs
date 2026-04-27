@@ -1,6 +1,6 @@
 ---
 title: "DELETE /datasets/{id} — Delete a Dataset"
-sidebarTitle: "Delete"
+sidebarTitle: "Delete a dataset"
 description: "Permanently delete a dataset and all its data. Requires Write permission on the dataset. Returns 204 No Content. This action cannot be undone."
 ---
 
@@ -27,10 +27,32 @@ Returns `204 No Content` with an empty body on success.
 
 ## Example
 
-```bash
+<RequestExample>
+
+```bash cURL
 curl -u YOUR_API_KEY: \
   -X DELETE https://api.alphacast.io/datasets/123
 ```
+
+```python Python
+import requests
+
+response = requests.delete(
+    "https://api.alphacast.io/datasets/123",
+    auth=("YOUR_API_KEY", ""),
+)
+assert response.status_code == 204
+```
+
+```javascript Node.js
+const response = await fetch("https://api.alphacast.io/datasets/123", {
+  method: "DELETE",
+  headers: { Authorization: "Basic " + btoa("YOUR_API_KEY:") },
+});
+// response.status === 204
+```
+
+</RequestExample>
 
 A successful deletion produces no response body and returns HTTP `204`.
 

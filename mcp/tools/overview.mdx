@@ -1,0 +1,56 @@
+---
+title: "MCP Tools Overview"
+sidebarTitle: "Overview"
+description: "Reference for all 22 tools exposed by the Alphacast MCP server, grouped by capability and read/write access."
+---
+
+The Alphacast MCP server exposes 22 tools across four functional areas. Use this page as a high-level map; click any tool name to jump to its full input schema and example prompt on the corresponding detail page.
+
+## All tools
+
+| Tool | Group | Access | Summary |
+|---|---|---|---|
+| [`search_catalog`](/mcp/tools/search-and-datasets#search_catalog) | Search & datasets | Read | Search the curated Alphacast/Seido catalog or all public repositories. |
+| [`get_dataset`](/mcp/tools/search-and-datasets#get_dataset) | Search & datasets | Read | Retrieve dataset metadata and column schema. |
+| [`download_dataset`](/mcp/tools/search-and-datasets#download_dataset) | Search & datasets | Read | Download dataset rows as JSON or CSV. |
+| [`list_datasets`](/mcp/tools/search-and-datasets#list_datasets) | Search & datasets | Read | List every dataset the API key can access. |
+| [`list_repositories`](/mcp/tools/search-and-datasets#list_repositories) | Search & datasets | Read | List repositories where the API key has Write access or higher. |
+| [`get_repository`](/mcp/tools/search-and-datasets#get_repository) | Search & datasets | Read | Retrieve repository metadata and your permission level. |
+| [`list_pipelines`](/mcp/tools/pipelines-read#list_pipelines) | Pipelines (read) | Read | List every pipeline the API key can access. |
+| [`get_pipeline`](/mcp/tools/pipelines-read#get_pipeline) | Pipelines (read) | Read | Get a pipeline definition with all steps and the last run status. |
+| [`get_pipeline_run`](/mcp/tools/pipelines-read#get_pipeline_run) | Pipelines (read) | Read | Get a specific run's status, timestamps, and per-step logs. |
+| [`get_step_data`](/mcp/tools/pipelines-read#get_step_data) | Pipelines (read) | Read | Fetch the cached output of a step without triggering a run. |
+| [`get_step_preview`](/mcp/tools/pipelines-read#get_step_preview) | Pipelines (read) | Read | Run the pipeline up to a step and return its output (≤ 60 s). |
+| [`create_pipeline`](/mcp/tools/pipelines-write#create_pipeline) | Pipelines (write) | Write | Create a pipeline; auto-validates and auto-runs when steps are provided. |
+| [`add_pipeline_step`](/mcp/tools/pipelines-write#add_pipeline_step) | Pipelines (write) | Write | Append a step; auto-validates, saves, and auto-runs. |
+| [`edit_pipeline_step`](/mcp/tools/pipelines-write#edit_pipeline_step) | Pipelines (write) | Write | Edit a step's configuration; auto-validates, saves, and auto-runs. |
+| [`delete_pipeline_step`](/mcp/tools/pipelines-write#delete_pipeline_step) | Pipelines (write) | Write | Remove a step; auto-validates remaining steps and auto-runs. |
+| [`list_providers`](/mcp/tools/providers#list_providers) | Providers | Read | List all external data providers, or the top 5 matching a keyword. |
+| [`get_provider`](/mcp/tools/providers#get_provider) | Providers | Read | Retrieve a provider's parameters, popular series, and key requirements. |
+| [`browse_provider`](/mcp/tools/providers#browse_provider) | Providers | Read | Walk a provider's hierarchical catalog by path. |
+| [`search_provider`](/mcp/tools/providers#search_provider) | Providers | Read | Search series within a provider by keyword. |
+| [`get_series`](/mcp/tools/providers#get_series) | Providers | Read | Preview or fetch full data for a provider series. |
+| [`list_user_keys`](/mcp/tools/providers#list_user_keys) | Providers | Read | List which third-party providers have a stored API key. |
+| [`set_user_key`](/mcp/tools/providers#set_user_key) | Providers | Write | Save or remove your third-party API key for a provider. |
+
+## Safety boundaries
+
+<Warning>
+  The server intentionally does **not** expose:
+
+  - `delete_pipeline` — deleting an entire pipeline is irreversible from the API. Delete pipelines from the Alphacast web UI when needed.
+  - Repository or dataset deletion — same reasoning. Use the web UI for irreversible operations.
+  - `run_from_step_id` / `runFromStepId` — this parameter exists in older parts of the REST API but is not supported. Do not use it; it will be ignored or rejected.
+</Warning>
+
+## Tool conventions
+
+- **IDs** are always numeric (`integer`). Tools accept strings and coerce them — `"42"` works the same as `42`.
+- **Formats** for downloads: `json` (default for `download_dataset`) or `csv`.
+- **Auto-run** behavior: any pipeline write tool (`create_pipeline`, `add_pipeline_step`, `edit_pipeline_step`, `delete_pipeline_step`) immediately validates the resulting pipeline and queues a run. There is no separate "run" tool to call afterwards.
+- **Step previews** (`get_step_preview`) poll up to 60 seconds. If the run is slow, the tool returns a timeout error — retry or use `get_step_data` to read cached output instead.
+- **Permissions** mirror the REST API. The API key's permission on each repository determines which tools succeed.
+
+## Underlying API
+
+Each tool maps to one or more endpoints in the Alphacast REST API. The mapping is documented on each tool's detail page. You don't need to call those endpoints yourself — the MCP server is the recommended interface for programmatic access.
