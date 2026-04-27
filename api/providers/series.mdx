@@ -1,0 +1,456 @@
+---
+title: "Fetch Series Data from External Providers"
+sidebarTitle: "Series"
+description: "Preview or download complete time-series data from FRED, BLS, World Bank, Yahoo Finance, and 10+ other providers using the Alphacast provider API."
+---
+
+Once you have found a series ID — through browsing, searching, or the popular series list — you can fetch its data in two steps: a lightweight preview that returns the most recent data points, followed by a full historical fetch. For Yahoo Finance tickers and FRED series, dedicated shortcut endpoints are also available that bypass the provider slug workflow entirely.
+
+## Authentication
+
+All endpoints use HTTP Basic Auth. Pass your Alphacast API key as the username with an empty password.
+
+```bash
+curl -u YOUR_API_KEY: https://api.alphacast.io/providers/fred/series/UNRATE
+```
+
+<Note>
+For providers that require an upstream API key (such as FRED or INEGI), save your key via `PUT /user-keys/{slug}` first. Alphacast applies it automatically on every series request.
+</Note>
+
+---
+
+## Provider series endpoints
+
+### GET /providers/{slug}/series/{series_id}
+
+Returns a preview of the series: the last ~24 data points, the series label, and metadata. The response always includes `"is_preview": true` to signal that the data is truncated.
+
+Use this endpoint to confirm you have the right series before fetching the full history.
+
+**Path parameters**
+
+<ParamField path="slug" type="string" required>
+  Provider slug. Examples: `fred`, `bls`, `worldbank`, `bcra`, `banxico`.
+</ParamField>
+
+<ParamField path="series_id" type="string" required>
+  The series identifier as recognized by the upstream provider. Format varies by provider — for example, `UNRATE` for FRED, `CUUR0000SA0` for BLS, or `NY.GDP.PCAP.CD` for World Bank.
+</ParamField>
+
+```bash
+curl -u YOUR_API_KEY: \
+  https://api.alphacast.io/providers/fred/series/UNRATE
+```
+
+**Response fields**
+
+<ResponseField name="series_id" type="string" required>
+  The series identifier that was requested.
+</ResponseField>
+
+<ResponseField name="label" type="string" required>
+  Descriptive name of the series as provided by the upstream source. Example: `"Unemployment Rate"`.
+</ResponseField>
+
+<ResponseField name="metadata" type="object" required>
+  Provider-specific metadata about the series. Contents vary by provider but may include frequency, units, seasonal adjustment, source, and notes.
+</ResponseField>
+
+<ResponseField name="data" type="object[]" required>
+  Array of data points, most recent ~24 observations. Each item has:
+
+  <Expandable title="data point properties">
+    <ResponseField name="date" type="string">
+      Observation date in `YYYY-MM-DD` format.
+    </ResponseField>
+    <ResponseField name="value" type="number | null">
+      Numeric value for the observation. `null` when the upstream source reports a missing value.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="is_preview" type="boolean" required>
+  Always `true` for this endpoint. Indicates the data array is truncated to the most recent observations.
+</ResponseField>
+
+<ResponseField name="api_key_required" type="boolean">
+  Present when the provider requires an upstream API key. Always `true` in that case.
+</ResponseField>
+
+<ResponseField name="has_api_key" type="boolean">
+  Present when `api_key_required` is `true`. Whether you have a stored key for this provider.
+</ResponseField>
+
+<ResponseField name="api_key_hint" type="string">
+  Present when `api_key_required` is `true`. Instructions for obtaining and saving an API key.
+</ResponseField>
+
+**Example response**
+
+```json
+{
+  "series_id": "UNRATE",
+  "label": "Unemployment Rate",
+  "metadata": {
+    "frequency": "Monthly",
+    "units": "Percent",
+    "seasonal_adjustment": "Seasonally Adjusted",
+    "last_updated": "2024-04-05"
+  },
+  "data": [
+    {"date": "2024-03-01", "value": 3.8},
+    {"date": "2024-02-01", "value": 3.9},
+    {"date": "2024-01-01", "value": 3.7},
+    {"date": "2023-12-01", "value": 3.7}
+  ],
+  "is_preview": true
+}
+```
+
+**Handling api_key_required**
+
+When a provider needs an upstream key and you have not stored one, the preview still returns recent data where possible, but includes the key status fields:
+
+```json
+{
+  "series_id": "GDP",
+  "label": "Gross Domestic Product",
+  "metadata": {"frequency": "Quarterly", "units": "Billions of Dollars"},
+  "data": [{"date": "2024-01-01", "value": 27360.9}],
+  "is_preview": true,
+  "api_key_required": true,
+  "has_api_key": false,
+  "api_key_hint": "A FRED API key is required. Get one for free."
+}
+```
+
+Store your key with `PUT /user-keys/fred` to remove the restriction.
+
+---
+
+### POST /providers/{slug}/series/{series_id}/data
+
+Returns the full historical time series. This endpoint accepts provider-specific parameters in the request body to control units, frequency, date ranges, and other transformations.
+
+**Path parameters**
+
+<ParamField path="slug" type="string" required>
+  Provider slug.
+</ParamField>
+
+<ParamField path="series_id" type="string" required>
+  Series identifier.
+</ParamField>
+
+**Request body**
+
+<ParamField body="params" type="object" default="{}">
+  Provider-specific parameters. The available keys depend on the provider — consult the `parameters` array in `GET /providers/{slug}` for valid options.
+
+  Common examples:
+
+  | Provider | Parameter key | Example value |
+  |---|---|---|
+  | FRED | `units` | `"pc1"` (% change from year ago) |
+  | FRED | `frequency` | `"q"` (quarterly) |
+  | BLS | `startyear` | `2010` |
+  | BLS | `endyear` | `2024` |
+  | World Bank | `country` | `"BR"` |
+  | World Bank | `date_range` | `"2000:2024"` |
+</ParamField>
+
+```bash
+# Fetch full FRED unemployment data, resampled to annual % change
+curl -u YOUR_API_KEY: \
+  -X POST https://api.alphacast.io/providers/fred/series/UNRATE/data \
+  -H "Content-Type: application/json" \
+  -d '{"params": {"units": "pc1", "frequency": "a"}}'
+```
+
+**Response fields**
+
+The response has the same structure as the preview endpoint, with one difference:
+
+<ResponseField name="is_preview" type="boolean" required>
+  Always `false`. The `data` array contains the complete historical series.
+</ResponseField>
+
+<ResponseField name="series_id" type="string" required>
+  The requested series ID.
+</ResponseField>
+
+<ResponseField name="label" type="string" required>
+  Descriptive name of the series.
+</ResponseField>
+
+<ResponseField name="metadata" type="object" required>
+  Provider-specific metadata.
+</ResponseField>
+
+<ResponseField name="data" type="object[]" required>
+  Complete array of all available observations, each with `date` (string, `YYYY-MM-DD`) and `value` (number or null).
+</ResponseField>
+
+**Example response**
+
+```json
+{
+  "series_id": "UNRATE",
+  "label": "Unemployment Rate",
+  "metadata": {
+    "frequency": "Monthly",
+    "units": "Percent",
+    "seasonal_adjustment": "Seasonally Adjusted",
+    "last_updated": "2024-04-05"
+  },
+  "data": [
+    {"date": "1948-01-01", "value": 3.4},
+    {"date": "1948-02-01", "value": 3.8},
+    "...",
+    {"date": "2024-03-01", "value": 3.8}
+  ],
+  "is_preview": false
+}
+```
+
+---
+
+## Complete workflow example
+
+The following example shows the full sequence: match a provider, search for a series, preview it, then fetch the complete history.
+
+<Steps>
+  <Step title="Find the right provider">
+    ```bash
+    curl -u YOUR_API_KEY: \
+      "https://api.alphacast.io/providers/match?q=federal+reserve+interest+rates"
+    ```
+  </Step>
+
+  <Step title="Search for a series within the provider">
+    ```bash
+    curl -u YOUR_API_KEY: \
+      "https://api.alphacast.io/providers/fred/search?q=federal+funds+rate"
+    ```
+
+    Note the `id` from the results — for example, `FEDFUNDS`.
+  </Step>
+
+  <Step title="Preview the series">
+    ```bash
+    curl -u YOUR_API_KEY: \
+      https://api.alphacast.io/providers/fred/series/FEDFUNDS
+    ```
+
+    Check that `label` and `metadata` match what you expect. Confirm `is_preview: true`.
+  </Step>
+
+  <Step title="Fetch the full history">
+    ```bash
+    curl -u YOUR_API_KEY: \
+      -X POST https://api.alphacast.io/providers/fred/series/FEDFUNDS/data \
+      -H "Content-Type: application/json" \
+      -d '{"params": {"frequency": "m"}}'
+    ```
+
+    The response contains the complete monthly series with `is_preview: false`.
+  </Step>
+</Steps>
+
+---
+
+## FRED direct endpoints
+
+These endpoints provide a streamlined interface to FRED without the provider slug workflow. They are useful when you already know your FRED symbol.
+
+### GET /fred/search/{query}
+
+Searches FRED for series matching the query string and returns matching symbols and descriptions.
+
+**Path parameters**
+
+<ParamField path="query" type="string" required>
+  Search term to look up in FRED. URL-encode spaces as `%20` or `+`.
+</ParamField>
+
+```bash
+curl -u YOUR_API_KEY: \
+  "https://api.alphacast.io/fred/search/consumer+price+index"
+```
+
+**Response**
+
+```json
+{
+  "results": [
+    {
+      "id": "CPIAUCSL",
+      "title": "Consumer Price Index for All Urban Consumers: All Items in U.S. City Average",
+      "frequency": "Monthly",
+      "units": "Index 1982-1984=100"
+    }
+  ]
+}
+```
+
+---
+
+### GET /fred/{symbol}/data
+
+Fetches time-series data for a FRED symbol directly. Returns data as CSV by default; use `$format=json` for a JSON response.
+
+**Path parameters**
+
+<ParamField path="symbol" type="string" required>
+  FRED series symbol. Examples: `GDP`, `UNRATE`, `CPIAUCSL`, `FEDFUNDS`, `DGS10`.
+</ParamField>
+
+**Query parameters**
+
+<ParamField query="$format" type="string" default="csv">
+  Output format. Accepted values: `json`, `csv`, `xlsx`, `tsv`.
+</ParamField>
+
+<ParamField query="$top" type="number">
+  Limit the number of rows returned. Omit to return all available data.
+</ParamField>
+
+<ParamField query="start" type="string">
+  Start date filter in `YYYY-MM-DD` format.
+</ParamField>
+
+<ParamField query="end" type="string">
+  End date filter in `YYYY-MM-DD` format.
+</ParamField>
+
+```bash
+# Get CPIAUCSL as JSON, last 5 rows
+curl -u YOUR_API_KEY: \
+  "https://api.alphacast.io/fred/CPIAUCSL/data?$format=json&$top=5"
+
+# Get data between two dates
+curl -u YOUR_API_KEY: \
+  "https://api.alphacast.io/fred/GDP/data?$format=json&start=2020-01-01&end=2023-12-31"
+```
+
+---
+
+## Ticker endpoints
+
+The ticker endpoints provide price history and metadata for equity, ETF, index, and other market tickers sourced from Yahoo Finance.
+
+### GET /tickers/search/{query}
+
+Searches for tickers matching a company name, symbol, or keyword.
+
+**Path parameters**
+
+<ParamField path="query" type="string" required>
+  Search term. Can be a partial symbol or company name.
+</ParamField>
+
+```bash
+curl -u YOUR_API_KEY: \
+  "https://api.alphacast.io/tickers/search/apple"
+```
+
+**Response**
+
+```json
+{
+  "results": [
+    {"symbol": "AAPL", "name": "Apple Inc.", "exchange": "NMS", "type": "Equity"},
+    {"symbol": "AAPL.BA", "name": "Apple Inc.", "exchange": "BUE", "type": "Equity"}
+  ]
+}
+```
+
+---
+
+### GET /tickers/{ticker}
+
+Returns metadata and descriptive information for a specific ticker.
+
+**Path parameters**
+
+<ParamField path="ticker" type="string" required>
+  Ticker symbol. Examples: `AAPL`, `SPY`, `^GSPC`, `BTC-USD`.
+</ParamField>
+
+```bash
+curl -u YOUR_API_KEY: https://api.alphacast.io/tickers/AAPL
+```
+
+---
+
+### GET /tickers/{ticker}/data
+
+Returns price history for a ticker. Data is sourced from Yahoo Finance. The default output format is CSV; use `$format=json` for a structured response.
+
+**Path parameters**
+
+<ParamField path="ticker" type="string" required>
+  Ticker symbol. Examples: `AAPL`, `MSFT`, `SPY`, `^GSPC`, `BTC-USD`, `EURUSD=X`.
+</ParamField>
+
+**Query parameters**
+
+<ParamField query="period" type="string" default="5y">
+  Time window for historical data. Accepted values:
+
+  | Value | Description |
+  |---|---|
+  | `1d` | 1 day |
+  | `5d` | 5 days |
+  | `1mo` | 1 month |
+  | `3mo` | 3 months |
+  | `6mo` | 6 months |
+  | `1y` | 1 year |
+  | `2y` | 2 years |
+  | `5y` | 5 years (default) |
+  | `10y` | 10 years |
+  | `ytd` | Year to date |
+  | `max` | Maximum available history |
+</ParamField>
+
+<ParamField query="$format" type="string" default="csv">
+  Output format. Accepted values: `json`, `csv`, `xlsx`, `tsv`.
+</ParamField>
+
+<ParamField query="$top" type="number">
+  Limit the number of rows returned. Omit to return the full period.
+</ParamField>
+
+```bash
+# Get 1 year of Apple price history as JSON
+curl -u YOUR_API_KEY: \
+  "https://api.alphacast.io/tickers/AAPL/data?period=1y&\$format=json"
+
+# Get 5 most recent rows of S&P 500 data
+curl -u YOUR_API_KEY: \
+  "https://api.alphacast.io/tickers/%5EGSPC/data?period=1mo&\$format=json&\$top=5"
+```
+
+<Tip>
+URL-encode special characters in ticker symbols: `^` becomes `%5E` and `-` is safe to pass as-is. For example, `^GSPC` should be requested as `%5EGSPC`.
+</Tip>
+
+---
+
+## Error responses
+
+All endpoints return a JSON error object with an `error` field when a request fails.
+
+| Status | Meaning |
+|---|---|
+| `400` | The provider does not support the requested operation (e.g., browse on a non-hierarchical provider). |
+| `404` | Provider slug or series ID not found. |
+| `501` | The connector does not implement this operation. |
+| `502` | The upstream provider returned an error. Check the `error` message for details. |
+
+```json
+{
+  "error": "Provider does not support hierarchical browse"
+}
+```

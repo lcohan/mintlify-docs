@@ -1,0 +1,93 @@
+---
+title: "Repositories: Organizing Your Data in Alphacast"
+description: "Repositories are the top-level containers in Alphacast. Every dataset and pipeline you create belongs to a repository, and you control who can access it."
+---
+
+A repository is the top-level container for all your work in Alphacast. Before you can create a dataset or build a pipeline, you need a repository to hold them. Think of a repository like a project folder: it groups related datasets and pipelines together, carries a privacy setting, and lets you share access with teammates at different permission levels.
+
+## Privacy settings
+
+When you create or update a repository, you choose one of two privacy modes:
+
+| Setting | Who can see it |
+|---------|----------------|
+| `Private` | Only you and users you explicitly grant access to |
+| `Public` | Visible to anyone with an Alphacast account |
+
+## Permission levels
+
+Access to a repository is controlled through a tiered permission model. Each level inherits the capabilities of the levels below it.
+
+| Permission | Can read | Can clone | Can write | Admin actions | Delete |
+|------------|----------|-----------|-----------|---------------|--------|
+| `Read` | ✓ | | | | |
+| `Clone` | ✓ | ✓ | | | |
+| `Write` | ✓ | ✓ | ✓ | | |
+| `Admin` | ✓ | ✓ | ✓ | ✓ | |
+| `Owner` | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+Only the `Owner` of a repository can delete it.
+
+## API endpoints
+
+The base URL for all repository operations is `https://api.alphacast.io`.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/repositories` | List all repositories you have access to |
+| `POST` | `/repositories` | Create a new repository |
+| `GET` | `/repositories/{id}` | Get a single repository by ID |
+| `PUT` | `/repositories/{id}` | Update a repository's name, description, or privacy |
+| `DELETE` | `/repositories/{id}` | Delete a repository and all its assets (Owner only) |
+
+## Examples
+
+### List your repositories
+
+```bash
+curl https://api.alphacast.io/repositories \
+  -u YOUR_API_KEY:
+```
+
+### Create a repository
+
+The `name` and `privacy` fields are required. You can optionally assign the repository to a `team`.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.alphacast.io/repositories \
+  -u YOUR_API_KEY: \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Emerging Markets Data",
+    "description": "Macro indicators for EM economies",
+    "privacy": "Private",
+    "team": "research"
+  }'
+```
+
+```json Response
+{
+  "id": 1042,
+  "name": "Emerging Markets Data",
+  "description": "Macro indicators for EM economies",
+  "privacy": "Private",
+  "permission": "Owner"
+}
+```
+
+</CodeGroup>
+
+<Note>
+Deleting a repository removes all datasets and pipelines inside it. This action cannot be undone.
+</Note>
+
+## Request body fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Display name for the repository |
+| `description` | string | No | Optional free-text description |
+| `privacy` | string | Yes | `"Public"` or `"Private"` |
+| `team` | string | No | Team slug to associate the repository with |

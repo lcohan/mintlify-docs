@@ -1,0 +1,99 @@
+---
+title: "Alphacast REST API Reference"
+description: "Explore the Alphacast REST API to manage repositories, datasets, pipelines, and data providers programmatically from any HTTP client."
+---
+
+The Alphacast API gives you programmatic access to the same data and workflows available in the Alphacast platform. You can list and create repositories, upload and query datasets, trigger pipeline runs, and browse data providers — all over standard HTTP. Every response is JSON, and authentication uses your personal API key.
+
+## Base URL
+
+All API requests go to the following base URL:
+
+```
+https://api.alphacast.io
+```
+
+## Authentication
+
+The API supports two authentication methods. Both accept the same API key, which you can find in your Alphacast account settings.
+
+**HTTP Basic Auth (recommended)**
+
+Pass your API key as the HTTP Basic Auth username. Leave the password field empty.
+
+```bash
+curl -u YOUR_API_KEY: https://api.alphacast.io/repositories
+```
+
+<Warning>
+  Your API key goes in the **username** field, not the password field. The trailing colon in `-u YOUR_API_KEY:` tells curl to send an empty password — this is intentional.
+</Warning>
+
+**Query parameter**
+
+You can also pass your API key as a query parameter. This is convenient for quick testing but less secure because the key appears in URLs and server logs.
+
+```bash
+curl "https://api.alphacast.io/repositories?apiKey=YOUR_API_KEY"
+```
+
+<Tip>
+  For production integrations, use HTTP Basic Auth or the [Alphacast Python SDK](https://alphacast-python-sdk.readthedocs.io/en/latest/) which handles authentication for you.
+</Tip>
+
+## Request format
+
+For `POST` and `PUT` requests, send a JSON body with the `Content-Type: application/json` header:
+
+```bash
+curl -u YOUR_API_KEY: \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"name": "My Dataset", "repositoryId": 42}' \
+  https://api.alphacast.io/datasets
+```
+
+## Data export formats
+
+When downloading dataset data from `GET /datasets/{id}/data`, you can control the output format with the `$format` query parameter:
+
+| Format | Value | Notes |
+|--------|-------|-------|
+| CSV | `csv` | Default if `$format` is omitted |
+| JSON | `json` | — |
+| Excel | `xlsx` | — |
+| TSV | `tsv` | Tab-separated values |
+
+```bash
+# Download as Excel
+curl -u YOUR_API_KEY: \
+  "https://api.alphacast.io/datasets/123/data?\$format=xlsx" \
+  --output data.xlsx
+```
+
+## Rate limits
+
+Alphacast does not enforce a global rate limit on the API. However, some third-party data providers impose their own restrictions. For example, the BLS (Bureau of Labor Statistics) provider allows up to **25 requests per day** without a registered BLS API key. If you exceed this, requests to BLS-sourced data will fail until the limit resets.
+
+<Info>
+  To raise the BLS request limit, register for a free BLS API key at [bls.gov](https://www.bls.gov/developers/) and add it to your Alphacast provider settings.
+</Info>
+
+## API resources
+
+The Alphacast API is organized into four main resource groups. Each group has its own reference page with full endpoint listings, parameters, and example responses.
+
+<CardGroup cols={2}>
+  <Card title="Repositories" icon="folder" href="/api/repositories/list">
+    Create and manage repositories, which are the top-level containers for organizing your datasets and pipelines.
+  </Card>
+  <Card title="Datasets" icon="table" href="/api/datasets/list">
+    Upload, query, and manage datasets — including column configuration, data versioning, and export formats.
+  </Card>
+  <Card title="Pipelines" icon="workflow" href="/api/pipelines/list">
+    Build and run data transformation pipelines, manage pipeline steps, and retrieve run logs.
+  </Card>
+  <Card title="Data providers" icon="database" href="/api/providers/list">
+    Browse and query external financial data providers such as FRED, BLS, and market data sources.
+  </Card>
+</CardGroup>

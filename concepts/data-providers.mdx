@@ -1,0 +1,151 @@
+---
+title: "Data Providers: Built-In Sources for Market Data"
+description: "Alphacast includes 16 built-in data provider connectors — FRED, BLS, World Bank, OECD, and more. Browse, search, and pull series directly into your pipelines."
+---
+
+Alphacast ships with built-in connectors for 16 data providers, covering central banks, statistical agencies, and financial data sources from around the world. You can browse a provider's catalog hierarchically, search it by keyword, or fetch a specific series by ID — all through the same REST API. Once you find what you need, you can pull it directly into a pipeline using a `fetch-series` or provider-specific fetch step.
+
+## Available providers
+
+| Slug | Provider | Capabilities |
+|------|----------|--------------|
+| `bls` | U.S. Bureau of Labor Statistics | hierarchical, search, direct |
+| `fred` | Federal Reserve Bank of St. Louis | search, hierarchical, direct |
+| `worldbank` | World Bank | hierarchical, search, direct |
+| `inegi` | INEGI (Mexico) | hierarchical, direct |
+| `bcch` | Banco Central de Chile | hierarchical, direct |
+| `bcra` | Banco Central de la República Argentina | hierarchical, direct |
+| `banxico` | Bank of Mexico | hierarchical, direct |
+| `bcrp` | Banco Central de Reserva del Perú | hierarchical, direct |
+| `sdmx` | SDMX (generic) | hierarchical, direct |
+| `oecd` | OECD | hierarchical, search, direct |
+| `socrata` | Socrata open data portals | search, direct |
+| `pxweb` | PX-Web (Statistics Canada, SCB, etc.) | hierarchical, direct |
+| `odata` | OData feeds | direct |
+| `eia` | U.S. Energy Information Administration | hierarchical, search, direct |
+| `boe` | Bank of England | hierarchical, direct |
+| `statcan` | Statistics Canada | hierarchical, direct |
+| `bcb` | Banco Central do Brasil | hierarchical, direct |
+
+<Info>
+Not all providers support all three capability modes. Check the `capabilities` array in the provider list response to know which modes are available for a given provider.
+</Info>
+
+## Provider capabilities
+
+- **`hierarchical`** — Browse the provider's catalog as a tree of categories. Use `GET /providers/{slug}/browse` to navigate.
+- **`search`** — Search across the provider's catalog by keyword. Use `GET /providers/{slug}/search?q=your+query`.
+- **`direct`** — Fetch a specific series if you already know its ID. Use `GET /providers/{slug}/series/{seriesId}`.
+
+## API endpoints
+
+The base URL for all provider operations is `https://api.alphacast.io`.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/providers` | List all available providers |
+| `GET` | `/providers/{slug}` | Get a single provider's details and capabilities |
+| `GET` | `/providers/{slug}/browse` | Browse the provider's catalog hierarchically |
+| `GET` | `/providers/{slug}/search` | Search a provider's catalog |
+| `GET` | `/providers/{slug}/series/{seriesId}` | Preview the last 24 data points for a series |
+| `POST` | `/providers/{slug}/series/{seriesId}/data` | Fetch the full series data |
+| `PUT` | `/user-keys/{slug}` | Store your personal API key for a provider |
+
+## Listing all providers
+
+```bash
+curl https://api.alphacast.io/providers \
+  -u YOUR_API_KEY:
+```
+
+```json
+[
+  {
+    "slug": "fred",
+    "name": "FRED Economic Data",
+    "provider": "Federal Reserve Bank of St. Louis",
+    "description": "Hundreds of thousands of economic time series from dozens of national, international, public, and private sources.",
+    "capabilities": ["search", "hierarchical", "direct"],
+    "license": "Public Domain (mostly)"
+  }
+]
+```
+
+## Browsing hierarchically
+
+For providers with the `hierarchical` capability, you can navigate the catalog tree using the `path` parameter. Start at the root and drill down by appending path segments.
+
+```bash
+# Browse the root of the FRED catalog
+curl "https://api.alphacast.io/providers/fred/browse" \
+  -u YOUR_API_KEY:
+
+# Browse a subcategory
+curl "https://api.alphacast.io/providers/fred/browse?path=National%20Accounts" \
+  -u YOUR_API_KEY:
+```
+
+## Searching a provider
+
+```bash
+curl "https://api.alphacast.io/providers/fred/search?q=unemployment+rate" \
+  -u YOUR_API_KEY:
+```
+
+## Fetching a FRED series
+
+Once you know a series ID, fetch a preview (last 24 data points) with a GET request, or the full dataset with a POST.
+
+<CodeGroup>
+
+```bash Preview (last 24 points)
+curl "https://api.alphacast.io/providers/fred/series/UNRATE" \
+  -u YOUR_API_KEY:
+```
+
+```bash Full series
+curl -X POST "https://api.alphacast.io/providers/fred/series/UNRATE/data" \
+  -u YOUR_API_KEY: \
+  -H "Content-Type: application/json" \
+  -d '{"params": {}}'
+```
+
+</CodeGroup>
+
+```json
+{
+  "series_id": "UNRATE",
+  "label": "Unemployment Rate",
+  "metadata": {
+    "frequency": "Monthly",
+    "units": "Percent",
+    "seasonal_adjustment": "Seasonally Adjusted"
+  },
+  "data": [
+    { "date": "2024-10-01", "value": 4.1 },
+    { "date": "2024-11-01", "value": 4.2 }
+  ],
+  "is_preview": false
+}
+```
+
+## Storing a provider API key
+
+Some providers — including FRED and BLS — require their own API key to access higher rate limits or restricted data. You can store your key in Alphacast so it is used automatically whenever you fetch from that provider.
+
+```bash
+curl -X PUT https://api.alphacast.io/user-keys/fred \
+  -u YOUR_API_KEY: \
+  -H "Content-Type: application/json" \
+  -d '{"api_key": "YOUR_FRED_API_KEY"}'
+```
+
+```json
+{ "slug": "fred", "has_key": true }
+```
+
+To remove a stored key, send `null` or an empty string as the `api_key` value.
+
+<Tip>
+To get a free FRED API key, register at [https://fred.stlouisfed.org/docs/api/api_key.html](https://fred.stlouisfed.org/docs/api/api_key.html). Without a key, FRED requests may be rate-limited.
+</Tip>

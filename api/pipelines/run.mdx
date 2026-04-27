@@ -1,0 +1,189 @@
+---
+title: "POST /pipelines/{id}/runs — Run a Pipeline"
+sidebarTitle: "Run"
+description: "Manually trigger a full or partial Alphacast pipeline run. Pass previewStep to stop at a specific step. Returns a runId to poll for status."
+---
+
+Use this endpoint to manually trigger a pipeline run. By default the full pipeline executes from the first step to the last. You can pass a `previewStep` to stop execution at a specific step — useful for inspecting intermediate data before committing to a complete run. Once you have a `runId`, you can poll the run status or retrieve run logs using the companion endpoints documented below.
+
+## Authentication
+
+All requests require HTTP Basic Auth. Pass your API key as the username and leave the password blank.
+
+## Path parameters
+
+<ParamField path="id" type="integer" required>
+  Numeric ID of the pipeline to run.
+</ParamField>
+
+## Request body
+
+<ParamField body="previewStep" type="integer">
+  ID of the step at which execution should stop. When provided, only steps up to and including this step are executed. Set to `null` (or omit the field) to run the full pipeline.
+</ParamField>
+
+## Response
+
+<ResponseField name="runId" type="integer">
+  Server-assigned identifier for the triggered run. Use this value with the run status endpoints to track progress.
+</ResponseField>
+
+<Warning>
+  When `previewStep` is provided, any runs currently in progress for this pipeline are cancelled before the new run starts. This ensures only one preview is active at a time.
+</Warning>
+
+## Example
+
+<RequestExample>
+
+```bash cURL — full run
+curl --request POST \
+  --url https://api.alphacast.io/pipelines/42/runs \
+  --user YOUR_API_KEY: \
+  --header "Content-Type: application/json" \
+  --data '{}'
+```
+
+```bash cURL — preview up to step 1001
+curl --request POST \
+  --url https://api.alphacast.io/pipelines/42/runs \
+  --user YOUR_API_KEY: \
+  --header "Content-Type: application/json" \
+  --data '{"previewStep": 1001}'
+```
+
+```python Python
+import requests
+
+# Full run
+response = requests.post(
+    "https://api.alphacast.io/pipelines/42/runs",
+    auth=("YOUR_API_KEY", ""),
+    json={},
+)
+run_id = response.json()["runId"]
+
+# Preview up to a specific step
+response = requests.post(
+    "https://api.alphacast.io/pipelines/42/runs",
+    auth=("YOUR_API_KEY", ""),
+    json={"previewStep": 1001},
+)
+run_id = response.json()["runId"]
+```
+
+```javascript Node.js
+// Full run
+const response = await fetch("https://api.alphacast.io/pipelines/42/runs", {
+  method: "POST",
+  headers: {
+    Authorization: "Basic " + btoa("YOUR_API_KEY:"),
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({}),
+});
+const { runId } = await response.json();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200
+{
+  "runId": 8831
+}
+```
+
+</ResponseExample>
+
+---
+
+## Retrieve run status
+
+After triggering a run, use the following endpoints to check its progress or retrieve logs.
+
+### Get the last run
+
+```
+GET /pipelines/{id}/runs/last
+```
+
+Returns the most recent completed or failed run for the pipeline. Useful for checking the outcome of the latest execution without knowing the run ID in advance.
+
+<RequestExample>
+
+```bash cURL
+curl https://api.alphacast.io/pipelines/42/runs/last \
+  --user YOUR_API_KEY:
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/pipelines/42/runs/last",
+    auth=("YOUR_API_KEY", ""),
+)
+last_run = response.json()
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200
+{
+  "runId": 8831,
+  "status": "completed",
+  "startedAt": "2026-04-24T10:00:00Z",
+  "finishedAt": "2026-04-24T10:01:12Z"
+}
+```
+
+```json 404
+{
+  "error": "No completed or failed runs found for this pipeline"
+}
+```
+
+</ResponseExample>
+
+### Get a specific run
+
+```
+GET /pipelines/{id}/runs/{run_id}
+```
+
+Returns detailed information and logs for a specific run identified by `run_id`.
+
+<ParamField path="id" type="integer" required>
+  Numeric ID of the pipeline.
+</ParamField>
+
+<ParamField path="run_id" type="integer" required>
+  Numeric ID of the run, as returned by `POST /pipelines/{id}/runs`.
+</ParamField>
+
+<RequestExample>
+
+```bash cURL
+curl https://api.alphacast.io/pipelines/42/runs/8831 \
+  --user YOUR_API_KEY:
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/pipelines/42/runs/8831",
+    auth=("YOUR_API_KEY", ""),
+)
+run_details = response.json()
+```
+
+</RequestExample>
+
+<Tip>
+  To poll for completion, call `GET /pipelines/{id}/runs/{run_id}` on an interval until the `status` field shows `completed` or `failed`. Avoid polling more frequently than once every few seconds.
+</Tip>

@@ -1,0 +1,98 @@
+---
+title: "Import Excel Files into Alphacast Datasets"
+description: "Upload Excel (.xlsx, .xls) or CSV files to Alphacast via the API to create a temporary draft, then publish it into an existing dataset."
+---
+
+The Excel integration lets you bring spreadsheet data into Alphacast without using the web UI. You upload a file to create a temporary **draft**—a staging area in Alphacast's storage—inspect its contents, then publish it into a target dataset. This workflow fits well into automated pipelines where you generate a report as an Excel or CSV file and need to push it to Alphacast on a schedule.
+
+## Supported file types
+
+- `.xlsx` — Excel workbook (all sheet names are discoverable before you commit to one)
+- `.xls` — Legacy Excel format
+- `.csv` — Comma-separated values
+
+## How drafts work
+
+When you upload a file, Alphacast stores it as a draft identified by a `draftKey`. Drafts are temporary: they are automatically deleted after approximately 24 hours. You must publish a draft to a dataset before it expires if you want the data to persist.
+
+## Workflow
+
+<Steps>
+  <Step title="Upload your file">
+    Send a `PUT` request to `/integrations/excel` with your file attached as a multipart form field named `data`. The response returns a `draftKey` you will use in subsequent steps.
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X PUT https://api.alphacast.io/integrations/excel \
+      -u "YOUR_API_KEY:" \
+      -F "data=@/path/to/your/file.xlsx"
+    ```
+    </CodeGroup>
+
+    A successful response looks like:
+
+    ```json
+    {
+      "draftKey": "42-1713964800"
+    }
+    ```
+
+    <Note>
+      Authentication uses HTTP Basic Auth. Pass your API key as the username and leave the password empty (note the trailing colon in the `-u` flag).
+    </Note>
+  </Step>
+
+  <Step title="Inspect the draft">
+    Use the `draftKey` from the previous step to retrieve a preview of the uploaded data. For Excel files, you must specify which sheet to read using the `$select` query parameter.
+
+    <CodeGroup>
+    ```bash cURL (Excel — specify a sheet)
+    curl -X GET "https://api.alphacast.io/integrations/excel/42-1713964800?%24select=Sheet1" \
+      -u "YOUR_API_KEY:"
+    ```
+
+    ```bash cURL (CSV — no sheet required)
+    curl -X GET "https://api.alphacast.io/integrations/excel/42-1713964800" \
+      -u "YOUR_API_KEY:"
+    ```
+    </CodeGroup>
+
+    The response contains the parsed data in CSV format by default. You can request a different format with the `$format` query parameter (`json`, `csv`, `xlsx`, or `tsv`).
+
+    <Tip>
+      To discover all sheet names in an Excel workbook before fetching data, send a `HEAD` request to the same URL. The response includes a `File-Description` header containing a JSON object with a `sheets` array.
+    </Tip>
+  </Step>
+
+  <Step title="Publish the draft to a dataset">
+    Once you are satisfied with the draft contents, publish it to an existing dataset. You need the numeric dataset ID, which you can find in the Alphacast UI or from the `/datasets` endpoint.
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X POST "https://api.alphacast.io/drafts/42-1713964800/publish/12345" \
+      -u "YOUR_API_KEY:"
+    ```
+    </CodeGroup>
+
+    Replace `12345` with your actual dataset ID. A `201` response confirms the data has been queued for ingestion into the dataset.
+
+    <Warning>
+      Publishing overwrites existing data in the dataset according to the dataset's conflict-resolution settings. To control this behavior, add the `deleteMissingFromDB=true` or `onConflictUpdateDB=true` query parameters to the publish request.
+    </Warning>
+  </Step>
+</Steps>
+
+## API reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `PUT` | `/integrations/excel` | Upload a file and create a draft |
+| `GET` | `/integrations/excel/{draftKey}` | Retrieve draft data (use `$select` for sheet name) |
+| `HEAD` | `/integrations/excel/{draftKey}` | Get sheet names from an Excel draft |
+| `POST` | `/drafts/{draftKey}/publish/{dataset_id}` | Publish a draft into a dataset |
+
+## Notes
+
+- Drafts expire after approximately 24 hours. Publish before then or re-upload.
+- The file size limit for uploads is 80 MB.
+- The `$select` parameter is required when reading an Excel draft. For CSV drafts, it is ignored.

@@ -1,0 +1,427 @@
+---
+title: "Pipeline Steps API — Add, Update, and Remove Steps"
+sidebarTitle: "Steps"
+description: "Manage the steps in a pipeline — list, add, update, clone, or delete individual steps. Each change triggers an automatic pipeline run."
+---
+
+Steps are the building blocks of a pipeline. Each step has a `type` that determines what it does (fetching data, transforming columns, publishing a dataset, and so on), an `order` that controls when it runs relative to other steps, and a `configuration` object whose shape depends on the step type. The endpoints below let you list, add, update, clone, and delete steps on any pipeline you have Write access to. Every modification that changes pipeline state automatically cancels any in-progress runs and triggers a fresh run from the beginning.
+
+<Warning>
+  Every write operation on steps (add, update, delete, clone) cancels any currently running pipeline execution and starts a new one immediately. If you are making several changes at once, consider pausing automation or batching changes to avoid unnecessary runs.
+</Warning>
+
+## Supported step types
+
+Alphacast supports more than 40 step types. The most commonly used are:
+
+| Category | Step types |
+|---|---|
+| **Data fetching** | `fetch-dataset`, `fetch-yahoo`, `fetch-eod`, `fetch-fred`, `fetch-series` |
+| **Column operations** | `select-columns`, `rename-columns`, `reorder-columns`, `calculate-variable`, `apply-formula` |
+| **Row operations** | `filter-rows`, `filter-entity`, `filter-dates`, `sort-rows`, `reorder-rows` |
+| **Joins & reshaping** | `merge`, `append-dataset`, `melt-dataset`, `unstack-dataset`, `resample`, `regroup-entities` |
+| **Transforms** | `transform`, `change-units`, `rename-values`, `talib`, `arima-sa` |
+| **AI** | `ai-transform`, `ai-summary` |
+| **Publishing & views** | `publish`, `chart-data`, `table-view`, `deck-view`, `scoreboard-view`, `markdown` |
+| **Utilities** | `stash`, `data-snapshot`, `manual-configuration`, `portfolio-analysis`, `debt-sustainability-analysis`, `country-validator`, `select-series` |
+
+---
+
+## List all steps
+
+```
+GET /pipelines/{id}/steps
+```
+
+Returns the ordered array of steps for the pipeline.
+
+<ParamField path="id" type="integer" required>
+  Numeric ID of the pipeline.
+</ParamField>
+
+<RequestExample>
+
+```bash cURL
+curl https://api.alphacast.io/pipelines/42/steps \
+  --user YOUR_API_KEY:
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/pipelines/42/steps",
+    auth=("YOUR_API_KEY", ""),
+)
+steps = response.json()
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200
+[
+  {
+    "id": 1001,
+    "type": "fetch-fred",
+    "order": 0,
+    "configuration": { "series": "CPIAUCSL" }
+  },
+  {
+    "id": 1002,
+    "type": "select-columns",
+    "order": 1,
+    "configuration": { "columns": ["Date", "Country", "GDP"] }
+  },
+  {
+    "id": 1003,
+    "type": "publish",
+    "order": 2,
+    "configuration": { "datasetId": 456 }
+  }
+]
+```
+
+</ResponseExample>
+
+---
+
+## Add a step
+
+```
+POST /pipelines/{id}/steps
+```
+
+Appends a new step to the pipeline. The server assigns a unique `id` to the step. After saving, any in-progress runs are cancelled and a new run is triggered.
+
+<ParamField path="id" type="integer" required>
+  Numeric ID of the pipeline.
+</ParamField>
+
+### Request body
+
+<ParamField body="type" type="string" required>
+  Step type. Must be one of the supported types listed above.
+</ParamField>
+
+<ParamField body="order" type="integer" required>
+  Zero-based position of the step in the execution sequence. Steps are run in ascending order.
+</ParamField>
+
+<ParamField body="configuration" type="object" required>
+  Step-specific configuration. Content varies by `type`.
+</ParamField>
+
+### Examples
+
+<RequestExample>
+
+```bash cURL — select-columns step
+curl --request POST \
+  --url https://api.alphacast.io/pipelines/42/steps \
+  --user YOUR_API_KEY: \
+  --header "Content-Type: application/json" \
+  --data '{
+    "type": "select-columns",
+    "order": 1,
+    "configuration": {
+      "columns": ["Date", "Country", "GDP"]
+    }
+  }'
+```
+
+```bash cURL — publish step
+curl --request POST \
+  --url https://api.alphacast.io/pipelines/42/steps \
+  --user YOUR_API_KEY: \
+  --header "Content-Type: application/json" \
+  --data '{
+    "type": "publish",
+    "order": 2,
+    "configuration": {
+      "datasetId": 456
+    }
+  }'
+```
+
+```python Python
+import requests
+
+step = {
+    "type": "select-columns",
+    "order": 1,
+    "configuration": {"columns": ["Date", "Country", "GDP"]},
+}
+
+response = requests.post(
+    "https://api.alphacast.io/pipelines/42/steps",
+    auth=("YOUR_API_KEY", ""),
+    json=step,
+)
+pipeline = response.json()
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200
+{
+  "id": 42,
+  "name": "CPI Inflation Monitor",
+  "repositoryId": 7,
+  "slug": "cpi-inflation-monitor",
+  "steps": [
+    {
+      "id": 1001,
+      "type": "fetch-fred",
+      "order": 0,
+      "configuration": { "series": "CPIAUCSL" }
+    },
+    {
+      "id": 1002,
+      "type": "select-columns",
+      "order": 1,
+      "configuration": { "columns": ["Date", "Country", "GDP"] }
+    },
+    {
+      "id": 1003,
+      "type": "publish",
+      "order": 2,
+      "configuration": { "datasetId": 456 }
+    }
+  ]
+}
+```
+
+</ResponseExample>
+
+---
+
+## Get a step
+
+```
+GET /pipelines/{id}/steps/{step_id}
+```
+
+Returns a single step by its ID.
+
+<ParamField path="id" type="integer" required>
+  Numeric ID of the pipeline.
+</ParamField>
+
+<ParamField path="step_id" type="integer" required>
+  Server-assigned numeric ID of the step.
+</ParamField>
+
+<RequestExample>
+
+```bash cURL
+curl https://api.alphacast.io/pipelines/42/steps/1002 \
+  --user YOUR_API_KEY:
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200
+{
+  "id": 1002,
+  "type": "select-columns",
+  "order": 1,
+  "configuration": {
+    "columns": ["Date", "Country", "GDP"]
+  }
+}
+```
+
+```json 404
+{
+  "message": "Step 1002 doesn't exist"
+}
+```
+
+</ResponseExample>
+
+---
+
+## Update a step
+
+```
+PUT /pipelines/{id}/steps/{step_id}
+```
+
+Replaces the configuration of an existing step. You must supply the full step object — `type`, `order`, and `configuration` are all required. After saving, any in-progress runs are cancelled and a new run is triggered.
+
+<ParamField path="id" type="integer" required>
+  Numeric ID of the pipeline.
+</ParamField>
+
+<ParamField path="step_id" type="integer" required>
+  Server-assigned numeric ID of the step to update.
+</ParamField>
+
+### Request body
+
+<ParamField body="type" type="string" required>
+  Step type. Must match the existing step's type or be a valid replacement type.
+</ParamField>
+
+<ParamField body="order" type="integer" required>
+  Execution position of the step.
+</ParamField>
+
+<ParamField body="configuration" type="object" required>
+  Updated step-specific configuration.
+</ParamField>
+
+<RequestExample>
+
+```bash cURL
+curl --request PUT \
+  --url https://api.alphacast.io/pipelines/42/steps/1002 \
+  --user YOUR_API_KEY: \
+  --header "Content-Type: application/json" \
+  --data '{
+    "type": "select-columns",
+    "order": 1,
+    "configuration": {
+      "columns": ["Date", "Country", "GDP", "Inflation"]
+    }
+  }'
+```
+
+```python Python
+import requests
+
+updated_step = {
+    "type": "select-columns",
+    "order": 1,
+    "configuration": {"columns": ["Date", "Country", "GDP", "Inflation"]},
+}
+
+response = requests.put(
+    "https://api.alphacast.io/pipelines/42/steps/1002",
+    auth=("YOUR_API_KEY", ""),
+    json=updated_step,
+)
+```
+
+</RequestExample>
+
+---
+
+## Delete a step
+
+```
+DELETE /pipelines/{id}/steps/{step_id}
+```
+
+Removes a single step from the pipeline. After deletion, any in-progress runs are cancelled and a new run is triggered.
+
+<ParamField path="id" type="integer" required>
+  Numeric ID of the pipeline.
+</ParamField>
+
+<ParamField path="step_id" type="integer" required>
+  Numeric ID of the step to remove.
+</ParamField>
+
+<RequestExample>
+
+```bash cURL
+curl --request DELETE \
+  --url https://api.alphacast.io/pipelines/42/steps/1002 \
+  --user YOUR_API_KEY:
+```
+
+```python Python
+import requests
+
+requests.delete(
+    "https://api.alphacast.io/pipelines/42/steps/1002",
+    auth=("YOUR_API_KEY", ""),
+)
+```
+
+</RequestExample>
+
+---
+
+## Clone a step
+
+```
+POST /pipelines/{id}/steps/{step_id}/clone
+```
+
+Creates a copy of an existing step and inserts it immediately after the original (at `order + 1`). The clone is assigned a new server-generated `id`. After cloning, any in-progress runs are cancelled and a new run is triggered.
+
+<ParamField path="id" type="integer" required>
+  Numeric ID of the pipeline.
+</ParamField>
+
+<ParamField path="step_id" type="integer" required>
+  Numeric ID of the step to clone.
+</ParamField>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://api.alphacast.io/pipelines/42/steps/1002/clone \
+  --user YOUR_API_KEY:
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.alphacast.io/pipelines/42/steps/1002/clone",
+    auth=("YOUR_API_KEY", ""),
+)
+pipeline = response.json()
+```
+
+</RequestExample>
+
+---
+
+## Batch delete steps
+
+```
+POST /pipelines/{id}/steps/delete
+```
+
+Deletes multiple steps in a single request. Useful when reorganising a pipeline to avoid triggering a separate run for each individual deletion.
+
+<ParamField path="id" type="integer" required>
+  Numeric ID of the pipeline.
+</ParamField>
+
+<Note>
+  Even with a batch delete, Alphacast cancels any current runs and triggers one new run once all deletions are applied.
+</Note>
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://api.alphacast.io/pipelines/42/steps/delete \
+  --user YOUR_API_KEY: \
+  --header "Content-Type: application/json" \
+  --data '{"stepIds": [1002, 1003]}'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.alphacast.io/pipelines/42/steps/delete",
+    auth=("YOUR_API_KEY", ""),
+    json={"stepIds": [1002, 1003]},
+)
+```
+
+</RequestExample>

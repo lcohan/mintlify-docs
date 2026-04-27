@@ -1,0 +1,182 @@
+---
+title: "Connect to 15+ Financial Data Providers"
+description: "Browse, search, and fetch time series from central banks, statistical agencies, and international organizations through a single unified API."
+---
+
+Alphacast connects you to 15+ global economic and financial data providers through a single unified interface. Whether you need U.S. GDP from FRED, exchange rates from Argentina's central bank, or development indicators from the World Bank, every provider follows the same REST conventions — browse, search, preview, then fetch. You do not need to learn each provider's native API.
+
+## Available providers
+
+The providers listed below are enabled in the catalog. Providers marked as requiring an API key need credentials from the source institution before you can fetch data.
+
+<CardGroup cols={2}>
+  <Card title="FRED Economic Data" icon="landmark" href="/providers/fred">
+    Federal Reserve Bank of St. Louis — hundreds of thousands of economic time series from dozens of national and international sources.
+  </Card>
+  <Card title="Yahoo Finance" icon="chart-line" href="/providers/yahoo-finance">
+    Equity, ETF, index, crypto, and forex price history for thousands of global instruments. No API key required.
+  </Card>
+  <Card title="World Bank Open Data" icon="globe" href="/providers/world-bank">
+    Global development indicators covering economics, health, education, environment, and more for 200+ countries. No API key required.
+  </Card>
+  <Card title="BLS Public Data" icon="chart-bar" href="/api/providers/list">
+    U.S. Bureau of Labor Statistics — employment, wages, inflation, and productivity statistics. Slug: `bls`.
+  </Card>
+</CardGroup>
+
+## API endpoints
+
+All provider endpoints are available under `https://api.alphacast.io`. Most are accessible without authentication for reading, but some providers require that you first save your third-party API key via the `/user-keys` endpoint.
+
+### List and discover providers
+
+```bash
+# List all enabled providers with their slugs, capabilities, and license
+GET /providers
+
+# Get full detail for a single provider: capabilities, parameters, popular series
+GET /providers/{slug}
+```
+
+### Browse, search, and fetch series
+
+```bash
+# Browse hierarchically (topics, categories, surveys)
+GET /providers/{slug}/browse?path=
+
+# Full-text search for series within a provider
+GET /providers/{slug}/search?q={query}
+
+# Preview the last 24 data points for a series
+GET /providers/{slug}/series/{series_id}
+
+# Fetch the full series history
+POST /providers/{slug}/series/{series_id}/data
+```
+
+### Manage your API keys
+
+```bash
+# List which providers you have API keys stored for
+GET /user-keys
+
+# Save (or update) your API key for a provider
+PUT /user-keys/{slug}
+```
+
+<Info>
+  For providers that require a key (FRED, BLS, INEGI, Banxico), save your key once using `PUT /user-keys/{slug}`. Alphacast stores it securely and passes it automatically on every subsequent request. You never need to include it in individual calls.
+</Info>
+
+## Capability types
+
+Each provider declares which access patterns it supports.
+
+| Capability | Description |
+|---|---|
+| `hierarchical` | Browse a tree of topics, categories, or surveys to discover series |
+| `search` | Full-text search for series by name or keyword |
+| `direct` | Fetch a series directly if you already know its ID |
+
+You can check a provider's capabilities with `GET /providers/{slug}` before deciding how to query it.
+
+## Complete example: list, search, and fetch
+
+The walkthrough below shows the full flow from discovering providers to downloading data.
+
+<Steps>
+  <Step title="List all providers">
+    Retrieve the catalog to see slugs and capabilities.
+
+    ```bash
+    curl https://api.alphacast.io/providers
+    ```
+
+    Each entry in the response includes `slug`, `name`, `capabilities`, and `license`.
+  </Step>
+
+  <Step title="Inspect a provider">
+    Fetch provider detail including its parameters and popular series IDs.
+
+    ```bash
+    curl https://api.alphacast.io/providers/fred
+    ```
+
+    The response includes `popular_series` (a list of well-known series IDs), `parameters` (optional request modifiers), and `browse_root_label`.
+  </Step>
+
+  <Step title="Search for a series">
+    Find a series by keyword. Only providers with the `search` capability support this endpoint.
+
+    ```bash
+    curl "https://api.alphacast.io/providers/fred/search?q=consumer+price+index"
+    ```
+
+    Each result contains `series_id` and `label`. Use the `series_id` in the next step.
+  </Step>
+
+  <Step title="Preview the series">
+    Retrieve the last 24 data points to confirm you have the right series.
+
+    ```bash
+    curl https://api.alphacast.io/providers/fred/series/CPIAUCSL
+    ```
+
+    The response includes `label`, `metadata` (frequency, units, date range), and a `data` array limited to 24 observations. The `is_preview: true` field indicates this is a truncated response.
+  </Step>
+
+  <Step title="Fetch the full series">
+    Issue a POST to retrieve all historical data. Pass optional parameters in the request body.
+
+    <CodeGroup>
+
+    ```bash Full history
+    curl -X POST https://api.alphacast.io/providers/fred/series/CPIAUCSL/data \
+      -H "Content-Type: application/json" \
+      -d '{}'
+    ```
+
+    ```bash With parameters
+    curl -X POST https://api.alphacast.io/providers/fred/series/CPIAUCSL/data \
+      -H "Content-Type: application/json" \
+      -d '{"params": {"units": "pc1", "frequency": "m"}}'
+    ```
+
+    </CodeGroup>
+
+    The response contains the same structure as the preview but with `is_preview: false` and the full `data` array.
+  </Step>
+
+  <Step title="Save an API key (if required)">
+    For providers like FRED or BLS that enforce rate limits or require authentication, save your key once.
+
+    ```bash
+    curl -X PUT https://api.alphacast.io/user-keys/fred \
+      -H "Content-Type: application/json" \
+      -d '{"api_key": "your_fred_api_key_here"}'
+    ```
+
+    After saving, Alphacast uses your key automatically on all subsequent requests to that provider.
+  </Step>
+</Steps>
+
+## Provider slugs reference
+
+Use these slugs in API paths (`/providers/{slug}/...`).
+
+| Slug | Provider name | Capabilities | API key required |
+|---|---|---|---|
+| `bls` | BLS Public Data | hierarchical, search, direct | Optional (25 req/day limit without) |
+| `fred` | FRED Economic Data | search, hierarchical, direct | Yes |
+| `worldbank` | World Bank Open Data | hierarchical, direct | No |
+| `inegi` | INEGI Indicators | search, hierarchical, direct | Yes |
+| `bcra` | BCRA — Estadísticas Monetarias | search, direct | No |
+| `banxico` | Banxico SIE | search, hierarchical, direct | Yes |
+| `oecd` | OECD Statistics | hierarchical, search, direct | No |
+| `imf` | IMF Data | hierarchical, search, direct | No |
+| `bis` | BIS Statistics | hierarchical, search, direct | No |
+| `bcb-opendata` | BCB Brazil — Open Data | hierarchical, search, direct | No |
+
+<Tip>
+  Not sure which provider has the data you need? Use the provider match endpoint with a free-text description: `GET /providers/match?q=argentina+exchange+rate`. It returns the top 5 matching providers based on your query.
+</Tip>

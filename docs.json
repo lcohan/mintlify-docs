@@ -1,0 +1,118 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "luma",
+  "name": "Alphacast",
+  "favicon": "https://media.brand.dev/15f0bd29-8d2d-4c07-8834-a7a4aa2e20ce.png",
+  "colors": {
+    "primary": "#6549d0",
+    "light": "#927ed8",
+    "dark": "#2a1d61"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/alphacastio/alphacast-api"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "authentication"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/repositories",
+              "concepts/datasets",
+              "concepts/pipelines",
+              "concepts/data-providers"
+            ]
+          },
+          {
+            "group": "Pipelines",
+            "pages": [
+              "pipelines/overview",
+              "pipelines/step-types",
+              "pipelines/running",
+              "pipelines/ai-features"
+            ]
+          },
+          {
+            "group": "Data Providers",
+            "pages": [
+              "providers/overview",
+              "providers/fred",
+              "providers/yahoo-finance",
+              "providers/world-bank"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/excel",
+              "integrations/google-drive"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api/overview",
+              "api/errors"
+            ]
+          },
+          {
+            "group": "Repositories",
+            "pages": [
+              "api/repositories/list",
+              "api/repositories/get",
+              "api/repositories/create",
+              "api/repositories/update",
+              "api/repositories/delete"
+            ]
+          },
+          {
+            "group": "Datasets",
+            "pages": [
+              "api/datasets/list",
+              "api/datasets/get",
+              "api/datasets/create",
+              "api/datasets/delete",
+              "api/datasets/data",
+              "api/datasets/upload"
+            ]
+          },
+          {
+            "group": "Pipelines",
+            "pages": [
+              "api/pipelines/list",
+              "api/pipelines/get",
+              "api/pipelines/create",
+              "api/pipelines/run",
+              "api/pipelines/steps"
+            ]
+          },
+          {
+            "group": "Data Providers",
+            "pages": [
+              "api/providers/list",
+              "api/providers/series"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,105 @@
+---
+title: "GET /datasets — List All Datasets"
+sidebarTitle: "List"
+description: "Retrieve all datasets accessible to the authenticated user across all repositories. Returns an array of dataset objects with metadata."
+---
+
+The list endpoint returns every dataset your account can access, spanning all repositories you own or have been granted permission to view. Use this endpoint to discover available datasets, check their names and IDs, and determine which repository each dataset belongs to before fetching its data.
+
+## Authentication
+
+Authenticate using HTTP Basic Auth. Pass your API key as the username and leave the password empty.
+
+```bash
+curl -u YOUR_API_KEY: https://api.alphacast.io/datasets
+```
+
+## Request
+
+**Method:** `GET`  
+**URL:** `https://api.alphacast.io/datasets`
+
+No query parameters or request body are required.
+
+## Response
+
+Returns a JSON array of dataset objects. Each object represents one dataset accessible to your account.
+
+<ResponseField name="id" type="integer">
+  Unique numeric identifier for the dataset.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Display name of the dataset.
+</ResponseField>
+
+<ResponseField name="repositoryId" type="integer">
+  ID of the repository this dataset belongs to.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Optional human-readable description of the dataset's contents.
+</ResponseField>
+
+<ResponseField name="sourceName" type="string">
+  Name of the original data source, if provided at creation time.
+</ResponseField>
+
+<ResponseField name="sourceUrl" type="string">
+  URL linking to the original data source, if provided at creation time.
+</ResponseField>
+
+<ResponseField name="permission" type="string">
+  Your permission level on this dataset. One of `Read`, `Write`, or `Admin`.
+</ResponseField>
+
+<ResponseField name="frequency" type="string">
+  Inferred data frequency of the dataset (e.g., `monthly`, `daily`). May be `null` if not yet determined.
+</ResponseField>
+
+<ResponseField name="minDate" type="string">
+  Earliest date present in the dataset, in `YYYY-MM-DD` format. May be `null` if the dataset is empty.
+</ResponseField>
+
+<ResponseField name="maxDate" type="string">
+  Latest date present in the dataset, in `YYYY-MM-DD` format. May be `null` if the dataset is empty.
+</ResponseField>
+
+## Example
+
+```bash
+curl -u YOUR_API_KEY: https://api.alphacast.io/datasets
+```
+
+```json
+[
+  {
+    "id": 123,
+    "name": "US GDP Quarterly",
+    "repositoryId": 45,
+    "description": "Quarterly US GDP figures from BEA",
+    "sourceName": "Bureau of Economic Analysis",
+    "sourceUrl": "https://www.bea.gov/data/gdp",
+    "permission": "Admin",
+    "frequency": "quarterly",
+    "minDate": "1947-01-01",
+    "maxDate": "2024-10-01"
+  },
+  {
+    "id": 124,
+    "name": "CPI Monthly",
+    "repositoryId": 45,
+    "description": null,
+    "sourceName": null,
+    "sourceUrl": null,
+    "permission": "Read",
+    "frequency": "monthly",
+    "minDate": "2000-01-01",
+    "maxDate": "2024-11-01"
+  }
+]
+```
+
+<Note>
+  This endpoint returns only datasets your account has at least `Read` permission on. Datasets in repositories you cannot access are not included in the response.
+</Note>

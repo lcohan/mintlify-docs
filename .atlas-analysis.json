@@ -1,0 +1,159 @@
+{
+  "projectType": "api-service",
+  "projectName": "Alphacast",
+  "projectDescription": "A financial data analytics platform that lets you discover, transform, and publish economic and market data through a REST API, visual pipeline builder, and integrations with 15+ global data providers.",
+  "theme": "luma",
+  "primaryColor": "#6549d0",
+  "lightColor": "#927ed8",
+  "darkColor": "#2a1d61",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "authentication"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/repositories",
+              "concepts/datasets",
+              "concepts/pipelines",
+              "concepts/data-providers"
+            ]
+          },
+          {
+            "group": "Pipelines",
+            "pages": [
+              "pipelines/overview",
+              "pipelines/step-types",
+              "pipelines/running",
+              "pipelines/ai-features"
+            ]
+          },
+          {
+            "group": "Data Providers",
+            "pages": [
+              "providers/overview",
+              "providers/fred",
+              "providers/yahoo-finance",
+              "providers/world-bank"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/excel",
+              "integrations/google-drive"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api/overview",
+              "api/errors"
+            ]
+          },
+          {
+            "group": "Repositories",
+            "pages": [
+              "api/repositories/list",
+              "api/repositories/get",
+              "api/repositories/create",
+              "api/repositories/update",
+              "api/repositories/delete"
+            ]
+          },
+          {
+            "group": "Datasets",
+            "pages": [
+              "api/datasets/list",
+              "api/datasets/get",
+              "api/datasets/create",
+              "api/datasets/delete",
+              "api/datasets/data",
+              "api/datasets/upload"
+            ]
+          },
+          {
+            "group": "Pipelines",
+            "pages": [
+              "api/pipelines/list",
+              "api/pipelines/get",
+              "api/pipelines/create",
+              "api/pipelines/run",
+              "api/pipelines/steps"
+            ]
+          },
+          {
+            "group": "Data Providers",
+            "pages": [
+              "api/providers/list",
+              "api/providers/series"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Repository-based organization for datasets and pipelines",
+    "Visual pipeline builder with 40+ step types for data transformation",
+    "15+ built-in data provider connectors (FRED, BLS, World Bank, Yahoo Finance, OECD, and more)",
+    "Flexible data download with OData filtering, column selection, and multiple output formats (CSV, JSON, XLSX, TSV)",
+    "AI-powered code generation and data summaries within pipelines",
+    "API key and session-based authentication",
+    "Chart and table SVG export",
+    "Membership and subscription management",
+    "Excel and Google Drive integrations",
+    "Version history and dataset diff comparison"
+  ],
+  "publicApiSurface": [
+    "GET /repositories — list repositories",
+    "GET /repositories/{id} — get repository",
+    "POST /repositories — create repository",
+    "PUT /repositories/{id} — update repository",
+    "DELETE /repositories/{id} — delete repository",
+    "GET /datasets — list datasets",
+    "GET /datasets/{id} — get dataset",
+    "POST /datasets — create dataset",
+    "DELETE /datasets/{id} — delete dataset",
+    "GET /datasets/{id}/data — download dataset data (with $select, $filter, $top, $format, $last)",
+    "PUT /datasets/{id}/data — upload data to dataset",
+    "GET /datasets/{id}/columns — get dataset columns",
+    "GET /pipelines — list pipelines",
+    "GET /pipelines/{id} — get pipeline",
+    "POST /pipelines — create pipeline",
+    "PUT /pipelines/{id} — update pipeline",
+    "DELETE /pipelines/{id} — delete pipeline",
+    "POST /pipelines/{id}/runs — run pipeline",
+    "GET /pipelines/{id}/runs/last — get last pipeline run",
+    "GET /pipelines/{id}/steps — list pipeline steps",
+    "POST /pipelines/{id}/steps — add pipeline step",
+    "PUT /pipelines/{id}/steps/{step_id} — update pipeline step",
+    "DELETE /pipelines/{id}/steps/{step_id} — delete pipeline step",
+    "GET /providers — list data providers",
+    "GET /providers/{slug} — get provider detail",
+    "GET /providers/{slug}/search — search provider series",
+    "GET /providers/{slug}/browse — browse provider hierarchy",
+    "GET /providers/{slug}/series/{id} — preview series",
+    "POST /providers/{slug}/series/{id}/data — fetch full series data",
+    "GET /tickers/search/{query} — search financial tickers",
+    "GET /tickers/{ticker}/data — get ticker historical data",
+    "GET /fred/{symbol}/data — get FRED series data",
+    "GET /series/{id}/data — get series data",
+    "GET /memberships/plans — list membership plans",
+    "GET /memberships — get current membership"
+  ]
+}

@@ -1,0 +1,127 @@
+---
+title: "GET /pipelines — List All Pipelines"
+sidebarTitle: "List"
+description: "Retrieve all pipelines accessible to the authenticated user. Returns an array of pipeline objects, each including steps and configuration."
+---
+
+Use this endpoint to fetch every pipeline your API key has access to. Each object in the response is a fully-hydrated pipeline including its complete list of steps, repository assignment, runtime version, and slug — the same shape returned by the single-pipeline `GET /pipelines/{id}` endpoint.
+
+## Authentication
+
+All requests require HTTP Basic Auth. Pass your API key as the username and leave the password blank.
+
+```bash
+curl https://api.alphacast.io/pipelines \
+  --user YOUR_API_KEY:
+```
+
+## Response
+
+The endpoint returns a JSON array. Each element is a pipeline object.
+
+<ResponseField name="id" type="integer">
+  Unique numeric identifier for the pipeline, assigned by the server.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Human-readable display name of the pipeline.
+</ResponseField>
+
+<ResponseField name="repositoryId" type="integer">
+  ID of the repository this pipeline belongs to.
+</ResponseField>
+
+<ResponseField name="slug" type="string">
+  URL-friendly identifier for the pipeline. Can be used in place of the numeric `id` in other endpoints.
+</ResponseField>
+
+<ResponseField name="runtimeVersion" type="string">
+  The runtime environment version the pipeline uses for execution.
+</ResponseField>
+
+<ResponseField name="steps" type="array">
+  Ordered list of step objects that make up the pipeline.
+
+  <Expandable title="step properties">
+    <ResponseField name="id" type="integer">
+      Server-assigned step identifier.
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      Step type (e.g. `fetch-fred`, `select-columns`, `publish`). See the [steps reference](/api/pipelines/steps) for the full list of supported types.
+    </ResponseField>
+    <ResponseField name="order" type="integer">
+      Zero-based position of the step in the execution sequence.
+    </ResponseField>
+    <ResponseField name="configuration" type="object">
+      Step-specific configuration. Structure varies by `type`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example
+
+<RequestExample>
+
+```bash cURL
+curl https://api.alphacast.io/pipelines \
+  --user YOUR_API_KEY:
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/pipelines",
+    auth=("YOUR_API_KEY", ""),
+)
+pipelines = response.json()
+```
+
+```javascript Node.js
+const response = await fetch("https://api.alphacast.io/pipelines", {
+  headers: {
+    Authorization: "Basic " + btoa("YOUR_API_KEY:"),
+  },
+});
+const pipelines = await response.json();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200
+[
+  {
+    "id": 42,
+    "name": "CPI Inflation Monitor",
+    "repositoryId": 7,
+    "slug": "cpi-inflation-monitor",
+    "runtimeVersion": "3.10",
+    "steps": [
+      {
+        "id": 1001,
+        "type": "fetch-fred",
+        "order": 0,
+        "configuration": {
+          "series": "CPIAUCSL"
+        }
+      },
+      {
+        "id": 1002,
+        "type": "publish",
+        "order": 1,
+        "configuration": {
+          "datasetId": 456
+        }
+      }
+    ]
+  }
+]
+```
+
+</ResponseExample>
+
+<Note>
+  Pipelines that belong to private repositories are only returned if your API key has at least Read permission on those repositories.
+</Note>

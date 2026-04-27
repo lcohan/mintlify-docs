@@ -1,0 +1,220 @@
+---
+title: "Fetch FRED Data in Alphacast Pipelines"
+description: "Fetch FRED economic time series in Alphacast using the API Navigator or direct endpoints. Supports units, frequency, and date range parameters."
+---
+
+FRED (Federal Reserve Economic Data) is published by the Federal Reserve Bank of St. Louis and contains hundreds of thousands of economic time series from dozens of national, international, public, and private sources. In Alphacast you can reach FRED data in two ways: through the unified API Navigator at `/providers/fred/...`, or through the dedicated `/fred/...` endpoints for simpler one-liner access.
+
+<Info>
+  FRED requires an API key. You can get one for free at [fred.stlouisfed.org/docs/api/api_key.html](https://fred.stlouisfed.org/docs/api/api_key.html). Save it once in Alphacast and it is applied automatically to every subsequent FRED request.
+</Info>
+
+## Save your FRED API key
+
+Before fetching data, store your key using the user-keys endpoint. You only need to do this once.
+
+```bash
+curl -X PUT https://api.alphacast.io/user-keys/fred \
+  -H "Content-Type: application/json" \
+  -d '{"api_key": "your_fred_api_key_here"}'
+```
+
+After saving, the key is attached to your Alphacast account and passed through on every request to the FRED provider.
+
+## Popular FRED series
+
+These are the most commonly used FRED series IDs. Use them directly in the endpoints below.
+
+| Series ID | Description |
+|---|---|
+| `GDP` | Gross Domestic Product |
+| `UNRATE` | Unemployment Rate |
+| `CPIAUCSL` | Consumer Price Index for All Urban Consumers |
+| `FEDFUNDS` | Federal Funds Effective Rate |
+| `DGS10` | 10-Year Treasury Constant Maturity Rate |
+| `SP500` | S&P 500 |
+| `DEXUSEU` | U.S. / Euro Exchange Rate |
+| `M2SL` | M2 Money Stock |
+| `PAYEMS` | All Employees: Total Nonfarm |
+| `HOUST` | Housing Starts: Total |
+
+## Method 1: API Navigator
+
+The API Navigator is the recommended approach. It exposes FRED's full capabilities — search, hierarchical category browsing, and direct series access — through the same interface used by every other Alphacast provider.
+
+### Search for series
+
+```bash
+curl "https://api.alphacast.io/providers/fred/search?q=consumer+price+index"
+```
+
+Each result includes `series_id`, `label`, `frequency`, and `popularity`. Use the `series_id` from search results in the series endpoints below.
+
+### Browse FRED categories
+
+FRED organizes its series into a hierarchical category tree. Start at the root and navigate down.
+
+```bash
+# List root categories
+curl "https://api.alphacast.io/providers/fred/browse"
+
+# Browse into a subcategory (use the numeric ID from the previous response)
+curl "https://api.alphacast.io/providers/fred/browse?path=32"
+```
+
+### Preview a series
+
+Retrieve the last 24 data points and metadata to confirm you have the right series.
+
+```bash
+curl https://api.alphacast.io/providers/fred/series/CPIAUCSL
+```
+
+**Example response:**
+
+```json
+{
+  "series_id": "CPIAUCSL",
+  "label": "Consumer Price Index for All Urban Consumers: All Items in U.S. City Average",
+  "is_preview": true,
+  "metadata": {
+    "frequency": "Monthly",
+    "units": "Index 1982-1984=100",
+    "seasonal_adjustment": "Seasonally Adjusted",
+    "total_observations": 24
+  },
+  "data": [
+    {"date": "2024-03-01", "value": 312.228},
+    {"date": "2024-04-01", "value": 313.207}
+  ]
+}
+```
+
+### Fetch the full series
+
+Use POST to retrieve the complete historical record. Pass optional FRED transformation parameters in the `params` object.
+
+<CodeGroup>
+
+```bash Full history
+curl -X POST https://api.alphacast.io/providers/fred/series/CPIAUCSL/data \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+```bash Year-over-year percent change
+curl -X POST https://api.alphacast.io/providers/fred/series/CPIAUCSL/data \
+  -H "Content-Type: application/json" \
+  -d '{"params": {"units": "pc1"}}'
+```
+
+```bash Annual frequency, levels
+curl -X POST https://api.alphacast.io/providers/fred/series/GDP/data \
+  -H "Content-Type: application/json" \
+  -d '{"params": {"units": "lin", "frequency": "a"}}'
+```
+
+</CodeGroup>
+
+#### Supported parameters
+
+These parameters are passed inside the `params` object of the POST body.
+
+| Parameter | Values | Default | Description |
+|---|---|---|---|
+| `units` | `lin`, `chg`, `ch1`, `pch`, `pc1`, `log` | `lin` | Transform the series. `pc1` = % change from year ago, `ch1` = change from year ago. |
+| `frequency` | `a`, `q`, `m`, `w`, `d` (or empty) | Native | Resample to annual, quarterly, monthly, weekly, or daily. Leave empty to use the series' native frequency. |
+
+## Method 2: Direct FRED endpoint
+
+The `/fred/` endpoints provide a simpler interface when you already know the series ID and want a file download rather than a JSON response.
+
+### Search
+
+```bash
+curl "https://api.alphacast.io/fred/search/inflation"
+```
+
+Returns `{"results": [...]}` with matching series IDs and titles.
+
+### Fetch data
+
+```bash
+# Default: CSV output, full history
+curl "https://api.alphacast.io/fred/CPIAUCSL/data"
+
+# JSON output, last 12 observations
+curl "https://api.alphacast.io/fred/CPIAUCSL/data?\$format=json&\$top=12"
+
+# Date range
+curl "https://api.alphacast.io/fred/CPIAUCSL/data?start=2020-01-01&end=2024-12-31"
+```
+
+#### Query parameters
+
+| Parameter | Values | Default | Description |
+|---|---|---|---|
+| `$format` | `CSV`, `JSON`, `XLSX`, `TSV` | `CSV` | Output format |
+| `$top` | integer | 0 (all) | Limit to the most recent N observations |
+| `start` | `YYYY-MM-DD` | — | Filter to observations on or after this date |
+| `end` | `YYYY-MM-DD` | — | Filter to observations on or before this date |
+
+<Note>
+  The `$top` parameter on the direct endpoint counts from the most recent observation backward. If you want a specific date range, use `start` and `end` instead.
+</Note>
+
+## Complete example: CPI year-over-year change
+
+<Steps>
+  <Step title="Save your API key">
+    ```bash
+    curl -X PUT https://api.alphacast.io/user-keys/fred \
+      -H "Content-Type: application/json" \
+      -d '{"api_key": "your_fred_api_key_here"}'
+    ```
+  </Step>
+
+  <Step title="Preview CPIAUCSL">
+    ```bash
+    curl https://api.alphacast.io/providers/fred/series/CPIAUCSL
+    ```
+
+    Confirm that the series ID, units, and frequency match what you need.
+  </Step>
+
+  <Step title="Fetch year-over-year percent change">
+    ```bash
+    curl -X POST https://api.alphacast.io/providers/fred/series/CPIAUCSL/data \
+      -H "Content-Type: application/json" \
+      -d '{"params": {"units": "pc1", "frequency": "m"}}'
+    ```
+
+    The response `data` array contains monthly CPI inflation readings expressed as percent change from the same month one year prior.
+  </Step>
+
+  <Step title="Or download as CSV via the direct endpoint">
+    ```bash
+    curl "https://api.alphacast.io/fred/CPIAUCSL/data?start=2015-01-01" \
+      -o cpiaucsl.csv
+    ```
+  </Step>
+</Steps>
+
+## Using FRED in pipelines
+
+To pull FRED data into an Alphacast pipeline, add a `fetch-fred` step and specify the series ID. The pipeline step accepts the same `units` and `frequency` parameters described above.
+
+```json
+{
+  "type": "fetch-fred",
+  "order": 0,
+  "configuration": {
+    "series": ["CPIAUCSL"],
+    "fromDate": "2000-01-01"
+  }
+}
+```
+
+<Tip>
+  FRED series IDs are always uppercase (e.g., `GDP`, `FEDFUNDS`, `CPIAUCSL`). Alphacast normalizes the case automatically, but using uppercase in your code avoids potential confusion.
+</Tip>

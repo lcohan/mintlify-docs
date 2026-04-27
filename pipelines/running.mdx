@@ -1,0 +1,243 @@
+---
+title: "Run and Monitor Your Alphacast Pipelines"
+description: "Trigger manual pipeline runs, preview output up to a specific step, check run status and logs, and undo recent changes through the Alphacast API."
+---
+
+Alphacast pipelines run automatically every time you add, update, or delete a step. You do not need to manually trigger a run after saving a step change — Alphacast cancels any in-progress run for that pipeline and starts a new one immediately. For cases where you want to trigger a run explicitly, preview output partway through the pipeline, or inspect what happened in a previous run, the API gives you full control.
+
+## Trigger a run manually
+
+Send a `POST` request to `/pipelines/{id}/runs` to start a run. The body accepts a single optional field: `previewStep`.
+
+```
+POST https://api.alphacast.io/pipelines/{id}/runs
+```
+
+| Body field | Type | Description |
+|---|---|---|
+| `previewStep` | integer or null | If provided, the pipeline runs only up to (and including) the step with this ID. If `null` or omitted, all steps are executed. |
+
+<Warning>
+When `previewStep` is set to a specific step ID, Alphacast cancels any currently processing run for this pipeline before starting the preview. This prevents conflicting executions.
+</Warning>
+
+### Run all steps
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.alphacast.io/pipelines/123/runs \
+  -u "YOUR_API_KEY:" \
+  -H "Content-Type: application/json" \
+  -d '{"previewStep": null}'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.alphacast.io/pipelines/123/runs",
+    auth=("YOUR_API_KEY", ""),
+    json={"previewStep": None}
+)
+print(response.json())  # {"runId": 4567}
+```
+
+</CodeGroup>
+
+### Preview up to a specific step
+
+To inspect the intermediate output of your pipeline without executing the full run, pass the ID of the step you want to preview up to:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.alphacast.io/pipelines/123/runs \
+  -u "YOUR_API_KEY:" \
+  -H "Content-Type: application/json" \
+  -d '{"previewStep": 789}'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.alphacast.io/pipelines/123/runs",
+    auth=("YOUR_API_KEY", ""),
+    json={"previewStep": 789}
+)
+print(response.json())  # {"runId": 4568}
+```
+
+</CodeGroup>
+
+A successful response returns HTTP `200` with a `runId` you can use to poll for status.
+
+```json
+{
+  "runId": 4568
+}
+```
+
+## Check the last run
+
+To get the status and logs of the most recently completed or failed full run (excluding previews), call:
+
+```
+GET https://api.alphacast.io/pipelines/{id}/runs/last
+```
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.alphacast.io/pipelines/123/runs/last \
+  -u "YOUR_API_KEY:"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/pipelines/123/runs/last",
+    auth=("YOUR_API_KEY", "")
+)
+print(response.json())
+```
+
+</CodeGroup>
+
+**Example response**
+
+```json
+{
+  "id": 4567,
+  "pipelineId": 123,
+  "status": "completed",
+  "createdAt": "2024-09-15T10:30:00",
+  "logs": [
+    {
+      "stepId": 101,
+      "stepOrder": 0,
+      "log": "{\"status\": \"ok\", \"rows\": 1240}"
+    },
+    {
+      "stepId": 102,
+      "stepOrder": 1,
+      "log": "{\"status\": \"ok\", \"uploadProcessId\": \"abc123\"}"
+    }
+  ]
+}
+```
+
+If no completed or failed run exists yet, the endpoint returns `404`.
+
+<Note>
+The `last` endpoint only returns full runs. Preview runs (those triggered with a `previewStep`) are excluded from this result.
+</Note>
+
+## Check a specific run
+
+If you have a `runId` from a previous trigger response, you can fetch its logs directly:
+
+```
+GET https://api.alphacast.io/pipelines/{id}/runs/{run_id}
+```
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.alphacast.io/pipelines/123/runs/4568 \
+  -u "YOUR_API_KEY:"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/pipelines/123/runs/4568",
+    auth=("YOUR_API_KEY", "")
+)
+print(response.json())
+```
+
+</CodeGroup>
+
+The response shape is the same as `/runs/last` and includes per-step log entries.
+
+## Run statuses
+
+| Status | Meaning |
+|---|---|
+| `new` | The run has been queued but has not started yet. |
+| `processing` | The run is currently executing. |
+| `completed` | All steps finished successfully. |
+| `failed` | One or more steps encountered an error. |
+| `cancelled` | The run was cancelled — typically because a newer run was triggered. |
+
+## Undo the last change
+
+If you made a mistake editing a step and want to revert to the previous pipeline configuration, call the undo endpoint:
+
+```
+POST https://api.alphacast.io/pipelines/{id}/undoChange
+```
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.alphacast.io/pipelines/123/undoChange \
+  -u "YOUR_API_KEY:"
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.alphacast.io/pipelines/123/undoChange",
+    auth=("YOUR_API_KEY", "")
+)
+print(response.status_code)
+```
+
+</CodeGroup>
+
+A successful response returns HTTP `200` with the restored pipeline configuration. If there is no previous version to recover, the API returns `400`.
+
+<Tip>
+Use `undoChange` immediately after an accidental step edit or deletion. It restores the pipeline configuration but does not automatically re-run the pipeline — trigger a new run manually after undoing if needed.
+</Tip>
+
+## Polling for run completion
+
+The Alphacast API does not currently provide webhooks for run completion. If you need to wait for a run to finish, poll the `/runs/last` endpoint until `status` is `completed` or `failed`.
+
+```python Python (polling example)
+import time
+import requests
+
+pipeline_id = 123
+auth = ("YOUR_API_KEY", "")
+
+# Trigger a run
+run_response = requests.post(
+    f"https://api.alphacast.io/pipelines/{pipeline_id}/runs",
+    auth=auth,
+    json={"previewStep": None}
+)
+run_id = run_response.json()["runId"]
+print(f"Run queued: {run_id}")
+
+# Poll until done
+while True:
+    status_response = requests.get(
+        f"https://api.alphacast.io/pipelines/{pipeline_id}/runs/last",
+        auth=auth
+    )
+    if status_response.status_code == 200:
+        run = status_response.json()
+        status = run.get("status")
+        print(f"Status: {status}")
+        if status in ("completed", "failed"):
+            break
+    time.sleep(5)
+```

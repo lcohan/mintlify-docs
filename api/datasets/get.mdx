@@ -1,0 +1,149 @@
+---
+title: "GET /datasets/{id} — Get a Dataset"
+sidebarTitle: "Get"
+description: "Retrieve a single dataset by numeric ID, including its name, repository, description, column schema, date range, and your permission level."
+---
+
+Use this endpoint to retrieve full metadata for a specific dataset, including its column definitions and date range. This is useful before downloading data, as it lets you inspect the available columns and verify you have the right dataset. A supplementary endpoint, `GET /datasets/{id}/date-stats`, returns precise frequency and date-range information computed directly from the stored data.
+
+## Authentication
+
+Authenticate using HTTP Basic Auth. Pass your API key as the username and leave the password empty.
+
+## Endpoints
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `GET` | `/datasets/{dataset_id}` | Retrieve dataset metadata |
+| `GET` | `/datasets/{dataset_id}/date-stats` | Retrieve inferred frequency and date range |
+
+## Path parameters
+
+<ParamField path="dataset_id" type="integer" required>
+  The numeric ID of the dataset to retrieve.
+</ParamField>
+
+## Get dataset metadata
+
+```bash
+curl -u YOUR_API_KEY: https://api.alphacast.io/datasets/123
+```
+
+### Response
+
+<ResponseField name="id" type="integer">
+  Unique numeric identifier for the dataset.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Display name of the dataset.
+</ResponseField>
+
+<ResponseField name="repositoryId" type="integer">
+  ID of the repository this dataset belongs to.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Optional human-readable description.
+</ResponseField>
+
+<ResponseField name="sourceName" type="string">
+  Name of the original data source.
+</ResponseField>
+
+<ResponseField name="sourceUrl" type="string">
+  URL linking to the original data source.
+</ResponseField>
+
+<ResponseField name="permission" type="string">
+  Your permission level: `Read`, `Write`, or `Admin`.
+</ResponseField>
+
+<ResponseField name="frequency" type="string">
+  Inferred data frequency (e.g., `monthly`, `quarterly`, `daily`). May be `null` if not yet computed.
+</ResponseField>
+
+<ResponseField name="minDate" type="string">
+  Earliest date in the dataset (`YYYY-MM-DD`). May be `null` for empty datasets.
+</ResponseField>
+
+<ResponseField name="maxDate" type="string">
+  Latest date in the dataset (`YYYY-MM-DD`). May be `null` for empty datasets.
+</ResponseField>
+
+<ResponseField name="columns" type="array">
+  Array of column definition objects describing the dataset schema.
+
+  <Expandable title="column properties">
+    <ResponseField name="id" type="integer">
+      Unique column ID. Use this value with `$select` to reference columns reliably across renames.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      Column display name.
+    </ResponseField>
+    <ResponseField name="dataType" type="string">
+      Data type of the column. One of `Date`, `String`, or `Decimal`.
+    </ResponseField>
+    <ResponseField name="isEntity" type="boolean">
+      When `true`, this column is a dimension or index column (e.g., `Date`, `Country`). When `false`, it is a value column.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example response
+
+```json
+{
+  "id": 123,
+  "name": "US GDP Quarterly",
+  "repositoryId": 45,
+  "description": "Quarterly US GDP figures from BEA",
+  "sourceName": "Bureau of Economic Analysis",
+  "sourceUrl": "https://www.bea.gov/data/gdp",
+  "permission": "Admin",
+  "frequency": "quarterly",
+  "minDate": "1947-01-01",
+  "maxDate": "2024-10-01",
+  "columns": [
+    { "id": 1, "name": "Date", "dataType": "Date", "isEntity": true },
+    { "id": 2, "name": "Country", "dataType": "String", "isEntity": true },
+    { "id": 3, "name": "GDP", "dataType": "Decimal", "isEntity": false }
+  ]
+}
+```
+
+## Get date statistics
+
+The `/date-stats` endpoint returns frequency and date range information computed live from the dataset's stored data. If the dataset record already has a cached `frequency`, `minDate`, and `maxDate`, those cached values are returned immediately. Otherwise, the values are computed from the column data on demand.
+
+```bash
+curl -u YOUR_API_KEY: https://api.alphacast.io/datasets/123/date-stats
+```
+
+### Response
+
+<ResponseField name="inferedFreq" type="string">
+  The inferred data frequency, such as `monthly`, `quarterly`, or `daily`.
+</ResponseField>
+
+<ResponseField name="minDate" type="string">
+  The earliest date found in the dataset (`YYYY-MM-DD`).
+</ResponseField>
+
+<ResponseField name="maxDate" type="string">
+  The latest date found in the dataset (`YYYY-MM-DD`).
+</ResponseField>
+
+### Example response
+
+```json
+{
+  "inferedFreq": "quarterly",
+  "minDate": "1947-01-01",
+  "maxDate": "2024-10-01"
+}
+```
+
+<Note>
+  The `/date-stats` endpoint supports optional authentication. Public datasets can be queried without an API key, while private datasets require authentication.
+</Note>

@@ -1,0 +1,204 @@
+---
+title: "POST /pipelines — Create a Pipeline"
+sidebarTitle: "Create"
+description: "Create a new data pipeline in a repository. Define steps at creation time or add them later. The pipeline runs automatically after creation."
+---
+
+Use this endpoint to create a new pipeline inside one of your repositories. You must supply a `repositoryId`; all other fields are optional. If you include `steps` in the request body, Alphacast validates and saves them immediately and then triggers an automatic pipeline run. If you omit `steps`, you can add them later via the [steps API](/api/pipelines/steps).
+
+## Authentication
+
+All requests require HTTP Basic Auth with **Write** permission on the target repository. Pass your API key as the username and leave the password blank.
+
+<Warning>
+  You must have Write permission on the repository identified by `repositoryId`. Requests using an API key without Write access on that repository will receive a `403` error.
+</Warning>
+
+## Request body
+
+<ParamField body="repositoryId" type="integer" required>
+  ID of the repository to create the pipeline in. Your API key must have Write permission on this repository.
+</ParamField>
+
+<ParamField body="name" type="string">
+  Display name for the pipeline. Defaults to an auto-generated name if omitted.
+</ParamField>
+
+<ParamField body="steps" type="array">
+  Initial steps to include in the pipeline. Each element must conform to the step schema. If provided and non-empty, the pipeline runs automatically after creation.
+
+  <Expandable title="step object properties">
+    <ParamField body="type" type="string" required>
+      Step type. Must be one of the supported types — for example `fetch-fred`, `select-columns`, `filter-rows`, `merge`, `publish`, `apply-formula`, `ai-transform`, etc. See the [steps reference](/api/pipelines/steps) for the complete list.
+    </ParamField>
+    <ParamField body="order" type="integer" required>
+      Zero-based execution order. Steps run in ascending order.
+    </ParamField>
+    <ParamField body="configuration" type="object" required>
+      Step-specific configuration. Content depends on the `type`. For example, a `fetch-fred` step takes `{"series": "CPIAUCSL"}`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="runtimeVersion" type="string">
+  Runtime environment version for the pipeline. Defaults to the platform's current recommended version if omitted.
+</ParamField>
+
+## Response
+
+Returns `201 Created` with the newly created pipeline object. The `id` and `slug` are assigned by the server.
+
+<ResponseField name="id" type="integer">
+  Server-assigned numeric identifier for the new pipeline.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Display name of the pipeline.
+</ResponseField>
+
+<ResponseField name="repositoryId" type="integer">
+  Repository the pipeline was created in.
+</ResponseField>
+
+<ResponseField name="slug" type="string">
+  Auto-generated URL-friendly identifier. Can be used in place of the numeric `id`.
+</ResponseField>
+
+<ResponseField name="runtimeVersion" type="string">
+  Runtime version the pipeline will use.
+</ResponseField>
+
+<ResponseField name="steps" type="array">
+  The saved steps, each augmented with a server-assigned `id`.
+</ResponseField>
+
+## Example — fetch FRED data and publish it
+
+The following example creates a two-step pipeline that pulls the FRED CPI series and publishes the result to an existing Alphacast dataset.
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://api.alphacast.io/pipelines \
+  --user YOUR_API_KEY: \
+  --header "Content-Type: application/json" \
+  --data '{
+    "name": "CPI Inflation Monitor",
+    "repositoryId": 7,
+    "steps": [
+      {
+        "type": "fetch-fred",
+        "order": 0,
+        "configuration": {
+          "series": "CPIAUCSL"
+        }
+      },
+      {
+        "type": "publish",
+        "order": 1,
+        "configuration": {
+          "datasetId": 456
+        }
+      }
+    ]
+  }'
+```
+
+```python Python
+import requests
+
+payload = {
+    "name": "CPI Inflation Monitor",
+    "repositoryId": 7,
+    "steps": [
+        {
+            "type": "fetch-fred",
+            "order": 0,
+            "configuration": {"series": "CPIAUCSL"},
+        },
+        {
+            "type": "publish",
+            "order": 1,
+            "configuration": {"datasetId": 456},
+        },
+    ],
+}
+
+response = requests.post(
+    "https://api.alphacast.io/pipelines",
+    auth=("YOUR_API_KEY", ""),
+    json=payload,
+)
+pipeline = response.json()
+print(pipeline["id"])   # server-assigned ID
+```
+
+```javascript Node.js
+const response = await fetch("https://api.alphacast.io/pipelines", {
+  method: "POST",
+  headers: {
+    Authorization: "Basic " + btoa("YOUR_API_KEY:"),
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    name: "CPI Inflation Monitor",
+    repositoryId: 7,
+    steps: [
+      { type: "fetch-fred", order: 0, configuration: { series: "CPIAUCSL" } },
+      { type: "publish", order: 1, configuration: { datasetId: 456 } },
+    ],
+  }),
+});
+const pipeline = await response.json();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 201
+{
+  "id": 42,
+  "name": "CPI Inflation Monitor",
+  "repositoryId": 7,
+  "slug": "cpi-inflation-monitor",
+  "runtimeVersion": "3.10",
+  "steps": [
+    {
+      "id": 1001,
+      "type": "fetch-fred",
+      "order": 0,
+      "configuration": {
+        "series": "CPIAUCSL"
+      }
+    },
+    {
+      "id": 1002,
+      "type": "publish",
+      "order": 1,
+      "configuration": {
+        "datasetId": 456
+      }
+    }
+  ]
+}
+```
+
+```json 403
+{
+  "message": "You cannot create a pipeline on Repository 7"
+}
+```
+
+```json 409
+{
+  "message": "A conflict occurred while creating the pipeline."
+}
+```
+
+</ResponseExample>
+
+<Note>
+  When you supply one or more steps, Alphacast automatically triggers a pipeline run immediately after creation. To create a pipeline without running it, omit the `steps` field and add steps later using the [steps API](/api/pipelines/steps).
+</Note>

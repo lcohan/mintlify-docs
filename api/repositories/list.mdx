@@ -1,0 +1,89 @@
+---
+title: "GET /repositories — List All Repositories"
+sidebarTitle: "List"
+description: "Retrieve all repositories accessible to the authenticated user. Returns an array of repository objects with id, name, privacy, and permission fields."
+---
+
+The list repositories endpoint returns every repository your API key can access, including repositories you own and those shared with you by other team members. The `permission` field in each result tells you your effective access level for that repository.
+
+## Request
+
+```bash
+GET https://api.alphacast.io/repositories
+```
+
+No query parameters or request body are required.
+
+## Authentication
+
+<Note>
+  This endpoint requires HTTP Basic Auth. Pass your API key as the username and leave the password empty.
+</Note>
+
+```bash
+curl -u YOUR_API_KEY: https://api.alphacast.io/repositories
+```
+
+## Response
+
+The endpoint returns a JSON array. Each element is a repository object.
+
+<ResponseField name="id" type="integer">
+  Unique numeric identifier for the repository.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Display name of the repository.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Optional description of the repository's contents or purpose.
+</ResponseField>
+
+<ResponseField name="privacy" type="string">
+  Visibility setting. Either `"Public"` or `"Private"`.
+</ResponseField>
+
+<ResponseField name="team" type="string">
+  The team this repository belongs to, if applicable.
+</ResponseField>
+
+<ResponseField name="permission" type="string">
+  Your access level for this repository. One of `"Owner"`, `"Admin"`, `"Write"`, `"Clone"`, or `"Read"`. This field is determined by the server based on your API key and cannot be set directly.
+</ResponseField>
+
+## Example
+
+<RequestExample>
+
+```bash cURL
+curl -u YOUR_API_KEY: \
+  https://api.alphacast.io/repositories
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200
+[
+  {
+    "id": 101,
+    "name": "Emerging Markets Macro",
+    "description": "GDP, inflation, and rates for EM economies",
+    "privacy": "Private",
+    "team": "research",
+    "permission": "Owner"
+  },
+  {
+    "id": 204,
+    "name": "Global Equity Indices",
+    "description": null,
+    "privacy": "Public",
+    "team": null,
+    "permission": "Read"
+  }
+]
+```
+
+</ResponseExample>

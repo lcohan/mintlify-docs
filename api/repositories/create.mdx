@@ -1,0 +1,101 @@
+---
+title: "POST /repositories — Create a Repository"
+sidebarTitle: "Create"
+description: "Create a new repository to organize datasets and pipelines. Requires name and privacy. Optionally specify description and team for collaboration."
+---
+
+Repositories are the top-level containers for organizing your datasets and pipelines on Alphacast. Use this endpoint to create a new repository under your account. You will automatically become the `Owner` of any repository you create.
+
+## Request
+
+```bash
+POST https://api.alphacast.io/repositories
+```
+
+Send a JSON body with the `Content-Type: application/json` header.
+
+## Authentication
+
+<Note>
+  This endpoint requires HTTP Basic Auth. Pass your API key as the username and leave the password empty.
+</Note>
+
+## Body parameters
+
+<ParamField body="name" type="string" required>
+  Display name for the new repository.
+</ParamField>
+
+<ParamField body="privacy" type="string" required>
+  Visibility setting for the repository. Must be either `"Public"` or `"Private"`.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional description of the repository's contents or purpose.
+</ParamField>
+
+<ParamField body="team" type="string">
+  Optional team name to associate this repository with for collaborative access.
+</ParamField>
+
+## Response
+
+Returns `201 Created` with the newly created repository object.
+
+<ResponseField name="id" type="integer">
+  Unique numeric identifier assigned to the new repository.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Display name of the repository.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Description of the repository, if provided.
+</ResponseField>
+
+<ResponseField name="privacy" type="string">
+  Visibility setting. Either `"Public"` or `"Private"`.
+</ResponseField>
+
+<ResponseField name="team" type="string">
+  The team this repository belongs to, if provided.
+</ResponseField>
+
+<ResponseField name="permission" type="string">
+  Your access level. Always `"Owner"` for repositories you create.
+</ResponseField>
+
+## Example
+
+<RequestExample>
+
+```bash cURL
+curl -u YOUR_API_KEY: \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Emerging Markets Macro",
+    "description": "GDP, inflation, and rates for EM economies",
+    "privacy": "Private",
+    "team": "research"
+  }' \
+  https://api.alphacast.io/repositories
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 201
+{
+  "id": 101,
+  "name": "Emerging Markets Macro",
+  "description": "GDP, inflation, and rates for EM economies",
+  "privacy": "Private",
+  "team": "research",
+  "permission": "Owner"
+}
+```
+
+</ResponseExample>

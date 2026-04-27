@@ -1,0 +1,128 @@
+---
+title: "API Error Codes and Troubleshooting"
+description: "Reference for every HTTP error code returned by the Alphacast API — 400, 401, 403, 404, 409, and 500 — with causes, example responses, and fixes."
+---
+
+When an API request fails, Alphacast returns a standard HTTP error status code and, where possible, a JSON body that describes what went wrong. This page covers every error code you may encounter, what typically causes it, and how to fix it.
+
+## Error response format
+
+Most error responses follow this shape:
+
+```json
+{
+  "error": "Description of what went wrong"
+}
+```
+
+Some errors — particularly `401` and `500` — may return an empty body or a plain-text message depending on where in the request lifecycle the failure occurs.
+
+## Error codes
+
+### 400 Bad Request
+
+Your request was understood but contained invalid or missing data.
+
+```json
+{
+  "error": "repositoryId is required"
+}
+```
+
+**Common causes:**
+
+- A required field is missing from the request body. For example, creating a dataset without providing `repositoryId`.
+- The request body is malformed JSON. Verify that your payload is valid and that you have set `Content-Type: application/json`.
+- An OData `$filter` expression references a column that does not exist in the dataset. The error message will look like:
+
+  ```json
+  {
+    "error": "Filter contains invalid column(s): region"
+  }
+  ```
+
+  Check the column names in the dataset exactly as they appear — column names are case-sensitive.
+
+---
+
+### 401 Unauthorized
+
+Your request did not include valid credentials, or no credentials were provided at all.
+
+**Common causes and fixes:**
+
+- **Missing API key** — Include your API key via HTTP Basic Auth or the `?apiKey=` query parameter. See the [API overview](/api/overview) for the correct format.
+- **Key in the wrong field** — When using Basic Auth, the API key must be the **username**, not the password. A common mistake is reversing these:
+
+  ```bash
+  # Correct
+  curl -u YOUR_API_KEY: https://api.alphacast.io/repositories
+
+  # Incorrect — key is in the password field
+  curl -u :YOUR_API_KEY https://api.alphacast.io/repositories
+  ```
+
+- **Invalid or revoked key** — Verify your key in Alphacast account settings. If you recently regenerated it, update any integrations that use the old key.
+
+---
+
+### 403 Forbidden
+
+Your credentials are valid, but you do not have permission to perform this action on the requested resource.
+
+**Common causes:**
+
+- You are attempting to write to (or delete from) a repository where you only have **Read** permission. Contact the repository owner to request Write access.
+- You are trying to access a private resource that belongs to another account.
+
+---
+
+### 404 Not Found
+
+The resource you requested does not exist.
+
+```json
+{
+  "error": "Not found"
+}
+```
+
+**Common causes:**
+
+- The dataset, pipeline, or repository ID in the URL is wrong. Double-check the ID in the Alphacast UI or via a `GET /datasets` list request.
+- The resource was deleted after you last retrieved its ID.
+- You are referencing a pipeline step ID that does not belong to the pipeline in the URL.
+
+---
+
+### 409 Conflict
+
+The request could not be completed because it conflicts with an existing resource.
+
+**Common cause:** You are trying to create a resource (such as a dataset) with a name that already exists in the same repository. Rename the resource or delete the existing one before retrying.
+
+---
+
+### 500 Internal Server Error
+
+An unexpected error occurred on the server. This is not caused by your request.
+
+**What to do:**
+
+- Wait a moment and retry the request — transient errors often resolve on their own.
+- If the error persists, note the endpoint, request body, and approximate time of the failure, then contact Alphacast support.
+
+<Note>
+  A `500` response is never caused by invalid input in your request. If you see one consistently for the same request, it is a server-side issue worth reporting.
+</Note>
+
+## Debugging checklist
+
+If you are not sure which error applies to your situation, work through this checklist:
+
+1. **Check the status code** — The HTTP status in the response headers is always the authoritative signal.
+2. **Read the error message** — The `error` field in the JSON body usually describes the problem specifically.
+3. **Confirm authentication** — Re-run the request with `curl -v` to inspect the `Authorization` header being sent.
+4. **Validate your JSON** — Paste your request body into a JSON validator to catch syntax errors before sending.
+5. **Verify resource IDs** — Fetch the parent resource (e.g., `GET /repositories`) to confirm the IDs you are using still exist.
+6. **Check column names in filters** — If using `$filter`, list the dataset columns first with `GET /datasets/{id}/columns` to confirm exact names.

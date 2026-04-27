@@ -1,0 +1,113 @@
+---
+title: "PUT /repositories/{id} — Update a Repository"
+sidebarTitle: "Update"
+description: "Update an existing repository's name, description, or privacy. Requires Owner permission. Returns the updated repository object on success."
+---
+
+Use this endpoint to rename a repository, update its description, or change its visibility between public and private. Only the repository owner can make these changes — users with `Admin`, `Write`, `Clone`, or `Read` access will receive a `403` error.
+
+## Request
+
+```bash
+PUT https://api.alphacast.io/repositories/{repository_id}
+```
+
+Send a JSON body with the `Content-Type: application/json` header.
+
+## Authentication
+
+<Note>
+  This endpoint requires HTTP Basic Auth. Pass your API key as the username and leave the password empty.
+</Note>
+
+<Warning>
+  You must have `Owner` permission on the repository to update it. Requests from users with any other permission level will be rejected with a `403 Forbidden` response.
+</Warning>
+
+## Path parameters
+
+<ParamField path="repository_id" type="integer" required>
+  The numeric ID of the repository to update.
+</ParamField>
+
+## Body parameters
+
+<ParamField body="name" type="string" required>
+  New display name for the repository.
+</ParamField>
+
+<ParamField body="privacy" type="string" required>
+  Visibility setting. Must be either `"Public"` or `"Private"`.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Updated description of the repository's contents or purpose.
+</ParamField>
+
+## Response
+
+Returns `201` with the updated repository object.
+
+<ResponseField name="id" type="integer">
+  Unique numeric identifier for the repository.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Updated display name of the repository.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Updated description, if provided.
+</ResponseField>
+
+<ResponseField name="privacy" type="string">
+  Updated visibility setting. Either `"Public"` or `"Private"`.
+</ResponseField>
+
+<ResponseField name="team" type="string">
+  The team this repository belongs to. Team association cannot be changed via this endpoint.
+</ResponseField>
+
+<ResponseField name="permission" type="string">
+  Your access level. Remains `"Owner"` after an update.
+</ResponseField>
+
+## Errors
+
+| Status | Meaning |
+|--------|---------|
+| `403`  | You do not have `Owner` permission on this repository. |
+| `404`  | No repository with the given ID exists, or you do not have access to it. |
+
+## Example
+
+<RequestExample>
+
+```bash cURL
+curl -u YOUR_API_KEY: \
+  -X PUT \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "EM Macro — Archived",
+    "description": "Historical GDP, inflation, and rates for EM economies",
+    "privacy": "Public"
+  }' \
+  https://api.alphacast.io/repositories/101
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 201
+{
+  "id": 101,
+  "name": "EM Macro — Archived",
+  "description": "Historical GDP, inflation, and rates for EM economies",
+  "privacy": "Public",
+  "team": "research",
+  "permission": "Owner"
+}
+```
+
+</ResponseExample>

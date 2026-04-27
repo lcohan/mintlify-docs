@@ -1,0 +1,94 @@
+---
+title: "Authenticate with the Alphacast API"
+description: "Learn how to authenticate Alphacast API requests using your API key via HTTP Basic Auth or as a query parameter, with examples in curl and Python."
+---
+
+Every request to the Alphacast API must include an API key. You can obtain your key from your account settings at [alphacast.io](https://alphacast.io) — navigate to **Account Settings → API Key** to generate or view your key. Alphacast supports two ways to pass your API key: as an HTTP Basic Auth credential, or as a URL query parameter.
+
+<Warning>
+  Your API key grants full access to your Alphacast account. Do not share it publicly, commit it to version control, or expose it in client-side code.
+</Warning>
+
+## Method 1: HTTP Basic Auth
+
+The recommended approach is HTTP Basic Auth, where you pass your API key as the **username** with an **empty password**. This follows the HTTP Basic Auth standard and is supported by all HTTP clients.
+
+<CodeGroup>
+
+```bash curl
+curl https://api.alphacast.io/datasets \
+  -u YOUR_API_KEY:
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/datasets",
+    auth=("YOUR_API_KEY", "")
+)
+print(response.json())
+```
+
+</CodeGroup>
+
+The colon after the API key (in `curl`) and the empty string as the second element of the `auth` tuple (in Python) indicate an empty password. Most HTTP clients accept this convention without additional configuration.
+
+## Method 2: Query parameter
+
+You can also authenticate by appending `?apiKey=YOUR_API_KEY` to any request URL. This is convenient for quick tests in a browser or when your HTTP client does not easily support Basic Auth headers.
+
+<CodeGroup>
+
+```bash curl
+curl "https://api.alphacast.io/datasets?apiKey=YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/datasets",
+    params={"apiKey": "YOUR_API_KEY"}
+)
+print(response.json())
+```
+
+</CodeGroup>
+
+<Note>
+  When using the query parameter method, make sure your API key is not captured in server logs or browser history, especially in production environments. HTTP Basic Auth is generally more secure because credentials travel in headers, not in the URL.
+</Note>
+
+## Authentication errors
+
+If a request is missing credentials or the API key is invalid, the API responds with HTTP `401 Unauthorized`:
+
+```json
+{"error": "Unauthorized"}
+```
+
+Common causes:
+- The API key was not included in the request
+- The API key has been revoked or regenerated
+- The key was passed as the password instead of the username in Basic Auth
+
+## Keeping your API key safe
+
+<Tip>
+  Store your API key in an environment variable rather than hardcoding it. For example, set `ALPHACAST_API_KEY` in your environment and read it at runtime:
+
+  ```python
+  import os
+  import requests
+
+  api_key = os.environ["ALPHACAST_API_KEY"]
+
+  response = requests.get(
+      "https://api.alphacast.io/datasets",
+      auth=(api_key, "")
+  )
+  ```
+</Tip>
+
+If you believe your API key has been compromised, regenerate it immediately from your account settings at [alphacast.io](https://alphacast.io). Regenerating a key immediately invalidates the previous one.

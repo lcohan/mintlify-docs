@@ -1,0 +1,173 @@
+---
+title: "Get Started with Alphacast API"
+description: "Get your API key, create a repository and dataset, upload data, and download it — all in under five minutes using the Alphacast API."
+---
+
+This guide walks you through the core workflow of the Alphacast API: creating a repository to hold your data, adding a dataset to it, uploading a file, and retrieving that data in the format of your choice. All examples use `curl` and the base URL `https://api.alphacast.io`.
+
+<Info>
+  All requests require an API key. See the [authentication guide](/authentication) for details on how to obtain and use your key.
+</Info>
+
+<Steps>
+  <Step title="Get your API key">
+    Log in to [alphacast.io](https://alphacast.io) and navigate to your account settings to generate an API key. You will use this key to authenticate every request.
+
+    Alphacast uses HTTP Basic Auth, where the API key is passed as the username with an empty password. The `-u` flag in `curl` handles this automatically:
+
+    ```bash
+    curl https://api.alphacast.io/repositories \
+      -u YOUR_API_KEY:
+    ```
+
+    <Tip>
+      The trailing colon after your API key tells `curl` to send an empty password, which is required by HTTP Basic Auth.
+    </Tip>
+  </Step>
+
+  <Step title="Create a repository">
+    Repositories are the top-level containers that organize your datasets. Every dataset must belong to a repository. Create one by sending a `POST` request to `/repositories`:
+
+    ```bash
+    curl -X POST https://api.alphacast.io/repositories \
+      -u YOUR_API_KEY: \
+      -H "Content-Type: application/json" \
+      -d '{
+        "name": "My First Repository",
+        "description": "A repository for testing the Alphacast API",
+        "privacy": "Private"
+      }'
+    ```
+
+    The `privacy` field accepts `"Private"` or `"Public"`. A successful response returns `201` with the new repository object:
+
+    ```json
+    {
+      "id": 42,
+      "name": "My First Repository",
+      "description": "A repository for testing the Alphacast API",
+      "privacy": "Private",
+      "permission": "Owner"
+    }
+    ```
+
+    Note the `id` — you will need it in the next step.
+  </Step>
+
+  <Step title="Create a dataset">
+    Within your repository, create a dataset by posting to `/datasets`. The `repositoryId` field must match the repository you created above:
+
+    ```bash
+    curl -X POST https://api.alphacast.io/datasets \
+      -u YOUR_API_KEY: \
+      -H "Content-Type: application/json" \
+      -d '{
+        "name": "Quarterly GDP",
+        "repositoryId": 42,
+        "description": "GDP data by quarter",
+        "sourceName": "National Statistics Office",
+        "sourceUrl": "https://example.com/gdp-data"
+      }'
+    ```
+
+    A successful response returns `201` with the dataset object:
+
+    ```json
+    {
+      "id": 101,
+      "name": "Quarterly GDP",
+      "repositoryId": 42,
+      "description": "GDP data by quarter",
+      "sourceName": "National Statistics Office",
+      "sourceUrl": "https://example.com/gdp-data"
+    }
+    ```
+
+    Note the dataset `id` — you will use it to upload and download data.
+  </Step>
+
+  <Step title="Upload data">
+    Upload a CSV file to your dataset using a multipart form `PUT` request to `/datasets/{id}/data`:
+
+    ```bash
+    curl -X PUT https://api.alphacast.io/datasets/101/data \
+      -u YOUR_API_KEY: \
+      -F "data=@gdp.csv"
+    ```
+
+    Your CSV should have a header row. For example:
+
+    ```csv
+    Date,Country,GDP_USD_Billions
+    2023-01-01,USA,6823.4
+    2023-04-01,USA,6901.2
+    2023-07-01,USA,6987.6
+    ```
+
+    A successful upload returns `201` with a process object describing the upload job:
+
+    ```json
+    {
+      "id": 500,
+      "datasetId": 101,
+      "status": "pending",
+      "createdAt": "2024-01-15T10:30:00"
+    }
+    ```
+
+    <Note>
+      Uploads are processed asynchronously. The dataset will be available for download once the process status reaches `"completed"`. You can check status at `GET /datasets/{id}/processes/{process_id}`.
+    </Note>
+  </Step>
+
+  <Step title="Download data">
+    Once the upload is processed, download your dataset using `GET /datasets/{id}/data`. By default the response is a CSV file:
+
+    ```bash
+    curl https://api.alphacast.io/datasets/101/data \
+      -u YOUR_API_KEY:
+    ```
+
+    You can request other formats using the `$format` query parameter:
+
+    <CodeGroup>
+
+    ```bash CSV (default)
+    curl "https://api.alphacast.io/datasets/101/data" \
+      -u YOUR_API_KEY:
+    ```
+
+    ```bash JSON
+    curl "https://api.alphacast.io/datasets/101/data?$format=json" \
+      -u YOUR_API_KEY:
+    ```
+
+    ```bash XLSX
+    curl "https://api.alphacast.io/datasets/101/data?$format=xlsx" \
+      -u YOUR_API_KEY: \
+      --output gdp.xlsx
+    ```
+
+    ```bash TSV
+    curl "https://api.alphacast.io/datasets/101/data?$format=tsv" \
+      -u YOUR_API_KEY:
+    ```
+
+    </CodeGroup>
+
+    You can also filter and paginate results using OData-style query parameters:
+
+    | Parameter | Description |
+    |-----------|-------------|
+    | `$filter` | OData filter expression, e.g. `Country eq 'USA'` |
+    | `$select` | Comma-separated column names to include |
+    | `$top` | Maximum number of rows to return |
+    | `$last` | Return the last N rows by date |
+  </Step>
+</Steps>
+
+## Next steps
+
+- Read the [authentication guide](/authentication) for details on both supported auth methods
+- Explore the [API reference](/api/overview) for the full list of endpoints and parameters
+- Learn how [repositories](/concepts/repositories) control access and visibility for your data

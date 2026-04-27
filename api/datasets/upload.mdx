@@ -1,0 +1,141 @@
+---
+title: "PUT /datasets/{id}/data — Upload Data to a Dataset"
+sidebarTitle: "Upload data"
+description: "Upload a CSV or gzip-compressed CSV file to replace or merge with existing dataset data. Supports manifest for column type configuration."
+---
+
+Use this endpoint to load rows into a dataset by uploading a CSV file. You can upload a plain CSV or a gzip-compressed CSV. The optional manifest lets you explicitly declare each column's data type and whether it acts as an entity (dimension) column or a value column. By default, new uploads are merged with existing data; use the `deleteMissingFromDB` and `onConflictUpdateDB` flags to control conflict resolution behavior.
+
+## Authentication
+
+Authenticate using HTTP Basic Auth. Pass your API key as the username and leave the password empty. You must have at least `Write` permission on the target dataset.
+
+## Request
+
+**Method:** `PUT`  
+**URL:** `https://api.alphacast.io/datasets/{dataset_id}/data`  
+**Content-Type:** `multipart/form-data`
+
+## Path parameters
+
+<ParamField path="dataset_id" type="integer" required>
+  The numeric ID of the dataset to upload data into.
+</ParamField>
+
+## Form fields
+
+<ParamField body="data" type="file" required>
+  The CSV file to upload. Accepts plain `.csv` files or gzip-compressed `.csv.gz` files. The first row must be a header row containing column names.
+</ParamField>
+
+<ParamField body="manifest" type="string">
+  A JSON string describing the type and role of each column in the uploaded file. When provided, the manifest overrides any automatic type inference. See the [Manifest format](#manifest-format) section below for the full schema.
+</ParamField>
+
+<ParamField query="deleteMissingFromDB" type="boolean">
+  When `true`, rows present in the existing dataset but absent from the uploaded file are deleted. Use this to perform a full replacement of the dataset's contents.
+</ParamField>
+
+<ParamField query="onConflictUpdateDB" type="boolean">
+  When `true`, rows in the uploaded file that match existing rows by their entity key columns are updated in place rather than rejected or duplicated.
+</ParamField>
+
+<ParamField query="acceptNewColumns" type="boolean">
+  When `true`, columns present in the uploaded file that do not already exist in the dataset schema are added as new columns. When `false` or omitted, unrecognized columns are ignored.
+</ParamField>
+
+## Manifest format
+
+The manifest is a JSON array where each element describes one column. You only need to include columns you want to explicitly configure; any columns not listed will be inferred automatically.
+
+```json
+[
+  {
+    "sourceName": "Date",
+    "dataType": "Date",
+    "isEntity": true
+  },
+  {
+    "sourceName": "Country",
+    "dataType": "String",
+    "isEntity": true
+  },
+  {
+    "sourceName": "GDP",
+    "dataType": "Decimal",
+    "isEntity": false
+  }
+]
+```
+
+Each object in the array must contain the following fields:
+
+<ResponseField name="sourceName" type="string" required>
+  The exact column name as it appears in the CSV header row.
+</ResponseField>
+
+<ResponseField name="dataType" type="string" required>
+  The data type for this column. Must be one of:
+  - `Date` — a date value
+  - `String` — a text/categorical value
+  - `Decimal` — a numeric value
+</ResponseField>
+
+<ResponseField name="isEntity" type="boolean" required>
+  Set to `true` for dimension/index columns that identify a row (such as `Date` or `Country`). Set to `false` for value columns that contain measurements. Entity columns form the composite key used to match rows during conflict resolution.
+</ResponseField>
+
+## Response
+
+Returns `201 Created` with a process object describing the background upload job that was started.
+
+<ResponseField name="id" type="string">
+  The ID of the upload process. You can use this to track the status of the upload.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Initial status of the upload process.
+</ResponseField>
+
+## Example
+
+**Upload a CSV file with a manifest:**
+
+```bash
+curl -u YOUR_API_KEY: \
+  -X PUT https://api.alphacast.io/datasets/123/data \
+  -F "data=@gdp_data.csv" \
+  -F 'manifest=[{"sourceName":"Date","dataType":"Date","isEntity":true},{"sourceName":"Country","dataType":"String","isEntity":true},{"sourceName":"GDP","dataType":"Decimal","isEntity":false}]'
+```
+
+**Upload a gzip-compressed CSV and replace existing rows not in the file:**
+
+```bash
+curl -u YOUR_API_KEY: \
+  -X PUT "https://api.alphacast.io/datasets/123/data?deleteMissingFromDB=true&onConflictUpdateDB=true" \
+  -F "data=@gdp_data.csv.gz"
+```
+
+**Upload a plain CSV accepting new columns:**
+
+```bash
+curl -u YOUR_API_KEY: \
+  -X PUT "https://api.alphacast.io/datasets/123/data?acceptNewColumns=true" \
+  -F "data=@gdp_data.csv"
+```
+
+## Error responses
+
+| Status | Cause |
+|--------|-------|
+| `400 Bad Request` | The manifest is malformed — check that every column object includes `sourceName` (string), `dataType` (one of `Date`, `String`, `Decimal`), and `isEntity` (boolean). |
+| `401 Unauthorized` | Missing or invalid API key. |
+| `403 Forbidden` | You do not have `Write` permission on this dataset. |
+
+<Warning>
+  When `deleteMissingFromDB` is `true`, any row in the existing dataset whose key does not appear in the uploaded file is permanently deleted. Verify your file contains all rows you wish to keep before setting this flag.
+</Warning>
+
+<Note>
+  Uploads are processed asynchronously. The API returns immediately with a process object, and the data becomes available in the dataset once the background job completes.
+</Note>

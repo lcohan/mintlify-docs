@@ -1,0 +1,398 @@
+---
+title: "Pipeline Step Types Reference"
+description: "Complete reference for all Alphacast pipeline step types, grouped by category — from data fetching and filtering to AI transformation and output views."
+---
+
+Every pipeline step has a `type` field that determines what it does and what configuration it accepts. Steps are validated in order, and each step's output becomes the next step's input. This page lists every available step type grouped by category, with the key configuration fields for each.
+
+<AccordionGroup>
+
+  <Accordion title="Data fetch">
+
+    Data fetch steps are always the starting point of a pipeline. They pull data from an external source or from within Alphacast and produce an output manifest (the list of columns) that downstream steps can act on.
+
+    ### `fetch-dataset`
+
+    Fetches an existing Alphacast dataset into the pipeline. Alphacast validates that the dataset exists and that you have read access, and detects circular dependencies between pipelines.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `datasetId` | integer | The ID of the Alphacast dataset to fetch. |
+    | `variables` | array of strings | Optional subset of columns to include. If omitted, all columns are fetched. |
+
+    ### `fetch-yahoo`
+
+    Fetches historical price data from Yahoo Finance. Produces columns for `Date`, `Ticker`, `High`, `Low`, `Open`, `Close`, `Dividends`, `Stock splits`, and `Volume`.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `tickers` | array of strings | Ticker symbols (e.g. `["AAPL", "MSFT"]`). Also accepts a comma-separated string. |
+    | `period` | string | Lookback period accepted by yfinance (e.g. `"1y"`, `"5y"`, `"max"`). |
+
+    ### `fetch-fred`
+
+    Fetches one or more economic series from the Federal Reserve Economic Data (FRED) API. Produces a `Date` column plus one decimal column per series code.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `series` | array of strings | FRED series codes (e.g. `["GDP", "UNRATE"]`). Also accepts a comma-separated string. |
+    | `fromDate` | string | Start date in ISO 8601 format. Defaults to `"1700-01-01"`. |
+    | `toDate` | string | End date in ISO 8601 format. Defaults to today. |
+
+    ### `fetch-eod`
+
+    Fetches end-of-day market data from EOD Historical Data. Produces `Date`, `Symbol`, and the data columns returned by EOD for the requested symbols. Supports up to 200 symbols per step.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `symbols` | array of strings | EOD symbol codes (e.g. `["AAPL.US"]`). Maximum 200. |
+
+    ### `fetch-series`
+
+    Fetches one or more Alphacast series by their internal series ID. Supports both wide format (one column per series) and long format (`Date`, `Country`, `Value`).
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `series` | array of objects | Each object contains a `serieId` (integer). |
+    | `asLong` | boolean | If `true`, output is in long format with a `Country` dimension. Defaults to `false`. |
+    | `scale` | string | Optional unit scale to apply uniformly. |
+
+  </Accordion>
+
+  <Accordion title="Data shaping">
+
+    Data shaping steps restructure the columns and layout of your data without filtering rows.
+
+    ### `select-columns`
+
+    Keeps only the columns you specify. Entity columns (date and dimension columns) are always retained.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `columns` | array of strings | Column names to keep. |
+
+    ### `rename-columns`
+
+    Renames one or more columns by mapping old names to new names.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `columns` | object | A map of `{ "oldName": "newName" }` pairs. |
+
+    ### `reorder-columns`
+
+    Changes the order in which columns appear in the output.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `columns` | array of strings | Column names in the desired output order. |
+
+    ### `melt-dataset`
+
+    Converts a wide-format dataset to long format. Value columns become rows under a new variable column, similar to `pandas.melt`.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `valueVars` | array of strings | Columns to unpivot into rows. |
+    | `varName` | string | Name of the new variable column. |
+    | `valueName` | string | Name of the new value column. |
+
+    ### `unstack-dataset`
+
+    Pivots a long-format dataset to wide format. The inverse of `melt-dataset`.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `column` | string | The entity column whose values become new column headers. |
+
+    ### `append-dataset`
+
+    Appends rows from a second Alphacast dataset to the current data. The two datasets must share a compatible schema.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `datasetId` | integer | ID of the dataset whose rows are appended. |
+
+    ### `merge`
+
+    Joins the current data with another Alphacast dataset or a stashed snapshot. Supports `inner`, `left`, `right`, and `outer` join types.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `datasetId` | integer | ID of the dataset to join. Mutually exclusive with `stash`. |
+    | `stash` | boolean | If `true`, join against the most recent stashed snapshot instead of a dataset. |
+    | `how` | string | Join type: `"inner"`, `"left"`, `"right"`, or `"outer"`. |
+    | `columns` | array of objects | Column mapping for the join key. Each object has `name` (right column) and optionally `matchTo` (left column). |
+    | `mergeVariables` | array of strings | Subset of right-side value columns to include. If omitted, all columns are included. |
+
+  </Accordion>
+
+  <Accordion title="Filtering">
+
+    Filtering steps reduce the rows or series in your data based on conditions you define.
+
+    ### `filter-rows`
+
+    Removes rows that do not satisfy a condition on a numeric or string column.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `column` | string | Column to filter on. |
+    | `operator` | string | Comparison operator (e.g. `">"`, `"<"`, `"=="`, `"!="`). |
+    | `value` | string or number | The threshold value. |
+
+    ### `filter-entity`
+
+    Filters rows based on the values in an entity (dimension) column, such as keeping only certain countries or tickers.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `column` | string | The entity column to filter on. |
+    | `values` | array of strings | The entity values to keep. |
+
+    ### `filter-dates`
+
+    Restricts the date range of the dataset.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `fromDate` | string | Start date in ISO 8601 format. |
+    | `toDate` | string | End date in ISO 8601 format. |
+
+    ### `select-series`
+
+    Keeps only the specified Alphacast series in the dataset, dropping all others.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `series` | array of integers | Series IDs to retain. |
+
+  </Accordion>
+
+  <Accordion title="Transformation">
+
+    Transformation steps compute new values, change how data is indexed, or rescale existing columns.
+
+    ### `calculate-variable`
+
+    Adds a new column by evaluating a formula against existing columns. The formula supports standard arithmetic operators and references column names directly.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `calculation` | string | Formula string (e.g. `"GDP / Population"`). |
+    | `destinationColumn` | string | Name for the new or overwritten column. |
+
+    ### `apply-formula`
+
+    Applies a formula to one or more existing columns, replacing their values in place.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `formula` | string | Formula to apply. |
+    | `columns` | array of strings | Columns to apply the formula to. |
+
+    ### `transform`
+
+    Applies a Python transformation to the dataset using a code block you write directly in the configuration.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `code` | string | Python code that receives a pandas DataFrame and returns a transformed DataFrame. |
+
+    ### `resample`
+
+    Changes the time frequency of the dataset (e.g. from daily to monthly). You must specify an aggregation function for each non-entity column.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `outputFrequency` | string | Target pandas frequency string (e.g. `"M"`, `"Q"`, `"Y"`). |
+    | `resampleFunctions` | object | Map of `{ "columnName": "aggregation" }` (e.g. `"mean"`, `"sum"`, `"last"`). |
+
+    ### `change-units`
+
+    Rescales numeric columns by a unit conversion factor.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `columns` | array of strings | Columns to rescale. |
+    | `factor` | number | Multiplier to apply. |
+
+    ### `regroup-entities`
+
+    Aggregates rows by collapsing entity dimension values according to a mapping you provide.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `column` | string | Entity column to regroup. |
+    | `mapping` | object | Map of original values to new group names. |
+    | `aggregation` | string | How to combine rows within a group (e.g. `"sum"`, `"mean"`). |
+
+    ### `rename-values`
+
+    Replaces specific cell values in an entity column with new labels, without changing the column structure.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `column` | string | The entity column whose values are renamed. |
+    | `mapping` | object | Map of `{ "oldValue": "newValue" }` pairs. |
+
+    ### `reorder-rows`
+
+    Reorders rows in a fixed sequence you define explicitly.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `order` | array | The desired row order. |
+
+    ### `sort-rows`
+
+    Sorts rows by one or more columns, ascending or descending.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `columns` | array of strings | Columns to sort by, in priority order. |
+    | `ascending` | boolean | `true` for ascending, `false` for descending. |
+
+  </Accordion>
+
+  <Accordion title="AI">
+
+    AI steps use large language models to generate transformation code or produce human-readable summaries of your data. See [AI-powered features](/pipelines/ai-features) for the full API reference.
+
+    ### `ai-transform`
+
+    Uses AI to generate a Python transformation. You describe what you want in natural language and the AI writes the code for you. You can refine the result through a conversational message history. The generated code is executed as a `transform` step.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `code` | string | The AI-generated Python code. Updated automatically when you call the `generateCode` endpoint. |
+
+    ### `ai-summary`
+
+    Generates a natural language summary of the data at this point in the pipeline. The summary is stored in the step configuration and streamed back using the Vercel AI data stream format.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `summary` | string | The generated summary text. Updated automatically when you call `generateSummary` or `updateSummary`. |
+
+    ### `arima-sa`
+
+    Applies ARIMA-based seasonal adjustment to selected numeric columns. For each selected column, it appends a new `{column} - sa` column with the seasonally adjusted values, and optionally a `{column} - trend` and `{column} - irregular` column.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `columns` | array of strings | Numeric columns to seasonally adjust. |
+    | `outputTrendline` | boolean | If `true`, adds a `{column} - trend` column. |
+    | `outputIrregular` | boolean | If `true`, adds a `{column} - irregular` column. |
+
+  </Accordion>
+
+  <Accordion title="Analysis">
+
+    Analysis steps run domain-specific financial or statistical models against your data.
+
+    ### `talib`
+
+    Applies a technical analysis indicator from the TA-Lib library (e.g. moving averages, RSI, Bollinger Bands) to a numeric column.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `function` | string | TA-Lib function name (e.g. `"SMA"`, `"RSI"`, `"BBANDS"`). |
+    | `column` | string | The column to apply the indicator to. |
+    | `parameters` | object | Function-specific parameters (e.g. `{ "timeperiod": 14 }`). |
+
+    ### `portfolio-analysis`
+
+    Runs a portfolio performance analysis on a dataset of asset returns or prices, computing metrics such as cumulative returns, volatility, and Sharpe ratio.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `columns` | array of strings | Asset columns to include in the analysis. |
+
+    ### `debt-sustainability-analysis`
+
+    Runs a government debt sustainability analysis model, projecting debt-to-GDP paths under different macroeconomic scenarios.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `parameters` | object | Model parameters such as growth rates and interest rate assumptions. |
+
+  </Accordion>
+
+  <Accordion title="Output and views">
+
+    Output steps save data to a dataset or render it into a view format. Every pipeline that produces data intended for downstream use should end with a `publish` step.
+
+    ### `publish`
+
+    Writes the current pipeline output to an Alphacast dataset. This is the primary way to persist pipeline results. The target dataset must already exist and you must have write access to it.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `datasetId` | integer | ID of the destination dataset. |
+
+    <Note>
+    If the destination dataset's manifest is locked, Alphacast notes this in the step metadata but still publishes to it.
+    </Note>
+
+    ### `chart-data`
+
+    Saves the current data as a chart asset linked to the pipeline. Use this to power Alphacast chart views.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `chartId` | integer | ID of the chart to update. |
+
+    ### `table-view`
+
+    Renders the data as a formatted table visible in the Alphacast UI. No external dataset is required.
+
+    ### `deck-view`
+
+    Renders the data as a slide-style deck view in the Alphacast UI.
+
+    ### `scoreboard-view`
+
+    Renders the data as a scoreboard-style view, useful for displaying KPIs or summary statistics.
+
+    ### `markdown`
+
+    Renders a block of Markdown text as a step in the pipeline. Use this to add documentation, notes, or section headers visible in the Alphacast UI.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `text` | string | The Markdown content to render. |
+
+    ### `stash`
+
+    Saves a snapshot of the current data to an in-memory stack. A later `merge` step can reference this stash instead of an external dataset. The stash step itself produces no output columns — it clears the manifest for the next step.
+
+    ### `data-snapshot`
+
+    Captures a point-in-time snapshot of the data for use in comparisons or historical tracking.
+
+  </Accordion>
+
+  <Accordion title="Validation">
+
+    Validation steps check data quality or prompt for manual input before the pipeline continues.
+
+    ### `country-validator`
+
+    Validates that entity values in a specified column match known country names or codes. Flags any unrecognized values as errors.
+
+    | Configuration field | Type | Description |
+    |---|---|---|
+    | `column` | string | The entity column to validate against the country list. |
+
+    ### `manual-configuration`
+
+    Pauses the pipeline and surfaces a configuration form that a user must complete before the run can proceed. Use this for pipelines that require human input at specific points.
+
+  </Accordion>
+
+</AccordionGroup>
+
+<Tip>
+You can clone any step to duplicate it within the same pipeline by calling `POST /pipelines/{id}/steps/{step_id}/clone`. The cloned step is inserted immediately after the original.
+</Tip>

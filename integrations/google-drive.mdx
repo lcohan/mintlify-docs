@@ -1,0 +1,121 @@
+---
+title: "Import Google Drive Files into Alphacast"
+description: "Connect your Google account to pull files directly from Google Drive into Alphacast datasets, including live Google Sheets exported as Excel workbooks."
+---
+
+The Google Drive integration lets you import files stored in your Google Drive—including Google Sheets—directly into Alphacast without downloading them locally first. Alphacast fetches the file on your behalf using the Google OAuth credentials linked to your account. This is especially useful when you maintain a Google Sheet as the authoritative source of a dataset and want to refresh Alphacast whenever the sheet changes.
+
+## Prerequisites
+
+Before you can use this integration, your Alphacast account must have a Google API token stored against it. You connect your Google account through the Alphacast account settings UI. Once connected, Alphacast securely stores and automatically refreshes the OAuth token for you.
+
+<Warning>
+  If your account does not have a linked Google token, the API returns a `400` error. Connect your Google account in the Alphacast settings before calling this endpoint.
+</Warning>
+
+## How to find your Google Drive file ID
+
+The file ID is the long alphanumeric string in the URL when you open a file in Google Drive.
+
+For a file with the share URL:
+
+```
+https://drive.google.com/file/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms/view
+```
+
+The file ID is `1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms`—the segment between `/d/` and `/view`.
+
+For Google Sheets, open the sheet, copy the URL from your browser, and extract the same segment:
+
+```
+https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms/edit
+```
+
+<Tip>
+  You can also find the file ID by right-clicking any file in Google Drive, selecting **Share**, and copying the link. The ID is always the path segment after `/d/`.
+</Tip>
+
+## Importing a file
+
+Send a `GET` request to `/integrations/gdrive/{file_id}`, substituting the file ID you identified above.
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.alphacast.io/integrations/gdrive/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" \
+  -u "YOUR_API_KEY:"
+```
+</CodeGroup>
+
+Alphacast will:
+
+1. Use the Google OAuth token linked to your account to authenticate with the Google Drive API.
+2. Download the file. If the file is a **Google Sheet**, Alphacast automatically exports it as an Excel workbook (`.xlsx`) before downloading.
+3. Parse the data and return it in CSV format by default.
+
+You can request a different output format with the `$format` query parameter:
+
+```
+GET /integrations/gdrive/{file_id}?$format=json
+```
+
+Supported values for `$format`: `csv`, `json`, `xlsx`, `tsv`.
+
+## Supported file types
+
+| File type | Behavior |
+|-----------|----------|
+| Google Sheets | Automatically exported to `.xlsx` before download |
+| `.xlsx` / `.xls` | Downloaded and parsed as Excel |
+| `.csv` | Downloaded and parsed as CSV |
+
+<Info>
+  For Excel files imported from Google Drive, use the `$select` query parameter to specify which sheet to read, just as you would with the Excel integration. For CSV files and Google Sheets with a single sheet, this parameter is optional.
+</Info>
+
+## Publishing to a dataset
+
+The Google Drive endpoint returns parsed file data directly. To get the data into an Alphacast dataset, combine it with the drafts workflow:
+
+<Steps>
+  <Step title="Import the file and create a draft">
+    Add `publishDraft=true` as a query parameter to the import request. Instead of returning the raw file data, Alphacast will store the result as a draft and return a `draftKey`.
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X GET "https://api.alphacast.io/integrations/gdrive/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms?publishDraft=true" \
+      -u "YOUR_API_KEY:"
+    ```
+    </CodeGroup>
+
+    Response:
+
+    ```json
+    {
+      "draftKey": "42-1713964800"
+    }
+    ```
+  </Step>
+
+  <Step title="Publish the draft to your dataset">
+    Use the `draftKey` to push the data into an existing dataset.
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X POST "https://api.alphacast.io/drafts/42-1713964800/publish/12345" \
+      -u "YOUR_API_KEY:"
+    ```
+    </CodeGroup>
+
+    Replace `12345` with your target dataset ID.
+  </Step>
+</Steps>
+
+## Keeping a dataset in sync with a Google Sheet
+
+A common pattern is to run the import-and-publish workflow on a schedule so your Alphacast dataset always reflects the latest data in your Google Sheet. You can automate this with any scheduler (cron, GitHub Actions, etc.) by scripting the two steps above. Each run fetches the current state of the sheet and overwrites the dataset.
+
+## API reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/integrations/gdrive/{file_id}` | Download and parse a Google Drive file |

@@ -1,0 +1,108 @@
+---
+title: "POST /datasets — Create a Dataset"
+sidebarTitle: "Create"
+description: "Create a new dataset in a repository to store tabular or time-series data. Requires name and repositoryId. Optionally add source metadata."
+---
+
+Creating a dataset registers a named container within a repository where you can then upload tabular or time-series data. You must have at least `Write` permission on the target repository. Once created, upload data to the dataset using `PUT /datasets/{id}/data`.
+
+## Authentication
+
+Authenticate using HTTP Basic Auth. Pass your API key as the username and leave the password empty. You must have `Write` permission on the target repository.
+
+## Request
+
+**Method:** `POST`  
+**URL:** `https://api.alphacast.io/datasets`
+
+## Body parameters
+
+<ParamField body="name" type="string" required>
+  The display name for the new dataset. Must be a non-empty string.
+</ParamField>
+
+<ParamField body="repositoryId" type="integer" required>
+  The numeric ID of the repository in which to create the dataset. You must have `Write` permission on this repository.
+</ParamField>
+
+<ParamField body="description" type="string">
+  A human-readable description of the dataset's contents, intended audience, or methodology.
+</ParamField>
+
+<ParamField body="sourceUrl" type="string">
+  The URL of the original data source, for provenance tracking.
+</ParamField>
+
+<ParamField body="sourceName" type="string">
+  The name of the organization or publication that originally produced this data.
+</ParamField>
+
+## Response
+
+Returns `201 Created` with the newly created dataset object.
+
+<ResponseField name="id" type="integer">
+  The numeric ID assigned to the new dataset. Use this in all subsequent requests.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name you provided.
+</ResponseField>
+
+<ResponseField name="repositoryId" type="integer">
+  The repository the dataset was created in.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  The description you provided, or `null` if omitted.
+</ResponseField>
+
+<ResponseField name="sourceName" type="string">
+  The source name you provided, or `null` if omitted.
+</ResponseField>
+
+<ResponseField name="sourceUrl" type="string">
+  The source URL you provided, or `null` if omitted.
+</ResponseField>
+
+<ResponseField name="permission" type="string">
+  Your permission level on the new dataset. Will be `Admin` for datasets you create.
+</ResponseField>
+
+## Example
+
+```bash
+curl -u YOUR_API_KEY: \
+  -X POST https://api.alphacast.io/datasets \
+  -d "name=US GDP Quarterly" \
+  -d "repositoryId=45" \
+  -d "description=Quarterly US GDP figures from BEA" \
+  -d "sourceName=Bureau of Economic Analysis" \
+  -d "sourceUrl=https://www.bea.gov/data/gdp"
+```
+
+```json
+{
+  "id": 123,
+  "name": "US GDP Quarterly",
+  "repositoryId": 45,
+  "description": "Quarterly US GDP figures from BEA",
+  "sourceName": "Bureau of Economic Analysis",
+  "sourceUrl": "https://www.bea.gov/data/gdp",
+  "permission": "Admin",
+  "frequency": null,
+  "minDate": null,
+  "maxDate": null
+}
+```
+
+## Error responses
+
+| Status | Cause |
+|--------|-------|
+| `403 Forbidden` | The repository does not exist, or you do not have `Write` permission on it. |
+| `409 Conflict` | A dataset with a conflicting configuration already exists. |
+
+<Tip>
+  After creating a dataset, use `PUT /datasets/{id}/data` to upload your first CSV file and populate the dataset with rows.
+</Tip>

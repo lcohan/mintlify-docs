@@ -1,0 +1,47 @@
+---
+title: "DELETE /datasets/{id} — Delete a Dataset"
+sidebarTitle: "Delete"
+description: "Permanently delete a dataset and all its data. Requires Write permission on the dataset. Returns 204 No Content. This action cannot be undone."
+---
+
+Deleting a dataset permanently removes it along with all uploaded data and column definitions. You must have `Write` permission on the dataset to perform this action. There is no confirmation step and no way to recover a deleted dataset, so proceed with care.
+
+## Authentication
+
+Authenticate using HTTP Basic Auth. Pass your API key as the username and leave the password empty. You must have `Write` permission on the target dataset.
+
+## Request
+
+**Method:** `DELETE`  
+**URL:** `https://api.alphacast.io/datasets/{dataset_id}`
+
+## Path parameters
+
+<ParamField path="dataset_id" type="integer" required>
+  The numeric ID of the dataset to delete.
+</ParamField>
+
+## Response
+
+Returns `204 No Content` with an empty body on success.
+
+## Example
+
+```bash
+curl -u YOUR_API_KEY: \
+  -X DELETE https://api.alphacast.io/datasets/123
+```
+
+A successful deletion produces no response body and returns HTTP `204`.
+
+## Error responses
+
+| Status | Cause |
+|--------|-------|
+| `401 Unauthorized` | Missing or invalid API key. |
+| `403 Forbidden` | You do not have `Write` permission on this dataset. |
+| `404 Not Found` | No dataset with the given ID exists or is accessible to your account. |
+
+<Warning>
+  Deletion is permanent. All rows, column definitions, and metadata associated with this dataset are destroyed immediately. This action cannot be undone.
+</Warning>

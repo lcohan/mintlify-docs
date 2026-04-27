@@ -1,0 +1,62 @@
+---
+title: "DELETE /repositories/{id} — Delete a Repository"
+sidebarTitle: "Delete"
+description: "Permanently delete a repository and all its assets including datasets and pipelines. Requires Owner permission. This action cannot be undone."
+---
+
+This endpoint permanently deletes a repository and every asset it contains. Only the repository owner can delete a repository. The deletion cascades to all datasets and pipelines stored in the repository, so make sure you have exported or backed up any data you need before calling this endpoint.
+
+<Warning>
+  Deleting a repository is irreversible. All datasets, pipelines, and associated data inside the repository are permanently removed. There is no way to recover them after deletion.
+</Warning>
+
+## Request
+
+```bash
+DELETE https://api.alphacast.io/repositories/{repository_id}
+```
+
+No request body is required.
+
+## Authentication
+
+<Note>
+  This endpoint requires HTTP Basic Auth. Pass your API key as the username and leave the password empty.
+</Note>
+
+## Path parameters
+
+<ParamField path="repository_id" type="integer" required>
+  The numeric ID of the repository to delete.
+</ParamField>
+
+## Response
+
+Returns `204 No Content` on success. The response body is empty.
+
+## Errors
+
+| Status | Meaning |
+|--------|---------|
+| `403`  | You do not have `Owner` permission on this repository. |
+| `404`  | No repository with the given ID exists, or you do not have access to it. |
+
+## Example
+
+<RequestExample>
+
+```bash cURL
+curl -u YOUR_API_KEY: \
+  -X DELETE \
+  https://api.alphacast.io/repositories/101
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```text 204
+(empty response body)
+```
+
+</ResponseExample>

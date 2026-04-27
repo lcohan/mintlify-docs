@@ -1,0 +1,118 @@
+---
+title: "Datasets: Storing and Accessing Time-Series Data"
+description: "Datasets hold tabular and time-series data inside Alphacast repositories. Upload CSV files, query with OData filters, and download in CSV, JSON, XLSX, or TSV."
+---
+
+A dataset is where your actual data lives in Alphacast. Every dataset belongs to a repository and holds a table of rows and columns — typically a time series with one date column and one or more value columns. You can upload data into a dataset, query it with OData-style filters, and download results as CSV, JSON, XLSX, or TSV.
+
+## Dataset fields
+
+When you create a dataset, the following fields are available:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Display name for the dataset |
+| `repositoryId` | Yes | ID of the repository that owns this dataset |
+| `description` | No | Human-readable description |
+| `sourceUrl` | No | URL of the original data source |
+| `sourceName` | No | Name of the original data source |
+
+## Column types
+
+Each column in a dataset has a `dataType` and an `isEntity` flag:
+
+- **`Date`** — A date or datetime column. Entity columns of type `Date` are used as the time axis.
+- **`String`** — A text column. Entity string columns act as dimension labels (e.g., country, sector).
+- **`Decimal`** — A numeric value column. These are the measurements in your time series.
+
+Columns where `isEntity` is `true` are dimension columns (they identify a row). Columns where `isEntity` is `false` are value columns (they hold the measurements).
+
+## API endpoints
+
+The base URL for all dataset operations is `https://api.alphacast.io`.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/datasets` | List all datasets you have access to |
+| `POST` | `/datasets` | Create a new dataset |
+| `GET` | `/datasets/{id}` | Get a dataset's metadata |
+| `PUT` | `/datasets/{id}` | Rename a dataset or move it to another repository |
+| `DELETE` | `/datasets/{id}` | Delete a dataset |
+| `GET` | `/datasets/{id}/data` | Download dataset data |
+| `PUT` | `/datasets/{id}/data` | Upload data into a dataset |
+| `GET` | `/datasets/{id}/date-stats` | Get the date range and inferred frequency |
+
+## Creating a dataset
+
+```bash
+curl -X POST https://api.alphacast.io/datasets \
+  -u YOUR_API_KEY: \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "US GDP Quarterly",
+    "repositoryId": 1042,
+    "description": "Quarterly US GDP in billions of chained 2017 dollars",
+    "sourceUrl": "https://fred.stlouisfed.org/series/GDPC1",
+    "sourceName": "FRED"
+  }'
+```
+
+## Downloading data
+
+Use `GET /datasets/{id}/data` to download a dataset's contents. You can shape the response with OData query parameters.
+
+### Query parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `$select` | Comma-separated list of column names or IDs to include |
+| `$filter` | OData filter expression (e.g., `Date ge '2020-01-01'`) |
+| `$top` | Maximum number of rows to return |
+| `$last` | Return only rows from the last N date periods |
+| `$format` | Output format: `csv` (default), `json`, `xlsx`, or `tsv` |
+
+<CodeGroup>
+
+```bash Download as CSV
+curl "https://api.alphacast.io/datasets/5801/data" \
+  -u YOUR_API_KEY:
+```
+
+```bash Filter by date range
+curl "https://api.alphacast.io/datasets/5801/data?\$filter=Date%20ge%20'2020-01-01'&\$format=json" \
+  -u YOUR_API_KEY:
+```
+
+```bash Last 8 periods
+curl "https://api.alphacast.io/datasets/5801/data?\$last=8" \
+  -u YOUR_API_KEY:
+```
+
+</CodeGroup>
+
+<Tip>
+For large datasets with no filters, the API returns a pre-signed download URL instead of streaming the file directly. Follow the redirect to download the file.
+</Tip>
+
+## Date stats
+
+Use the date-stats endpoint to inspect a dataset's temporal coverage before downloading it.
+
+```bash
+curl "https://api.alphacast.io/datasets/5801/date-stats" \
+  -u YOUR_API_KEY:
+```
+
+```json
+{
+  "inferedFreq": "Q",
+  "minDate": "1947-01-01",
+  "maxDate": "2024-10-01"
+}
+```
+
+The `inferedFreq` field returns the detected cadence of the data (e.g., `D` for daily, `M` for monthly, `Q` for quarterly, `A` for annual).
+
+<Note>
+If the frequency cannot be determined from cached metadata, the API will scan the dataset's date column to infer it on the fly. This may take a moment for large datasets.
+</Note>

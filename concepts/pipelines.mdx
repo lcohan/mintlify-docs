@@ -1,0 +1,152 @@
+---
+title: "Pipelines: Transform Data with Composable Steps"
+description: "Pipelines are ordered sequences of steps that fetch, transform, and publish data. Add or modify steps through the API and Alphacast runs them automatically."
+---
+
+A pipeline is an ordered list of steps that process data from start to finish. You configure each step — what type it is, what order it runs in, and how it behaves — and Alphacast executes the pipeline automatically whenever a step changes. You can also trigger a run manually through the API. Pipelines live inside repositories alongside the datasets they produce.
+
+## How pipelines work
+
+Each step in a pipeline has three required fields:
+
+- **`type`** — What the step does (e.g., fetch data, filter rows, publish results)
+- **`order`** — The position of the step in the sequence (integer, starting from 0)
+- **`configuration`** — A JSON object with step-specific settings
+
+When you add or modify a step, Alphacast automatically cancels any in-progress run for that pipeline and starts a fresh one. You can also trigger runs manually, which is useful for scheduled jobs or after uploading new source data.
+
+## Step types
+
+Alphacast supports a wide range of step types:
+
+<CardGroup cols={2}>
+  <Card title="Fetch steps" icon="cloud-arrow-down">
+    Pull data from internal datasets or external providers:
+    `fetch-dataset`, `fetch-yahoo`, `fetch-fred`, `fetch-eod`, `fetch-series`
+  </Card>
+  <Card title="Transform steps" icon="wand-magic-sparkles">
+    Reshape and clean data:
+    `select-columns`, `filter-rows`, `filter-dates`, `filter-entity`, `rename-columns`, `rename-values`, `reorder-columns`, `reorder-rows`, `sort-rows`
+  </Card>
+  <Card title="Calculation steps" icon="calculator">
+    Derive new values:
+    `calculate-variable`, `apply-formula`, `transform`, `resample`, `change-units`
+  </Card>
+  <Card title="Merge & reshape steps" icon="code-merge">
+    Combine and restructure data:
+    `merge`, `append-dataset`, `melt-dataset`, `unstack-dataset`
+  </Card>
+  <Card title="AI steps" icon="robot">
+    Use AI to transform or summarize data:
+    `ai-transform`, `ai-summary`
+  </Card>
+  <Card title="Publish steps" icon="upload">
+    Write results to a dataset:
+    `publish`
+  </Card>
+</CardGroup>
+
+## API endpoints
+
+The base URL for all pipeline operations is `https://api.alphacast.io`.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/pipelines` | List all pipelines you have access to |
+| `POST` | `/pipelines` | Create a new pipeline |
+| `GET` | `/pipelines/{id}` | Get a pipeline and its steps |
+| `PUT` | `/pipelines/{id}` | Update a pipeline's name or repository |
+| `DELETE` | `/pipelines/{id}` | Delete a pipeline |
+| `POST` | `/pipelines/{id}/runs` | Trigger a manual run |
+| `GET` | `/pipelines/{id}/steps` | List steps for a pipeline |
+| `POST` | `/pipelines/{id}/steps` | Add a step to a pipeline |
+| `PUT` | `/pipelines/{id}/steps/{stepId}` | Update an existing step |
+| `DELETE` | `/pipelines/{id}/steps/{stepId}` | Remove a step |
+| `POST` | `/pipelines/{id}/undoChange` | Revert the last configuration change |
+
+## Creating a pipeline with steps
+
+You can include steps in the initial creation request. The pipeline runs automatically once created if steps are provided.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.alphacast.io/pipelines \
+  -u YOUR_API_KEY: \
+  -H "Content-Type: application/json" \
+  -d '{
+    "repositoryId": 1042,
+    "name": "US GDP Monthly Transform",
+    "steps": [
+      {
+        "type": "fetch-fred",
+        "order": 0,
+        "configuration": {
+          "seriesId": "GDPC1"
+        }
+      },
+      {
+        "type": "resample",
+        "order": 1,
+        "configuration": {
+          "frequency": "M",
+          "method": "interpolate"
+        }
+      },
+      {
+        "type": "publish",
+        "order": 2,
+        "configuration": {
+          "datasetId": 5801
+        }
+      }
+    ]
+  }'
+```
+
+```json Response
+{
+  "id": 301,
+  "name": "US GDP Monthly Transform",
+  "repositoryId": 1042,
+  "steps": [
+    { "id": 1700000000001, "type": "fetch-fred", "order": 0, "configuration": { "seriesId": "GDPC1" } },
+    { "id": 1700000000002, "type": "resample", "order": 1, "configuration": { "frequency": "M", "method": "interpolate" } },
+    { "id": 1700000000003, "type": "publish", "order": 2, "configuration": { "datasetId": 5801 } }
+  ]
+}
+```
+
+</CodeGroup>
+
+## Triggering a manual run
+
+```bash
+curl -X POST https://api.alphacast.io/pipelines/301/runs \
+  -u YOUR_API_KEY: \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+```json
+{ "runId": "run_abc123" }
+```
+
+<Tip>
+Pass `"previewStep": <stepId>` in the run request body to run only up to a specific step. This is useful for debugging a pipeline mid-flow without triggering the publish step.
+</Tip>
+
+## Undoing a change
+
+If you make an unintended change to a pipeline's configuration, you can revert it:
+
+```bash
+curl -X POST https://api.alphacast.io/pipelines/301/undoChange \
+  -u YOUR_API_KEY: \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+<Warning>
+Undo only reverts the most recent configuration change. It does not undo the results of a completed run.
+</Warning>

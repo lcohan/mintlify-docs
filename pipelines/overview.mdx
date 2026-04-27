@@ -1,0 +1,154 @@
+---
+title: "Build Data Pipelines in Alphacast"
+description: "Learn how Alphacast pipelines chain fetch, transform, and publish steps to automate your financial data workflows from a single API."
+---
+
+A pipeline in Alphacast is an ordered sequence of steps that fetch data from one or more sources, apply transformations, and publish the result to a dataset. Every pipeline belongs to a repository, which controls who can read or write to it. When you add, edit, or remove a step, Alphacast automatically re-runs the pipeline so your published datasets always reflect the latest configuration.
+
+## How a pipeline is structured
+
+Each pipeline has a name, a `repositoryId`, and an array of `steps`. Every step requires three fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `type` | string | The step type (e.g. `fetch-fred`, `publish`). See [Step types](/pipelines/step-types) for the full list. |
+| `order` | integer | The position of this step in the pipeline, starting at `0`. |
+| `configuration` | object | Step-specific settings such as series IDs, column names, or dataset references. |
+
+Steps are executed in ascending `order`. The output of each step becomes the input of the next.
+
+## Create a pipeline
+
+Send a `POST` request to `/pipelines` with a name, a `repositoryId`, and an optional initial list of steps. If you include steps, Alphacast validates them and immediately queues a run.
+
+```bash
+POST https://api.alphacast.io/pipelines
+```
+
+**Required fields**
+
+| Field | Type | Required |
+|---|---|---|
+| `repositoryId` | integer | Yes |
+| `name` | string | No |
+| `steps` | array | No |
+| `runtimeVersion` | string | No |
+
+### Example: fetch FRED data and publish it
+
+The following request creates a pipeline with two steps: one that pulls the `GDP` series from the Federal Reserve and one that writes the result to an existing Alphacast dataset.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.alphacast.io/pipelines \
+  -u "YOUR_API_KEY:" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "US GDP from FRED",
+    "repositoryId": 42,
+    "steps": [
+      {
+        "type": "fetch-fred",
+        "order": 0,
+        "configuration": {
+          "series": ["GDP"],
+          "fromDate": "2000-01-01"
+        }
+      },
+      {
+        "type": "publish",
+        "order": 1,
+        "configuration": {
+          "datasetId": 1001
+        }
+      }
+    ]
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.alphacast.io/pipelines",
+    auth=("YOUR_API_KEY", ""),
+    json={
+        "name": "US GDP from FRED",
+        "repositoryId": 42,
+        "steps": [
+            {
+                "type": "fetch-fred",
+                "order": 0,
+                "configuration": {
+                    "series": ["GDP"],
+                    "fromDate": "2000-01-01"
+                }
+            },
+            {
+                "type": "publish",
+                "order": 1,
+                "configuration": {
+                    "datasetId": 1001
+                }
+            }
+        ]
+    }
+)
+print(response.json())
+```
+
+</CodeGroup>
+
+A successful response returns HTTP `201` with the pipeline object, including the assigned `id` and `slug`.
+
+<Note>
+If you include steps in the creation request, the pipeline is validated and a run is queued automatically. You do not need to trigger a separate run.
+</Note>
+
+## Manage pipeline steps
+
+After a pipeline exists, you can add, update, or remove individual steps without recreating the entire pipeline. Each step mutation cancels any in-progress run and starts a fresh one.
+
+| Operation | Endpoint |
+|---|---|
+| List steps | `GET /pipelines/{id}/steps` |
+| Add a step | `POST /pipelines/{id}/steps` |
+| Get a step | `GET /pipelines/{id}/steps/{step_id}` |
+| Update a step | `PUT /pipelines/{id}/steps/{step_id}` |
+| Delete a step | `DELETE /pipelines/{id}/steps/{step_id}` |
+| Clone a step | `POST /pipelines/{id}/steps/{step_id}/clone` |
+
+## Trigger and monitor runs
+
+Pipelines run automatically on any step change. You can also trigger a manual run or preview the output up to a specific step. See [Run and monitor pipelines](/pipelines/running) for details.
+
+## Clone a pipeline
+
+To copy an entire pipeline into a different repository, send a `POST` request to `/pipelines/{id}/clone` with the target `repositoryId`. Alphacast copies all steps and immediately runs the cloned pipeline.
+
+```bash
+POST https://api.alphacast.io/pipelines/{id}/clone
+Content-Type: application/json
+
+{
+  "repositoryId": 99
+}
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Step types reference" icon="list" href="/pipelines/step-types">
+    Browse every available step type grouped by category.
+  </Card>
+  <Card title="Run and monitor" icon="play" href="/pipelines/running">
+    Trigger manual runs, preview partial output, and check run logs.
+  </Card>
+  <Card title="AI features" icon="sparkles" href="/pipelines/ai-features">
+    Use AI to generate transformation code and data summaries.
+  </Card>
+  <Card title="API reference" icon="code" href="/api/pipelines/create">
+    Full parameter and response schema for every pipeline endpoint.
+  </Card>
+</CardGroup>

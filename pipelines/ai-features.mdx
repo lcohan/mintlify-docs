@@ -1,0 +1,291 @@
+---
+title: "AI-Powered Features in Alphacast Pipelines"
+description: "Use AI step types in Alphacast pipelines to generate Python transformation code via natural language chat or produce summaries of your pipeline data."
+---
+
+Alphacast includes two AI-powered step types — `ai-transform` and `ai-summary` — that let you interact with your data using natural language instead of writing code by hand. Both step types are backed by a large language model and stream their responses using the [Vercel AI data stream format](https://sdk.vercel.ai/docs/ai-sdk-ui/stream-protocol). The API also provides a dataset-level AI report endpoint for generating a high-level narrative about any dataset.
+
+## AI step types
+
+### `ai-transform`
+
+The `ai-transform` step uses AI to generate Python transformation code based on your input manifest and a natural language request. You describe what transformation you want, and the AI writes the code. Alphacast executes the generated code against the data and updates the output manifest accordingly.
+
+You can refine the generated code through a conversational message history — each exchange is stored against the step so the AI has context about previous requests. This means you can ask follow-up questions like "now normalize by the first row" without restating the full context.
+
+The generated code is stored in the step's `configuration.code` field. If the generated code produces a runtime error, the step surfaces an error state and you can prompt the AI to correct it.
+
+### `ai-summary`
+
+The `ai-summary` step generates a natural language summary of the data at that point in the pipeline. The summary is written to `configuration.summary` and is useful for adding human-readable narrative to your pipeline — for example, to describe what a dataset contains or what a particular transformation achieves.
+
+You can provide an optional user prompt to guide the summary, or trigger a regeneration against an updated version of the data.
+
+---
+
+## Generate transformation code
+
+```
+POST https://api.alphacast.io/pipelines/{id}/steps/{step_id}/ai/generateCode
+```
+
+This endpoint accepts the current input manifest, any previously generated code, and a message history. It streams back the updated code as it is generated.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `inputManifest` | array | Yes | The column manifest at this step (the `outputManifest` of the previous step). Each item has `name`, `dataType`, and `isEntity`. |
+| `code` | string | Yes | The current code in the step (may be empty on first generation). |
+| `messages` | array | Yes | Conversation history. Each message has a `role` (`"user"` or `"assistant"`) and `content`. |
+
+**Example request**
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST \
+  https://api.alphacast.io/pipelines/123/steps/456/ai/generateCode \
+  -u "YOUR_API_KEY:" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inputManifest": [
+      {"name": "Date", "dataType": "Date", "isEntity": true},
+      {"name": "GDP", "dataType": "Decimal", "isEntity": false},
+      {"name": "Country", "dataType": "String", "isEntity": true}
+    ],
+    "code": "",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Calculate the year-over-year percentage change for the GDP column"
+      }
+    ]
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.alphacast.io/pipelines/123/steps/456/ai/generateCode",
+    auth=("YOUR_API_KEY", ""),
+    json={
+        "inputManifest": [
+            {"name": "Date", "dataType": "Date", "isEntity": True},
+            {"name": "GDP", "dataType": "Decimal", "isEntity": False},
+            {"name": "Country", "dataType": "String", "isEntity": True}
+        ],
+        "code": "",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Calculate the year-over-year percentage change for the GDP column"
+            }
+        ]
+    },
+    stream=True
+)
+
+for chunk in response.iter_content(chunk_size=None):
+    print(chunk.decode(), end="", flush=True)
+```
+
+</CodeGroup>
+
+**Response**
+
+The response is a streaming text stream using the Vercel AI data stream protocol. The response header includes:
+
+```
+x-vercel-ai-data-stream: v1
+```
+
+Each chunk contains a fragment of the generated Python code. Concatenate the streamed chunks to get the full code block.
+
+**Refining the generated code**
+
+To continue the conversation and refine the code, include the full message history in subsequent requests:
+
+```json
+{
+  "inputManifest": [...],
+  "code": "df['GDP_yoy'] = df.groupby('Country')['GDP'].pct_change(periods=4) * 100\n",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Calculate the year-over-year percentage change for the GDP column"
+    },
+    {
+      "role": "assistant",
+      "content": "df['GDP_yoy'] = df.groupby('Country')['GDP'].pct_change(periods=4) * 100\n"
+    },
+    {
+      "role": "user",
+      "content": "Also drop any rows where GDP_yoy is null"
+    }
+  ]
+}
+```
+
+---
+
+## Generate a data summary
+
+```
+POST https://api.alphacast.io/pipelines/{id}/steps/{step_id}/ai/generateSummary
+```
+
+This endpoint generates a natural language summary of the data at the given step. It streams the summary back in the Vercel AI data stream format.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `inputManifest` | array | Yes | The column manifest at this step. |
+| `messages` | array | No | Optional conversation context. The last message's `content` is used as the user prompt. |
+
+**Example request**
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST \
+  https://api.alphacast.io/pipelines/123/steps/456/ai/generateSummary \
+  -u "YOUR_API_KEY:" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inputManifest": [
+      {"name": "Date", "dataType": "Date", "isEntity": true},
+      {"name": "GDP", "dataType": "Decimal", "isEntity": false},
+      {"name": "Country", "dataType": "String", "isEntity": true}
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "Summarize this dataset in two sentences for a non-technical audience"
+      }
+    ]
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.alphacast.io/pipelines/123/steps/456/ai/generateSummary",
+    auth=("YOUR_API_KEY", ""),
+    json={
+        "inputManifest": [
+            {"name": "Date", "dataType": "Date", "isEntity": True},
+            {"name": "GDP", "dataType": "Decimal", "isEntity": False},
+            {"name": "Country", "dataType": "String", "isEntity": True}
+        ],
+        "messages": [
+            {
+                "role": "user",
+                "content": "Summarize this dataset in two sentences for a non-technical audience"
+            }
+        ]
+    },
+    stream=True
+)
+
+for chunk in response.iter_content(chunk_size=None):
+    print(chunk.decode(), end="", flush=True)
+```
+
+</CodeGroup>
+
+---
+
+## Regenerate an existing summary
+
+```
+PUT https://api.alphacast.io/pipelines/{id}/steps/{step_id}/ai/updateSummary
+```
+
+Use this endpoint to regenerate the summary for an `ai-summary` step, for example after the upstream data has changed. You can optionally provide a reference to a draft data file.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `draft` | string | No | Key of a draft data file to use as the basis for regeneration. |
+
+**Example request**
+
+```bash cURL
+curl -X PUT \
+  https://api.alphacast.io/pipelines/123/steps/456/ai/updateSummary \
+  -u "YOUR_API_KEY:" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+The response is streamed in the same Vercel AI data stream format as the `generateSummary` endpoint.
+
+---
+
+## Retrieve conversation history
+
+```
+GET https://api.alphacast.io/pipelines/{id}/steps/{step_id}/ai/messageHistory
+```
+
+Returns the full message history for an `ai-transform` step. Use this to display the conversation in a UI or to construct the `messages` array for a new `generateCode` request.
+
+**Example request**
+
+```bash cURL
+curl https://api.alphacast.io/pipelines/123/steps/456/ai/messageHistory \
+  -u "YOUR_API_KEY:"
+```
+
+**Example response**
+
+```json
+[
+  {
+    "role": "user",
+    "content": "Calculate the year-over-year percentage change for the GDP column"
+  },
+  {
+    "role": "assistant",
+    "content": "df['GDP_yoy'] = df.groupby('Country')['GDP'].pct_change(periods=4) * 100\n"
+  }
+]
+```
+
+---
+
+## Dataset AI report
+
+In addition to step-level AI features, Alphacast can generate a high-level AI report for any published dataset:
+
+```
+GET https://api.alphacast.io/datasets/{id}/ai_report
+```
+
+This endpoint returns an AI-generated narrative report about the dataset — its contents, trends, and notable characteristics. The report is useful for providing a quick summary to consumers of your data without requiring them to download and explore it themselves.
+
+```bash cURL
+curl https://api.alphacast.io/datasets/1001/ai_report \
+  -u "YOUR_API_KEY:"
+```
+
+---
+
+## Streaming response format
+
+All AI generation endpoints return a streaming response that uses the [Vercel AI data stream protocol](https://sdk.vercel.ai/docs/ai-sdk-ui/stream-protocol). The response always includes the following header:
+
+```
+x-vercel-ai-data-stream: v1
+```
+
+If you are building a client application, you can use the Vercel AI SDK's `useChat` or `useCompletion` hooks to consume these streams directly. If you are calling the API from a script, use chunked transfer decoding and concatenate the text fragments as they arrive.
+
+<Info>
+Draft data files used for AI generation are available for up to 24 hours after a pipeline run. If the draft has expired, the AI generates a summary based on the manifest alone rather than the actual data values.
+</Info>
