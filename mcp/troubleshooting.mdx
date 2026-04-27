@@ -24,31 +24,15 @@ The API key authenticated successfully but does not have the permission required
 
 **Fixes:**
 - Read access required: ensure the API key's account has at least Read permission on the target repository.
-- Write access required (any pipeline write tool): the account must have Write or Admin on the target repository.
 - Have the repository owner grant your account the missing permission level.
 
-## Pipeline errors
+## Quota errors
 
-### `402 Payment Required` when creating or running a pipeline
+### `402 Payment Required`
 
-The action exceeds your plan's quota — typically pipeline runs per month or paid-tier provider usage.
+The action exceeds your plan's quota — typically downloads or paid-tier provider usage.
 
-**Fix:** upgrade your subscription, or remove an existing pipeline to free quota. See [Error codes](/api/errors#402-payment-required).
-
-### `409 Conflict` when adding or editing a step
-
-Another concurrent request is mutating the same pipeline (e.g., a previous run is still in flight, or you and a teammate edited the pipeline at the same time).
-
-**Fix:** call `get_pipeline` to read the current state, then retry the mutation. Each successful write cancels in-progress runs and starts a fresh one, so the retry is safe.
-
-### `get_step_preview` times out after 60 seconds
-
-The partial run did not complete within the polling window. The pipeline is still running on the server — your client just stopped waiting.
-
-**Fixes:**
-- Retry `get_step_preview` — long-running steps often complete on the second attempt because the partial result is now cached.
-- Use `get_step_data` instead. It returns whatever output the step has cached without triggering a new run.
-- Inspect the run with `get_pipeline_run` to see if a specific step is stuck.
+**Fix:** upgrade your subscription, or wait until the quota resets. See [Error codes](/api/errors#402-payment-required).
 
 ## Connection errors
 

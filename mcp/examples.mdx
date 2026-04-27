@@ -1,7 +1,7 @@
 ---
 title: "MCP Examples"
 sidebarTitle: "Examples"
-description: "End-to-end prompt walkthroughs that combine multiple Alphacast MCP tools to solve realistic research and pipeline tasks."
+description: "End-to-end prompt walkthroughs that combine multiple Alphacast MCP tools to solve realistic discovery and data-fetching tasks."
 ---
 
 These walkthroughs show the kinds of prompts that work well against the Alphacast MCP server. Each one uses several tools in sequence — your client (Claude Desktop, Cursor, etc.) decides the order based on the prompt, but the underlying tool calls are noted so you can debug if something looks off.
@@ -19,54 +19,6 @@ What the model does:
 Tips:
 - Add `excludeDeprecated: true` to the search if you want only currently-maintained series.
 - If your model is going to summarize the data instead of save it, ask for `format: "json"` so it can iterate over rows directly.
-
----
-
-## Build a FRED + Yahoo merge pipeline
-
-> "Create a pipeline in repository 1042 named 'CPI vs SPX' that fetches FRED series CPIAUCSL, fetches Yahoo ticker SPY, merges them on Date, and publishes to a new dataset I'll create."
-
-What the model does:
-
-1. Calls **`list_repositories`** to confirm it has Write on repository 1042.
-2. (Optional) Calls **`get_provider`** with `slug: "fred"` and `slug: "yahoo"` to confirm parameter shapes.
-3. Calls **`create_pipeline`** with the four steps in order:
-
-   ```json
-   {
-     "repositoryId": 1042,
-     "name": "CPI vs SPX",
-     "steps": [
-       { "type": "fetch-fred", "order": 0, "configuration": { "series": ["CPIAUCSL"] } },
-       { "type": "fetch-yahoo", "order": 1, "configuration": { "tickers": ["SPY"], "period": "10y" } },
-       { "type": "merge",       "order": 2, "configuration": { "on": ["Date"] } },
-       { "type": "publish",     "order": 3, "configuration": { "datasetId": "<new>" } }
-     ]
-   }
-   ```
-
-4. The pipeline auto-runs. The model calls **`get_pipeline`** to confirm validation and the run status.
-
-Tips:
-- The `publish` step needs an existing dataset. Create one in the Alphacast web UI first, then pass its ID.
-- If the model asks you for the dataset ID, paste it from the Alphacast dataset URL.
-
----
-
-## Debug a failed step without re-running the whole pipeline
-
-> "Pipeline 4321 failed. Show me the logs of step 2 and tell me what went wrong, then preview step 1 to see the data going into step 2."
-
-What the model does:
-
-1. **`get_pipeline`** with `pipelineId: 4321` to see the step IDs and current run status.
-2. **`get_pipeline_run`** for the last failed run to read the per-step error log.
-3. **`get_step_preview`** with `stepOrder: 1` to materialize what step 2 was given as input.
-4. Summarizes the upstream data shape and the downstream error.
-
-Tips:
-- `get_step_preview` polls up to 60 seconds. If it times out, fall back to `get_step_data` to read whatever was last cached.
-- Once you understand the bug, use `edit_pipeline_step` to fix step 2 — the auto-run picks up the fix and the pipeline re-runs end-to-end.
 
 ---
 
@@ -98,3 +50,18 @@ What the model does:
 Tips:
 - Always preview before pulling full data — it keeps the conversation fast and avoids token bloat.
 - If two providers carry the same series, prefer the one whose `license` field is most permissive for your use case.
+
+---
+
+## Compare a series across multiple providers
+
+> "Find unemployment rate series for the United States from FRED, BLS, and OECD. Pull a recent preview from each and tell me how they differ."
+
+What the model does:
+
+1. **`search_provider`** on `fred` with `query: "unemployment rate"`, then on `bls` and `oecd` with similar queries.
+2. **`get_series`** (preview) on the top candidate from each provider.
+3. Compares frequency, seasonal adjustment, and date coverage across the three.
+
+Tips:
+- The same indicator can have different methodology across providers (e.g., seasonally adjusted vs. raw, monthly vs. quarterly). The metadata returned by `get_series` calls this out — read it before treating the series as interchangeable.

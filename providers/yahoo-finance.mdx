@@ -71,7 +71,7 @@ curl "https://api.alphacast.io/tickers/AAPL/data?\$format=tsv&\$top=20"
 | `period` | `1d`, `5d`, `1mo`, `3mo`, `6mo`, `1y`, `2y`, `5y`, `10y`, `ytd`, `max` | `5y` | Time period to fetch |
 
 <Warning>
-  The `period` parameter uses Yahoo Finance period codes, not calendar dates. If you need data starting from a specific date, use `period=max` and filter the result in your pipeline.
+  The `period` parameter uses Yahoo Finance period codes, not calendar dates. If you need data starting from a specific date, use `period=max` and filter the result client-side.
 </Warning>
 
 ## Example: AAPL price history
@@ -125,23 +125,6 @@ curl "https://api.alphacast.io/tickers/AAPL/data?\$format=tsv&\$top=20"
 <Tip>
   Yahoo Finance uses `^` as a prefix for indices (e.g., `^GSPC`, `^DJI`, `^VIX`) and `-USD` or `=X` suffixes for crypto and forex pairs. These follow the same format in Alphacast.
 </Tip>
-
-## Using Yahoo Finance in pipelines
-
-To pull ticker data into an Alphacast pipeline, add a `fetch-yahoo` step.
-
-```json
-{
-  "type": "fetch-yahoo",
-  "order": 0,
-  "configuration": {
-    "tickers": ["AAPL"],
-    "period": "5y"
-  }
-}
-```
-
-The step produces a dataset with columns for date, open, high, low, close, volume, and adjusted close, ready for further transformation steps in the pipeline.
 
 <Note>
   Yahoo Finance data is sourced from Yahoo's public market data feeds. Alphacast does not control data availability, coverage, or accuracy. For production-grade financial data requiring guaranteed uptime or licensing, consider a commercial data provider.

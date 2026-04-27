@@ -6,8 +6,9 @@
 drafts/
 *.draft.mdx
 
-# Hidden pipeline content (kept on disk for easy re-enable; pipeline access is via the MCP server only)
+# Pipelines are not exposed in the public docs. Files kept on disk for easy re-enable.
 api/pipelines/
-pipelines/overview.mdx
-pipelines/running.mdx
-pipelines/ai-features.mdx
+pipelines/
+concepts/pipelines.mdx
+mcp/tools/pipelines-read.mdx
+mcp/tools/pipelines-write.mdx

@@ -186,20 +186,6 @@ The following country codes are supported in the `country` parameter: `all`, `US
   </Step>
 </Steps>
 
-## Using World Bank data in pipelines
-
-To pull World Bank data into an Alphacast pipeline, first fetch the full series using `POST /providers/worldbank/series/{series_id}/data`, publish the result to an Alphacast dataset, and then reference that dataset in a `fetch-dataset` step in your pipeline.
-
-```json
-{
-  "type": "fetch-dataset",
-  "order": 0,
-  "configuration": {
-    "datasetId": 1234
-  }
-}
-```
-
 <AccordionGroup>
   <Accordion title="Understanding World Bank indicator IDs">
     World Bank indicator codes follow a dot-separated topic hierarchy. For example, `NY.GDP.MKTP.CD` breaks down as:
@@ -213,7 +199,7 @@ To pull World Bank data into an Alphacast pipeline, first fetch the full series 
   </Accordion>
 
   <Accordion title="Data availability and coverage">
-    Coverage varies by indicator and country. High-income countries typically have data back to 1960; lower-income countries may have shorter or more gaps-heavy series. The World Bank updates most indicators annually, usually with a 1–2 year publication lag. Preview a series before building a pipeline that depends on recent values.
+    Coverage varies by indicator and country. High-income countries typically have data back to 1960; lower-income countries may have shorter or more gaps-heavy series. The World Bank updates most indicators annually, usually with a 1–2 year publication lag. Preview a series before relying on its most recent values.
   </Accordion>
 
   <Accordion title="License and attribution">

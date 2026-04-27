@@ -1,5 +1,5 @@
 ---
-title: "Fetch FRED Data in Alphacast Pipelines"
+title: "Fetch FRED Data in Alphacast"
 description: "Fetch FRED economic time series in Alphacast using the API Navigator or direct endpoints. Supports units, frequency, and date range parameters."
 ---
 
@@ -199,21 +199,6 @@ curl "https://api.alphacast.io/fred/CPIAUCSL/data?start=2020-01-01&end=2024-12-3
     ```
   </Step>
 </Steps>
-
-## Using FRED in pipelines
-
-To pull FRED data into an Alphacast pipeline, add a `fetch-fred` step and specify the series ID. The pipeline step accepts the same `units` and `frequency` parameters described above.
-
-```json
-{
-  "type": "fetch-fred",
-  "order": 0,
-  "configuration": {
-    "series": ["CPIAUCSL"],
-    "fromDate": "2000-01-01"
-  }
-}
-```
 
 <Tip>
   FRED series IDs are always uppercase (e.g., `GDP`, `FEDFUNDS`, `CPIAUCSL`). Alphacast normalizes the case automatically, but using uppercase in your code avoids potential confusion.

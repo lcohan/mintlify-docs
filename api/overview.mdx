@@ -1,9 +1,9 @@
 ---
 title: "Alphacast REST API Reference"
-description: "Explore the Alphacast REST API to manage repositories, datasets, pipelines, and data providers programmatically from any HTTP client."
+description: "Explore the Alphacast REST API to manage repositories, datasets, and data providers programmatically from any HTTP client."
 ---
 
-The Alphacast API gives you programmatic access to the same data and workflows available in the Alphacast platform. You can list and create repositories, upload and query datasets, trigger pipeline runs, and browse data providers — all over standard HTTP. Every response is JSON, and authentication uses your personal API key.
+The Alphacast API gives you programmatic access to the same data and workflows available in the Alphacast platform. You can list and create repositories, upload and query datasets, and browse data providers — all over standard HTTP. Every response is JSON, and authentication uses your personal API key.
 
 ## Base URL
 
@@ -105,7 +105,7 @@ The Alphacast API is organized into the resource groups below. Each group has it
 
 <CardGroup cols={2}>
   <Card title="Repositories" icon="folder" href="/api/repositories/list">
-    Create and manage repositories, which are the top-level containers for organizing your datasets and pipelines.
+    Create and manage repositories, which are the top-level containers for organizing your datasets.
   </Card>
   <Card title="Datasets" icon="table" href="/api/datasets/list">
     Upload, query, and manage datasets — including column configuration, data versioning, and export formats.
@@ -114,7 +114,3 @@ The Alphacast API is organized into the resource groups below. Each group has it
     Browse and query external financial data providers such as FRED, BLS, and market data sources.
   </Card>
 </CardGroup>
-
-<Note>
-  Programmatic pipeline operations (create, edit steps, run, monitor) are available through the Alphacast MCP server. See the [MCP](/mcp/overview) tab for setup and tool reference.
-</Note>

@@ -79,7 +79,7 @@ The action you attempted requires a higher membership tier than your current pla
 **Common causes:**
 
 - Creating an additional private repository beyond your plan's limit.
-- Triggering a pipeline run on a paid-tier provider while on a free plan.
+- Fetching data from a paid-tier provider while on a free plan.
 - Downloading data that exceeds your plan's monthly export quota.
 
 **Fix:** upgrade your Alphacast subscription, or remove an existing resource to free up quota.
@@ -109,9 +109,8 @@ The resource you requested does not exist.
 
 **Common causes:**
 
-- The dataset, pipeline, or repository ID in the URL is wrong. Double-check the ID in the Alphacast UI or via a `GET /datasets` list request.
+- The dataset or repository ID in the URL is wrong. Double-check the ID in the Alphacast UI or via a `GET /datasets` list request.
 - The resource was deleted after you last retrieved its ID.
-- You are referencing a pipeline step ID that does not belong to the pipeline in the URL.
 
 ---
 

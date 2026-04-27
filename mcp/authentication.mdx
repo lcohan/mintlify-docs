@@ -27,8 +27,8 @@ The MCP server inherits whatever permissions the API key has on the underlying a
 | Account permission | What MCP can do |
 |---|---|
 | Read on a repository | List, search, and download datasets in that repository. |
-| Write on a repository | All Read operations, plus create datasets and create or edit pipelines. |
-| Owner / Admin on a repository | All Write operations. Repository deletion is intentionally not exposed. |
+| Write on a repository | All Read operations. (Dataset and repository creation are intentionally not exposed via MCP.) |
+| Owner / Admin on a repository | Same as Write. Repository and dataset deletion are intentionally not exposed. |
 
 If a tool call returns `403 Forbidden`, the API key does not have the required permission on the target repository. Generate a new key under an account with the right access, or have the repository owner grant you write access.
 

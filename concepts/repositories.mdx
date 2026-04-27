@@ -1,10 +1,10 @@
 ---
 title: "Repositories: Organizing Your Data in Alphacast"
 sidebarTitle: "Repositories"
-description: "Repositories are the top-level containers in Alphacast. Every dataset and pipeline you create belongs to a repository, and you control who can access it."
+description: "Repositories are the top-level containers in Alphacast. Every dataset you create belongs to a repository, and you control who can access it."
 ---
 
-A repository is the top-level container for all your work in Alphacast. Before you can create a dataset or build a pipeline, you need a repository to hold them. Think of a repository like a project folder: it groups related datasets and pipelines together, carries a privacy setting, and lets you share access with teammates at different permission levels.
+A repository is the top-level container for all your work in Alphacast. Before you can create a dataset, you need a repository to hold it. Think of a repository like a project folder: it groups related datasets together, carries a privacy setting, and lets you share access with teammates at different permission levels.
 
 ## Privacy settings
 
@@ -81,7 +81,7 @@ curl -X POST https://api.alphacast.io/repositories \
 </CodeGroup>
 
 <Note>
-Deleting a repository removes all datasets and pipelines inside it. This action cannot be undone.
+Deleting a repository removes all datasets inside it. This action cannot be undone.
 </Note>
 
 ## Request body fields

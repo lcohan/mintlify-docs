@@ -1,13 +1,13 @@
 ---
 title: "DELETE /repositories/{id} — Delete a Repository"
 sidebarTitle: "Delete a repository"
-description: "Permanently delete a repository and all its assets including datasets and pipelines. Requires Owner permission. This action cannot be undone."
+description: "Permanently delete a repository and all its datasets. Requires Owner permission. This action cannot be undone."
 ---
 
-This endpoint permanently deletes a repository and every asset it contains. Only the repository owner can delete a repository. The deletion cascades to all datasets and pipelines stored in the repository, so make sure you have exported or backed up any data you need before calling this endpoint.
+This endpoint permanently deletes a repository and every asset it contains. Only the repository owner can delete a repository. The deletion cascades to all datasets stored in the repository, so make sure you have exported or backed up any data you need before calling this endpoint.
 
 <Warning>
-  Deleting a repository is irreversible. All datasets, pipelines, and associated data inside the repository are permanently removed. There is no way to recover them after deletion.
+  Deleting a repository is irreversible. All datasets and associated data inside the repository are permanently removed. There is no way to recover them after deletion.
 </Warning>
 
 ## Request

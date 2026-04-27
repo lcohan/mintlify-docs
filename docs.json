@@ -32,14 +32,7 @@
             "pages": [
               "concepts/repositories",
               "concepts/datasets",
-              "concepts/pipelines",
               "concepts/data-providers"
-            ]
-          },
-          {
-            "group": "Pipelines",
-            "pages": [
-              "pipelines/step-types"
             ]
           },
           {
@@ -125,8 +118,6 @@
             "pages": [
               "mcp/tools/overview",
               "mcp/tools/search-and-datasets",
-              "mcp/tools/pipelines-read",
-              "mcp/tools/pipelines-write",
               "mcp/tools/providers"
             ]
           },

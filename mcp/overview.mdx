@@ -1,10 +1,10 @@
 ---
 title: "Alphacast MCP Server"
 sidebarTitle: "Overview"
-description: "Connect Claude Desktop, Claude Code, Cursor, and other MCP-compatible clients to Alphacast. Search the catalog, download datasets, and orchestrate pipelines from natural-language prompts."
+description: "Connect Claude Desktop, Claude Code, Cursor, and other MCP-compatible clients to Alphacast. Search the catalog, download datasets, and browse data providers from natural-language prompts."
 ---
 
-The Alphacast Model Context Protocol (MCP) server lets any MCP-compatible client interact with the Alphacast platform through structured tool calls. Search the curated catalog, download dataset rows, browse 15+ external data providers, and build or edit data pipelines — all from inside Claude Desktop, Claude Code, Cursor, or any other client that speaks MCP.
+The Alphacast Model Context Protocol (MCP) server lets any MCP-compatible client interact with the Alphacast platform through structured tool calls. Search the curated catalog, download dataset rows, and browse 15+ external data providers — all from inside Claude Desktop, Claude Code, Cursor, or any other client that speaks MCP.
 
 ## Server endpoint
 
@@ -12,7 +12,7 @@ The Alphacast Model Context Protocol (MCP) server lets any MCP-compatible client
   **Public endpoint:** `https://mcp.alphacast.io` (HTTP streamable transport). Authenticate with the same API key you use for the REST API, sent as a Bearer token in the `Authorization` header.
 </Note>
 
-There is nothing to install. Point your client at the URL above, paste your API key, and the 22 tools below become available immediately.
+There is nothing to install. Point your client at the URL above, paste your API key, and the 13 tools below become available immediately.
 
 ## What you can do
 
@@ -23,8 +23,8 @@ There is nothing to install. Point your client at the URL above, paste your API 
   <Card title="Read datasets" icon="table">
     Download dataset rows in CSV or JSON, fetch column schemas, and inspect repository metadata.
   </Card>
-  <Card title="Build pipelines" icon="diagram-project">
-    Create pipelines, add and edit steps, and inspect intermediate output without running the full pipeline.
+  <Card title="Browse providers" icon="globe">
+    Walk hierarchical catalogs, search series by keyword, and preview or fetch full historical data.
   </Card>
   <Card title="Manage provider keys" icon="key">
     Save and remove third-party API keys (FRED, BLS, INEGI, Banxico) so Alphacast applies them automatically on every fetch.
@@ -50,4 +50,4 @@ There is nothing to install. Point your client at the URL above, paste your API 
 
 ## Safety boundaries
 
-The server intentionally does **not** expose destructive operations. Repositories, datasets, and entire pipelines can only be deleted from the Alphacast web UI — never from an agent. Pipeline steps can be added, edited, and removed, since each mutation is fully reversible from the Alphacast web UI.
+The server intentionally does **not** expose destructive operations. Repositories and datasets can only be deleted from the Alphacast web UI — never from an agent. The MCP surface is read-only with the single exception of `set_user_key`, which stores or removes your third-party provider key.
