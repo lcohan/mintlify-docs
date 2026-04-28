@@ -1,35 +1,32 @@
 ---
 title: "Data Providers: Built-In Sources for Market Data"
 sidebarTitle: "Data providers"
-description: "Alphacast includes 16 built-in data provider connectors — FRED, BLS, World Bank, OECD, and more. Browse, search, and pull series through a single unified REST API."
+description: "Alphacast includes built-in data provider connectors for FRED, BLS, World Bank, OECD, IMF, BIS, and Latin American central banks. Browse, search, and pull series through a single unified REST API."
 ---
 
-Alphacast ships with built-in connectors for 16 data providers, covering central banks, statistical agencies, and financial data sources from around the world. You can browse a provider's catalog hierarchically, search it by keyword, or fetch a specific series by ID — all through the same REST API.
+Alphacast ships with built-in connectors for a curated set of data providers, covering central banks, statistical agencies, and international organizations from around the world. You can browse a provider's catalog hierarchically, search it by keyword, or fetch a specific series by ID — all through the same REST API.
+
+<Card title="Browse the live provider catalog →" icon="compass" href="https://www.alphacast.io/explore/apis">
+  The authoritative list of providers — with their popular series, parameters, and key requirements — lives at **alphacast.io/explore/apis**.
+</Card>
 
 ## Available providers
 
-| Slug | Provider | Capabilities |
-|------|----------|--------------|
-| `bls` | U.S. Bureau of Labor Statistics | hierarchical, search, direct |
-| `fred` | Federal Reserve Bank of St. Louis | search, hierarchical, direct |
-| `worldbank` | World Bank | hierarchical, search, direct |
-| `inegi` | INEGI (Mexico) | hierarchical, direct |
-| `bcch` | Banco Central de Chile | hierarchical, direct |
-| `bcra` | Banco Central de la República Argentina | hierarchical, direct |
-| `banxico` | Bank of Mexico | hierarchical, direct |
-| `bcrp` | Banco Central de Reserva del Perú | hierarchical, direct |
-| `sdmx` | SDMX (generic) | hierarchical, direct |
-| `oecd` | OECD | hierarchical, search, direct |
-| `socrata` | Socrata open data portals | search, direct |
-| `pxweb` | PX-Web (Statistics Canada, SCB, etc.) | hierarchical, direct |
-| `odata` | OData feeds | direct |
-| `eia` | U.S. Energy Information Administration | hierarchical, search, direct |
-| `boe` | Bank of England | hierarchical, direct |
-| `statcan` | Statistics Canada | hierarchical, direct |
-| `bcb` | Banco Central do Brasil | hierarchical, direct |
+| Slug | Provider |
+|------|----------|
+| `bls` | U.S. Bureau of Labor Statistics |
+| `fred` | Federal Reserve Economic Data (St. Louis Fed) |
+| `worldbank` | World Bank Open Data |
+| `inegi` | INEGI — Instituto Nacional de Estadística y Geografía (Mexico) |
+| `bcra` | BCRA — Banco Central de la República Argentina |
+| `bis` | BIS — Bank for International Settlements |
+| `oecd` | OECD Statistics |
+| `imf` | IMF — International Monetary Fund |
+| `bcb-opendata` | BCB — Banco Central do Brasil |
+| `banxico` | Banxico — Banco de México |
 
 <Info>
-Not all providers support all three capability modes. Check the `capabilities` array in the provider list response to know which modes are available for a given provider.
+Not all providers support all three capability modes. Check the `capabilities` array in `GET /providers/{slug}` to know which modes are available for a given provider.
 </Info>
 
 ## Provider capabilities

@@ -1,10 +1,10 @@
 ---
 title: "Fetch Series Data from External Providers"
 sidebarTitle: "Fetch series data"
-description: "Preview or download complete time-series data from FRED, BLS, World Bank, Yahoo Finance, and 10+ other providers using the Alphacast provider API."
+description: "Preview or download complete time-series data from FRED, BLS, World Bank, OECD, IMF, BIS, and Latin American central banks using the Alphacast provider API."
 ---
 
-Once you have found a series ID — through browsing, searching, or the popular series list — you can fetch its data in two steps: a lightweight preview that returns the most recent data points, followed by a full historical fetch. For Yahoo Finance tickers and FRED series, dedicated shortcut endpoints are also available that bypass the provider slug workflow entirely.
+Once you have found a series ID — through browsing, searching, or the popular series list — you can fetch its data in two steps: a lightweight preview that returns the most recent data points, followed by a full historical fetch. For FRED series, a dedicated shortcut endpoint is also available that bypasses the provider slug workflow.
 
 ## Authentication
 
@@ -385,108 +385,6 @@ curl -u YOUR_API_KEY: \
 curl -u YOUR_API_KEY: \
   "https://api.alphacast.io/fred/GDP/data?$format=json&start=2020-01-01&end=2023-12-31"
 ```
-
----
-
-## Ticker endpoints
-
-The ticker endpoints provide price history and metadata for equity, ETF, index, and other market tickers sourced from Yahoo Finance.
-
-### GET /tickers/search/{query}
-
-Searches for tickers matching a company name, symbol, or keyword.
-
-**Path parameters**
-
-<ParamField path="query" type="string" required>
-  Search term. Can be a partial symbol or company name.
-</ParamField>
-
-```bash
-curl -u YOUR_API_KEY: \
-  "https://api.alphacast.io/tickers/search/apple"
-```
-
-**Response**
-
-```json
-{
-  "results": [
-    {"symbol": "AAPL", "name": "Apple Inc.", "exchange": "NMS", "type": "Equity"},
-    {"symbol": "AAPL.BA", "name": "Apple Inc.", "exchange": "BUE", "type": "Equity"}
-  ]
-}
-```
-
----
-
-### GET /tickers/{ticker}
-
-Returns metadata and descriptive information for a specific ticker.
-
-**Path parameters**
-
-<ParamField path="ticker" type="string" required>
-  Ticker symbol. Examples: `AAPL`, `SPY`, `^GSPC`, `BTC-USD`.
-</ParamField>
-
-```bash
-curl -u YOUR_API_KEY: https://api.alphacast.io/tickers/AAPL
-```
-
----
-
-### GET /tickers/{ticker}/data
-
-Returns price history for a ticker. Data is sourced from Yahoo Finance. The default output format is CSV; use `$format=json` for a structured response.
-
-**Path parameters**
-
-<ParamField path="ticker" type="string" required>
-  Ticker symbol. Examples: `AAPL`, `MSFT`, `SPY`, `^GSPC`, `BTC-USD`, `EURUSD=X`.
-</ParamField>
-
-**Query parameters**
-
-<ParamField query="period" type="string" default="5y">
-  Time window for historical data. Accepted values:
-
-  | Value | Description |
-  |---|---|
-  | `1d` | 1 day |
-  | `5d` | 5 days |
-  | `1mo` | 1 month |
-  | `3mo` | 3 months |
-  | `6mo` | 6 months |
-  | `1y` | 1 year |
-  | `2y` | 2 years |
-  | `5y` | 5 years (default) |
-  | `10y` | 10 years |
-  | `ytd` | Year to date |
-  | `max` | Maximum available history |
-</ParamField>
-
-<ParamField query="$format" type="string" default="csv">
-  Output format. Accepted values: `json`, `csv`, `xlsx`, `tsv`.
-</ParamField>
-
-<ParamField query="$top" type="number">
-  Limit the number of rows returned. Omit to return the full period.
-</ParamField>
-
-```bash
-# Get 1 year of Apple price history as JSON
-curl -u YOUR_API_KEY: \
-  "https://api.alphacast.io/tickers/AAPL/data?period=1y&\$format=json"
-
-# Get 5 most recent rows of S&P 500 data
-curl -u YOUR_API_KEY: \
-  "https://api.alphacast.io/tickers/%5EGSPC/data?period=1mo&\$format=json&\$top=5"
-```
-
-<Tip>
-URL-encode special characters in ticker symbols: `^` becomes `%5E` and `-` is safe to pass as-is. For example, `^GSPC` should be requested as `%5EGSPC`.
-</Tip>
 
 ---
 

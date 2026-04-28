@@ -46,10 +46,7 @@
           {
             "group": "Data Providers",
             "pages": [
-              "providers/overview",
-              "providers/fred",
-              "providers/yahoo-finance",
-              "providers/world-bank"
+              "providers/overview"
             ]
           }
         ]

@@ -1,10 +1,10 @@
 ---
 title: "Provider Tools"
 sidebarTitle: "Providers"
-description: "Tools for discovering external data providers (FRED, BLS, World Bank, Yahoo Finance, and more), browsing their catalogs, fetching series, and managing third-party API keys."
+description: "Tools for discovering external data providers (FRED, BLS, World Bank, OECD, IMF, BIS, and Latin American central banks), browsing their catalogs, fetching series, and managing third-party API keys."
 ---
 
-Seven tools for working with the 15+ external data providers Alphacast integrates with. Six are read-only; `set_user_key` writes a stored credential.
+Seven tools for working with the external data providers Alphacast integrates with. Six are read-only; `set_user_key` writes a stored credential. Browse the live catalog at [alphacast.io/explore/apis](https://www.alphacast.io/explore/apis).
 
 ## `list_providers`
 
@@ -27,7 +27,7 @@ List every available provider, or search the top 5 by keyword.
 Get full metadata for one provider, including its tunable parameters and curated popular series.
 
 <ParamField body="slug" type="string" required>
-  Provider slug. Examples: `fred`, `bls`, `worldbank`, `yahoo`, `bcra`, `inegi`, `banxico`.
+  Provider slug. Examples: `fred`, `bls`, `worldbank`, `bcra`, `inegi`, `banxico`, `oecd`, `imf`, `bis`, `bcb-opendata`.
 </ParamField>
 
 Response includes `parameters` (tunable knobs like FRED's `units` or `frequency`), `popular_series`, key requirements, and the `browse_root_label` for hierarchical navigation.

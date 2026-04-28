@@ -1,29 +1,34 @@
 ---
-title: "Connect to 15+ Financial Data Providers"
-description: "Browse, search, and fetch time series from central banks, statistical agencies, and international organizations through a single unified API."
+title: "Connect to External Data Providers"
+description: "Pull series from central banks, statistical agencies, and international organizations through a single unified Alphacast API. Browse the live catalog at alphacast.io/explore/apis."
 ---
 
-Alphacast connects you to 15+ global economic and financial data providers through a single unified interface. Whether you need U.S. GDP from FRED, exchange rates from Argentina's central bank, or development indicators from the World Bank, every provider follows the same REST conventions — browse, search, preview, then fetch. You do not need to learn each provider's native API.
+Alphacast connects you to a curated catalog of external data providers — central banks, statistical agencies, and international organizations — through a single unified interface. Every provider follows the same REST conventions: browse, search, preview, then fetch. You do not need to learn each provider's native API.
 
-## Available providers
+<Card title="Browse the live catalog →" icon="compass" href="https://www.alphacast.io/explore/apis">
+  The full list of supported providers, their capabilities, popular series, and any API-key requirements lives at **alphacast.io/explore/apis**. That page is always the source of truth — this documentation only describes how to use the API surface.
+</Card>
 
-The providers listed below are enabled in the catalog. Providers marked as requiring an API key need credentials from the source institution before you can fetch data.
+## Currently supported providers
 
-<CardGroup cols={2}>
-  <Card title="FRED Economic Data" icon="landmark" href="/providers/fred">
-    Federal Reserve Bank of St. Louis — hundreds of thousands of economic time series from dozens of national and international sources.
-  </Card>
-  <Card title="Yahoo Finance" icon="chart-line" href="/providers/yahoo-finance">
-    Equity, ETF, index, crypto, and forex price history for thousands of global instruments. No API key required.
-  </Card>
-  <Card title="World Bank Open Data" icon="globe" href="/providers/world-bank">
-    Global development indicators covering economics, health, education, environment, and more for 200+ countries. No API key required.
-  </Card>
-</CardGroup>
+| Slug | Provider | API key required |
+|---|---|---|
+| `bls` | U.S. Bureau of Labor Statistics | Optional (25 req/day limit without) |
+| `fred` | Federal Reserve Economic Data (St. Louis Fed) | Yes |
+| `worldbank` | World Bank Open Data | No |
+| `inegi` | INEGI — Instituto Nacional de Estadística y Geografía (Mexico) | Yes |
+| `bcra` | BCRA — Banco Central de la República Argentina | No |
+| `bis` | BIS — Bank for International Settlements | No |
+| `oecd` | OECD Statistics | No |
+| `imf` | IMF — International Monetary Fund | No |
+| `bcb-opendata` | BCB — Banco Central do Brasil | No |
+| `banxico` | Banxico — Banco de México | Yes |
+
+Use these slugs in the API paths below. To see capabilities (`hierarchical`, `search`, `direct`), parameters, and popular series for any provider, call `GET /providers/{slug}` or open it in [the live catalog](https://www.alphacast.io/explore/apis).
 
 ## API endpoints
 
-All provider endpoints are available under `https://api.alphacast.io`. Most are accessible without authentication for reading, but some providers require that you first save your third-party API key via the `/user-keys` endpoint.
+All provider endpoints are available under `https://api.alphacast.io`. Authentication uses your Alphacast API key over HTTP Basic Auth — see the [authentication guide](/authentication).
 
 ### List and discover providers
 
@@ -145,7 +150,7 @@ The walkthrough below shows the full flow from discovering providers to download
   </Step>
 
   <Step title="Save an API key (if required)">
-    For providers like FRED or BLS that enforce rate limits or require authentication, save your key once.
+    For providers like FRED, BLS, INEGI, or Banxico that enforce rate limits or require authentication, save your key once.
 
     ```bash
     curl -X PUT https://api.alphacast.io/user-keys/fred \
@@ -157,23 +162,6 @@ The walkthrough below shows the full flow from discovering providers to download
   </Step>
 </Steps>
 
-## Provider slugs reference
-
-Use these slugs in API paths (`/providers/{slug}/...`).
-
-| Slug | Provider name | Capabilities | API key required |
-|---|---|---|---|
-| `bls` | BLS Public Data | hierarchical, search, direct | Optional (25 req/day limit without) |
-| `fred` | FRED Economic Data | search, hierarchical, direct | Yes |
-| `worldbank` | World Bank Open Data | hierarchical, direct | No |
-| `inegi` | INEGI Indicators | search, hierarchical, direct | Yes |
-| `bcra` | BCRA — Estadísticas Monetarias | search, direct | No |
-| `banxico` | Banxico SIE | search, hierarchical, direct | Yes |
-| `oecd` | OECD Statistics | hierarchical, search, direct | No |
-| `imf` | IMF Data | hierarchical, search, direct | No |
-| `bis` | BIS Statistics | hierarchical, search, direct | No |
-| `bcb-opendata` | BCB Brazil — Open Data | hierarchical, search, direct | No |
-
 <Tip>
-  Not sure which provider has the data you need? Use the provider match endpoint with a free-text description: `GET /providers/match?q=argentina+exchange+rate`. It returns the top 5 matching providers based on your query.
+  Not sure which provider has the data you need? Use the provider match endpoint with a free-text description: `GET /providers/match?q=argentina+exchange+rate`. It returns the top matching providers based on your query.
 </Tip>
