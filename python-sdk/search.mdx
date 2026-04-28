@@ -1,0 +1,123 @@
+---
+title: "Search"
+description: "Find datasets across your repositories and Alphacast's public catalog using the Python SDK's search client."
+---
+
+`alphacast.search.datasets()` runs a full-text search against Alphacast's catalog. By default it scopes to datasets your account has read access to (your own repositories plus anything you've been granted access to). Pass `search_all=True` to extend the search to every public dataset on Alphacast.
+
+```python
+from alphacast import Alphacast
+
+alphacast = Alphacast("YOUR_API_KEY")
+results = alphacast.search.datasets("GDP Argentina")
+
+for ds in results["data"]:
+    print(ds["id"], ds["name"])
+```
+
+## Method signature
+
+```python
+search.datasets(
+    query,
+    offset=0,
+    length=10,
+    repository_id=None,
+    search_all=False,
+    exclude_deprecated=False,
+)
+```
+
+<ParamField path="query" type="str" required>
+  Free-text search. Supports fuzzy matching, so close spellings still rank.
+</ParamField>
+
+<ParamField path="offset" type="int" default="0">
+  Number of results to skip. Use with `length` for pagination.
+</ParamField>
+
+<ParamField path="length" type="int" default="10">
+  Maximum number of results to return.
+</ParamField>
+
+<ParamField path="repository_id" type="int">
+  Restrict results to a single repository.
+</ParamField>
+
+<ParamField path="search_all" type="bool" default="False">
+  When `True`, search every public dataset on Alphacast. When `False`, search only datasets your account can already read.
+</ParamField>
+
+<ParamField path="exclude_deprecated" type="bool" default="False">
+  When `True`, omit datasets flagged as deprecated.
+</ParamField>
+
+## Response shape
+
+The method returns a dict:
+
+```python
+{
+  "data": [...],         # list of matching datasets
+  "totalItems": 124,     # total matches across all pages
+  "totalPages": 13,
+  "currentPage": 1,
+  "offset": 0,
+}
+```
+
+Each entry in `data` includes the dataset's `id`, `name`, `description`, source metadata, and other fields the search service returns. Use the `id` to feed `dataset(id)` for further reads.
+
+## Examples
+
+### Paginate through results
+
+```python
+page1 = alphacast.search.datasets("inflation", offset=0, length=10)
+page2 = alphacast.search.datasets("inflation", offset=10, length=10)
+
+print(f"Showing {len(page1['data'])} of {page1['totalItems']} results")
+```
+
+### Search the entire public catalog
+
+```python
+results = alphacast.search.datasets("CPI", search_all=True)
+```
+
+Useful when you want to discover datasets you don't already have access to. Public results can be downloaded directly with `dataset(id).download_data(...)`.
+
+### Filter by repository
+
+```python
+results = alphacast.search.datasets("employment", repository_id=42)
+```
+
+### Exclude deprecated datasets
+
+```python
+results = alphacast.search.datasets("GDP", exclude_deprecated=True)
+```
+
+## Search results → download
+
+A common pattern is to search, pick a result, and pull the data:
+
+```python
+results = alphacast.search.datasets("Argentina inflation", search_all=True, length=5)
+
+# Take the top hit
+top = results["data"][0]
+print("Selected:", top["id"], top["name"])
+
+df = alphacast.datasets.dataset(top["id"]).download_data(format="pandas")
+```
+
+## Notes on the underlying endpoint
+
+`search.datasets()` calls the Alphacast workspace search endpoint at `https://www.alphacast.io/api/search`, not the standard REST API on `api.alphacast.io`. The SDK passes your API key as an `apiKey` query parameter on this endpoint — the search service does not currently support HTTP Basic Auth. Permissions are still respected: you only see what your key is authorized to read, plus any public content if `search_all=True`.
+
+## Next steps
+
+- Pull a dataset by ID — see [Downloading data](/python-sdk/downloading).
+- Programmatically discover what's in a repository — see [Datasets](/python-sdk/datasets).

@@ -1,0 +1,75 @@
+---
+title: "Series"
+description: "Read metadata and data for a single Alphacast series by ID using the Python SDK."
+---
+
+A **series** is a single time-indexed variable inside a dataset — for example, the headline CPI of a single country. Series are addressable by ID across all of Alphacast, so you can pull them directly without going through their parent dataset.
+
+The SDK exposes series via `alphacast.series(series_id)`, which returns a `Series` handle.
+
+```python
+from alphacast import Alphacast
+
+alphacast = Alphacast("YOUR_API_KEY")
+series = alphacast.series(12345)
+```
+
+<Info>
+  You need read permission on the parent dataset to read a series. Find a series ID in the URL on [alphacast.io](https://www.alphacast.io) when viewing an individual variable.
+</Info>
+
+## Read metadata
+
+```python
+meta = alphacast.series(12345).metadata()
+print(meta)
+```
+
+Returns a dict describing the series — its name, dataset ID, units, frequency, and other metadata fields exposed by the REST API.
+
+## Download the data
+
+Like datasets, series support the same five output formats:
+
+```python
+# pandas
+df = alphacast.series(12345).download_data(format="pandas")
+
+# csv bytes
+csv_bytes = alphacast.series(12345).download_data("csv")
+
+# json (list of dicts)
+rows = alphacast.series(12345).download_data(format="json")
+
+# xlsx / tsv bytes
+xlsx_bytes = alphacast.series(12345).download_data("xlsx")
+tsv_bytes = alphacast.series(12345).download_data("tsv")
+```
+
+When `format="pandas"`, the SDK fetches CSV under the hood and returns a parsed `DataFrame`. When `format="json"`, the SDK parses newline-delimited JSON and returns a list of dicts.
+
+<Note>
+  The Series download endpoint does not currently expose date-range or column filters. If you need filtered reads, fetch from the parent dataset with [`download_data`](/python-sdk/downloading) instead.
+</Note>
+
+## Method signature
+
+```python
+class Series:
+    def metadata(self) -> dict: ...
+    def download_data(self, format: str = "csv"): ...
+```
+
+<ParamField path="format" type="str" default='"csv"'>
+  One of `"csv"`, `"json"`, `"xlsx"`, `"tsv"`, or `"pandas"`. The first four return raw bytes (or list of dicts for JSON); `"pandas"` returns a DataFrame.
+</ParamField>
+
+## When to use series vs datasets
+
+- **Series** — ideal when you only need a single variable, and you already know its series ID. Lighter payload, single-column DataFrame.
+- **Dataset** — ideal when you need multiple variables together, want to filter by entity or date, or want to manage uploads. Use [`download_data`](/python-sdk/downloading) on the dataset handle.
+
+## Next steps
+
+- Find dataset and series content with [Search](/python-sdk/search).
+- Combine multiple variables in a single download via [Downloading data](/python-sdk/downloading).

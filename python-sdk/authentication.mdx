@@ -1,0 +1,96 @@
+---
+title: "Authentication"
+description: "How the Alphacast Python SDK authenticates requests with your API key, plus best practices for storing the key safely."
+---
+
+The Alphacast Python SDK authenticates every request with your personal API key. Internally the SDK uses HTTP Basic Auth — your key is sent as the username with an empty password, exactly as documented for the [REST API](/authentication). You only need to provide the key once when you create the client.
+
+<Warning>
+  Your API key grants full access to your Alphacast account. Do not commit it to source control, share it in chat or screenshots, or embed it in client-side code that ships to users.
+</Warning>
+
+## Get your API key
+
+1. Sign in at [alphacast.io](https://www.alphacast.io/api/auth/login).
+2. Click your user avatar in the left sidebar to open **Account Settings**.
+3. Find or generate your key under the **API Key** section.
+
+Treat the key like a password — anyone holding it can read, upload, and delete data on your behalf.
+
+## Initialize the client
+
+Pass the key to the `Alphacast` constructor. Every method called on the resulting client uses that key:
+
+```python
+from alphacast import Alphacast
+
+alphacast = Alphacast("YOUR_API_KEY")
+```
+
+The client stores the key in memory and re-uses it for every request. If you need to switch accounts in the same script, instantiate a second client.
+
+## Recommended: read from an environment variable
+
+Hardcoding API keys in your code makes it easy to leak them by accident. Read the key from an environment variable instead:
+
+```python
+import os
+from alphacast import Alphacast
+
+alphacast = Alphacast(os.environ["ALPHACAST_API_KEY"])
+```
+
+Set the variable in your shell:
+
+<CodeGroup>
+
+```bash macOS / Linux
+export ALPHACAST_API_KEY="your-key-here"
+```
+
+```powershell Windows (PowerShell)
+$env:ALPHACAST_API_KEY = "your-key-here"
+```
+
+</CodeGroup>
+
+## Loading from a `.env` file
+
+The SDK declares `python-dotenv` as a dependency, so you can keep your key in a local `.env` file:
+
+```
+# .env
+ALPHACAST_API_KEY=your-key-here
+```
+
+```python
+import os
+from dotenv import load_dotenv
+from alphacast import Alphacast
+
+load_dotenv()
+alphacast = Alphacast(os.environ["ALPHACAST_API_KEY"])
+```
+
+<Tip>
+  Add `.env` to your `.gitignore` so the file is never committed.
+</Tip>
+
+## Errors
+
+If the API key is missing or invalid, the SDK raises an `Exception` whose message includes the HTTP status code returned by the server. The most common case is `401`:
+
+```
+Exception: API failed with status code 401
+```
+
+Common causes:
+- The key was mistyped or copied with leading/trailing whitespace.
+- The key was revoked or regenerated from the Alphacast UI.
+- The key belongs to an account that no longer has access to the requested resource (in which case you may also see `403`).
+
+If you suspect your key has been exposed, regenerate it from your account settings. Regenerating immediately invalidates the old key.
+
+## How the SDK uses your key
+
+Internally, every method in the SDK calls `requests.get`, `requests.post`, `requests.put`, or `requests.delete` with `auth=HTTPBasicAuth(self.api_key, "")`. The Search endpoint is the one exception — it sends the key as an `apiKey` query parameter because the search endpoint lives on the workspace host (`alphacast.io`) rather than on `api.alphacast.io`. Both transports are equivalent in terms of authority — both grant the same access — but Basic Auth is preferred for everything that supports it because the credential travels in the `Authorization` header rather than in the URL.

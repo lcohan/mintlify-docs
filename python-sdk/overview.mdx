@@ -1,0 +1,93 @@
+---
+title: "Alphacast Python SDK"
+sidebarTitle: "Overview"
+description: "Install the Alphacast Python SDK and interact with repositories, datasets, series, and search from your Python code — no need to call the REST API directly."
+---
+
+The **Alphacast Python SDK** is the official Python client for the Alphacast API. It wraps the REST endpoints in a small set of Python classes so you can manage repositories, upload and download datasets, query individual series, and search for content without writing HTTP code by hand.
+
+The SDK is designed for the most common workflows of Alphacast users:
+
+- **Pulling data into a notebook** — return any dataset directly as a `pandas.DataFrame`.
+- **Pushing your own data** — upload a `DataFrame` or CSV with one method call.
+- **Automating data pipelines** — create repositories, initialize columns, and check process status programmatically.
+- **Discovery** — search datasets across your repositories or the entire public catalog.
+
+<Info>
+  The SDK is open source and published on PyPI as [`alphacast`](https://pypi.org/project/alphacast/). Source code, issues, and releases live at [github.com/Alphacastio/alphacast-python-sdk](https://github.com/Alphacastio/alphacast-python-sdk).
+</Info>
+
+## Installation
+
+Install the package from PyPI:
+
+```bash
+pip install alphacast
+```
+
+The SDK targets Python 3.6+ and depends on `requests`, `pandas`, and `python-dotenv`. These are installed automatically.
+
+## Initialize the client
+
+Import the `Alphacast` class and instantiate it with your API key. You can find your key in your [account settings](https://www.alphacast.io/api/auth/login) under **Account Settings → API Key**.
+
+```python
+from alphacast import Alphacast
+
+alphacast = Alphacast("YOUR_API_KEY")
+```
+
+The constructor returns a single client object that exposes four sub-clients — one per resource type:
+
+| Attribute | Class | Description |
+|---|---|---|
+| `alphacast.repository` | `Repository` | Create, list, and delete repositories. |
+| `alphacast.datasets` | `Datasets` | List, create, upload, download, and delete datasets. |
+| `alphacast.search` | `Search` | Full-text search for datasets across the catalog. |
+| `alphacast.series(id)` | `Series` | Read metadata and data for a single series. |
+
+<Tip>
+  Avoid hardcoding your API key. Read it from an environment variable instead:
+
+  ```python
+  import os
+  from alphacast import Alphacast
+
+  alphacast = Alphacast(os.environ["ALPHACAST_API_KEY"])
+  ```
+
+  The SDK also imports `python-dotenv` as a dependency — load a `.env` file with `from dotenv import load_dotenv; load_dotenv()` before reading the variable.
+</Tip>
+
+## What's in this section
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="bolt" href="/python-sdk/quickstart">
+    End-to-end example: install, create a repository, upload a CSV, and download it as a DataFrame.
+  </Card>
+  <Card title="Authentication" icon="key" href="/python-sdk/authentication">
+    Where to find your API key and how the SDK uses it.
+  </Card>
+  <Card title="Repositories" icon="folder" href="/python-sdk/repositories">
+    `repository.read_all`, `read_by_id`, `read_by_name`, `create`, `delete`.
+  </Card>
+  <Card title="Datasets" icon="table" href="/python-sdk/datasets">
+    Find datasets by name or ID and inspect their metadata, columns, and date stats.
+  </Card>
+  <Card title="Uploading data" icon="upload" href="/python-sdk/uploading">
+    Create a dataset, initialize its columns, and upload from a DataFrame or CSV.
+  </Card>
+  <Card title="Downloading data" icon="download" href="/python-sdk/downloading">
+    Pull data as JSON, CSV, XLSX, or directly into a `pandas.DataFrame`.
+  </Card>
+  <Card title="Series" icon="chart-line" href="/python-sdk/series">
+    Read metadata and data for individual series by ID.
+  </Card>
+  <Card title="Search" icon="magnifying-glass" href="/python-sdk/search">
+    Search datasets across your repositories and Alphacast's public catalog.
+  </Card>
+</CardGroup>
+
+## Beyond the SDK
+
+The SDK does not currently cover every endpoint exposed by the REST API (data providers, MCP, account management). For workflows that fall outside the SDK's surface, fall back to the [REST API reference](/api/overview) and call the API with `requests` directly using your same API key.

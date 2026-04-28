@@ -1,0 +1,146 @@
+---
+title: "Datasets"
+description: "List, look up, and inspect datasets with the Alphacast Python SDK — read metadata, columns, and date stats before uploading or downloading."
+---
+
+Datasets are the core unit of data in Alphacast. The SDK exposes them through `alphacast.datasets` (the collection-level client) and `alphacast.datasets.dataset(id)` (a per-dataset handle).
+
+```python
+from alphacast import Alphacast
+
+alphacast = Alphacast("YOUR_API_KEY")
+alphacast.datasets               # collection-level operations
+alphacast.datasets.dataset(123)  # operations on a specific dataset
+```
+
+This page covers **finding** datasets and **inspecting** their metadata. For mutations, see:
+
+- [Uploading data](/python-sdk/uploading) — `create`, `initialize_columns`, `upload_data_from_df`, `upload_data_from_csv`.
+- [Downloading data](/python-sdk/downloading) — `download_data` with filters and format options.
+- [Process status](/python-sdk/processes) — checking the result of an upload.
+
+## List your datasets
+
+`read_all()` returns every dataset you have access to (owner, admin, or write):
+
+```python
+datasets = alphacast.datasets.read_all()
+
+for d in datasets:
+    print(d["id"], d["name"], d["repositoryId"])
+```
+
+<Note>
+  `read_all()` only returns datasets where your account has owner, admin, or write permission. To pull data from a public dataset you don't directly own, look it up by ID — see [`download_data`](/python-sdk/downloading).
+</Note>
+
+## Look up a dataset by name
+
+```python
+ds = alphacast.datasets.read_by_name("Quarterly GDP")
+
+if ds:
+    print("Found:", ds["id"])
+```
+
+By default this scans every dataset you can access and returns the first match by name. To disambiguate when the same name exists in multiple repositories, pass `repo_id`:
+
+```python
+ds = alphacast.datasets.read_by_name("Quarterly GDP", repo_id=42)
+```
+
+If no dataset matches, the method returns `None`.
+
+## Per-dataset handle
+
+Most operations on a specific dataset go through `alphacast.datasets.dataset(id)`, which returns a `Dataset` handle bound to that ID:
+
+```python
+ds = alphacast.datasets.dataset(7938)
+```
+
+The handle exposes the methods documented below for inspecting metadata, plus the upload/download/process methods covered on their own pages.
+
+### `metadata()`
+
+Returns the dataset record: `id`, `name`, `description`, `createdAt`, `updatedAt`, `repositoryId`, and your permission level on it.
+
+```python
+meta = alphacast.datasets.dataset(7938).metadata()
+print(meta["name"], meta["repositoryId"], meta["permission"])
+```
+
+### `get_column_definitions()`
+
+Returns the list of column definitions stored on the dataset's manifest. Each definition has at least `sourceName` and `dataType`, and entity columns include `isEntity: True`.
+
+```python
+columns = alphacast.datasets.dataset(7938).get_column_definitions()
+
+for c in columns:
+    print(c["sourceName"], c.get("dataType"), c.get("isEntity"))
+```
+
+Use this to confirm what Alphacast knows about your columns before uploading new data — especially after editing the manifest from the web UI.
+
+### `datestats()`
+
+Returns the inferred frequency and the first/last available dates as raw bytes from the API. Decode and parse the JSON to use the result:
+
+```python
+import json
+
+raw = alphacast.datasets.dataset(7938).datestats()
+stats = json.loads(raw)
+print(stats)
+# {"frequency": "Q", "minDate": "2010-01-01", "maxDate": "2024-10-01"}
+```
+
+This is handy for deciding whether a refresh is needed — compare `maxDate` with the date of the latest publication of the source data.
+
+## Delete a dataset
+
+```python
+alphacast.datasets.dataset(7938).delete()
+```
+
+<Warning>
+  Deleting a dataset is permanent and removes all uploaded rows. This action cannot be undone.
+</Warning>
+
+Returns the raw API response body as bytes.
+
+## Common patterns
+
+### Look up an ID before uploading
+
+If your script bootstraps an environment, find or create the dataset before pushing rows:
+
+```python
+ds = alphacast.datasets.read_by_name("Quarterly GDP", repo_id=repo_id)
+
+if ds is None:
+    ds = alphacast.datasets.create("Quarterly GDP", repo_id, returnIdIfExists=True)
+
+dataset_id = ds["id"]
+```
+
+### Inspect before downloading
+
+Combine `metadata()`, `get_column_definitions()`, and `datestats()` to understand a dataset before pulling its full payload:
+
+```python
+handle = alphacast.datasets.dataset(7938)
+
+print(handle.metadata()["name"])
+print(handle.get_column_definitions())
+print(handle.datestats())
+```
+
+For data download options, see [Downloading data](/python-sdk/downloading).
+
+## Next steps
+
+- [Create a dataset and upload data →](/python-sdk/uploading)
+- [Download data as DataFrame, CSV, JSON, or XLSX →](/python-sdk/downloading)
+- [Check the status of an in-flight upload →](/python-sdk/processes)

@@ -95,6 +95,42 @@
         ]
       },
       {
+        "tab": "Python SDK",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "python-sdk/overview",
+              "python-sdk/quickstart",
+              "python-sdk/authentication"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "python-sdk/repositories",
+              "python-sdk/datasets",
+              "python-sdk/series",
+              "python-sdk/search"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "python-sdk/uploading",
+              "python-sdk/downloading",
+              "python-sdk/processes"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "python-sdk/reference"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "MCP",
         "groups": [
           {

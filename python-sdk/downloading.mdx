@@ -1,0 +1,172 @@
+---
+title: "Downloading Data"
+description: "Pull dataset rows into your Python code as a pandas DataFrame, CSV, JSON, or XLSX, with optional date, entity, and variable filters."
+---
+
+`download_data()` is the SDK's main read method. Call it on a per-dataset handle to retrieve the dataset's rows in the format of your choice. The method also supports server-side filtering by date range, entity values, and column subset — saving bandwidth and post-processing for large datasets.
+
+```python
+from alphacast import Alphacast
+
+alphacast = Alphacast("YOUR_API_KEY")
+df = alphacast.datasets.dataset(6755).download_data(format="pandas")
+```
+
+<Info>
+  You only need read permission on a dataset to download it. For public datasets that you don't own, look the dataset ID up in the URL on [alphacast.io](https://www.alphacast.io) and pass it directly to `dataset()`.
+</Info>
+
+## Output formats
+
+Pass the `format` argument to choose how the data is returned:
+
+| `format` | Returns | Use it when |
+|---|---|---|
+| `"pandas"` | `pandas.DataFrame` | Working in a notebook or pipeline that consumes DataFrames. |
+| `"csv"` | `bytes` (CSV) | Saving to disk or piping into another tool. |
+| `"json"` | `list[dict]` | Iterating row-by-row in pure Python. |
+| `"xlsx"` | `bytes` (XLSX) | Producing an Excel file for non-technical users. |
+| `"tsv"` | `bytes` (TSV) | Tab-separated workflows. |
+
+<Note>
+  When `format="json"` the API responds with newline-delimited JSON (NDJSON). The SDK parses it for you and returns a flat list of dicts — one dict per row.
+</Note>
+
+```python
+# Direct to DataFrame
+df = alphacast.datasets.dataset(6755).download_data(format="pandas")
+
+# Raw CSV bytes
+csv_bytes = alphacast.datasets.dataset(6755).download_data("csv")
+
+# Save XLSX to disk
+xlsx_bytes = alphacast.datasets.dataset(6755).download_data("xlsx")
+with open("data.xlsx", "wb") as f:
+    f.write(xlsx_bytes)
+
+# JSON as a list of dicts
+rows = alphacast.datasets.dataset(6755).download_data(format="json")
+for row in rows[:5]:
+    print(row)
+```
+
+<Tip>
+  When `format="pandas"`, the SDK fetches CSV under the hood and parses it with `pandas.read_csv`. You get the same data as `format="csv"`, just already wrapped in a DataFrame.
+</Tip>
+
+## Filtering by date range
+
+Pass `startDate` and/or `endDate` as `datetime.date` (or `datetime.datetime`) objects to restrict the rows returned:
+
+```python
+import datetime as dt
+
+df = alphacast.datasets.dataset(6755).download_data(
+    format="pandas",
+    startDate=dt.date(2020, 1, 1),
+    endDate=dt.date(2024, 12, 31),
+)
+```
+
+The SDK reads the dataset's column definitions to detect the date column automatically, so you don't need to pass its name. If the dataset has no date column, omit these parameters.
+
+## Filtering by entity values
+
+Use `filterEntities` to restrict rows by the value of one or more entity columns. Pass a dict mapping each entity column to a list of accepted values:
+
+```python
+df = alphacast.datasets.dataset(6755).download_data(
+    format="pandas",
+    filterEntities={"country": ["USA", "Argentina", "Brazil"]},
+)
+```
+
+You can pass multiple entity columns at once. Each column's values are OR'd internally; the columns are combined with AND:
+
+```python
+df = alphacast.datasets.dataset(6755).download_data(
+    format="pandas",
+    filterEntities={
+        "country": ["USA", "Mexico"],
+        "sector": ["Manufacturing", "Services"],
+    },
+)
+# country in (USA, Mexico) AND sector in (Manufacturing, Services)
+```
+
+## Selecting specific columns
+
+Use `filterVariables` to keep only certain value columns in the output. Entity and date columns are always returned automatically.
+
+```python
+df = alphacast.datasets.dataset(6755).download_data(
+    format="pandas",
+    filterVariables=["GDP_USD_Billions", "Inflation_YoY"],
+)
+```
+
+<Note>
+  Column names must match the names in the dataset schema exactly (case-sensitive). Use [`get_column_definitions()`](/python-sdk/datasets#get-column-definitions) to inspect the available columns first.
+</Note>
+
+## Combining filters
+
+All three filters compose. The example below downloads US and Argentine GDP from 2020 onwards as a DataFrame:
+
+```python
+import datetime as dt
+
+df = alphacast.datasets.dataset(6755).download_data(
+    format="pandas",
+    startDate=dt.date(2020, 1, 1),
+    filterEntities={"country": ["USA", "Argentina"]},
+    filterVariables=["GDP_USD_Billions"],
+)
+```
+
+Filters are applied server-side via OData query parameters, so only the matching rows travel over the network.
+
+## Method signature
+
+```python
+download_data(
+    format="csv",
+    startDate=None,
+    endDate=None,
+    filterVariables=[],
+    filterEntities=[],
+)
+```
+
+<ParamField path="format" type="str" default='"csv"'>
+  One of `"csv"`, `"json"`, `"xlsx"`, `"tsv"`, or `"pandas"`. The first four return the raw bytes (or list of dicts for JSON); `"pandas"` returns a DataFrame.
+</ParamField>
+
+<ParamField path="startDate" type="datetime.date">
+  Inclusive lower bound for the date column. The SDK detects the date column automatically.
+</ParamField>
+
+<ParamField path="endDate" type="datetime.date">
+  Inclusive upper bound for the date column.
+</ParamField>
+
+<ParamField path="filterVariables" type="list[str]">
+  Column names to include. Entity and date columns are always included even if not listed.
+</ParamField>
+
+<ParamField path="filterEntities" type="dict[str, list[str]]">
+  Mapping of entity column name to accepted values. Multiple keys are AND'd; values within a key are OR'd.
+</ParamField>
+
+## Public datasets
+
+You can download from any public dataset on Alphacast — even ones you don't own — by passing its ID. Find the ID in the URL on [alphacast.io](https://www.alphacast.io) (e.g. `/datasets/5208/...` → ID `5208`).
+
+```python
+df = alphacast.datasets.dataset(5208).download_data(format="pandas")
+```
+
+## Next steps
+
+- Discover dataset IDs across the catalog with [Search](/python-sdk/search).
+- Read [`download_data` REST reference](/api/datasets/data) for the underlying OData parameters.

@@ -1,0 +1,177 @@
+---
+title: "Python SDK Quickstart"
+sidebarTitle: "Quickstart"
+description: "Install the Alphacast Python SDK, create a repository, upload a pandas DataFrame, and download it back — in under five minutes."
+---
+
+This guide walks through the full Alphacast workflow using the Python SDK: install, authenticate, create a repository, create a dataset, initialize its columns, upload a `pandas.DataFrame`, and download the data back. By the end you will have a working dataset on Alphacast and a script you can adapt to your own data.
+
+<Info>
+  All examples use HTTP Basic Auth via the `Alphacast` client. See the [authentication page](/python-sdk/authentication) for details on how the SDK passes your API key to every request.
+</Info>
+
+<Steps>
+  <Step title="Install the SDK">
+    Install `alphacast` from PyPI. Pandas is pulled in as a dependency.
+
+    ```bash
+    pip install alphacast
+    ```
+  </Step>
+
+  <Step title="Initialize the client">
+    Get your API key from your [account settings](https://www.alphacast.io/api/auth/login) and pass it to the `Alphacast` constructor:
+
+    ```python
+    from alphacast import Alphacast
+
+    alphacast = Alphacast("YOUR_API_KEY")
+    ```
+
+    <Tip>
+      Store the key in an environment variable rather than hardcoding it. See the [authentication page](/python-sdk/authentication) for the recommended pattern.
+    </Tip>
+  </Step>
+
+  <Step title="Create a repository">
+    Repositories are top-level containers that hold datasets. Create one with `repository.create`:
+
+    ```python
+    repo = alphacast.repository.create(
+        "My First Repo",
+        repo_description="Sandbox for the SDK quickstart",
+        slug="my-first-repo",
+        privacy="Private",
+        returnIdIfExists=True,
+    )
+    repo_id = repo["id"]
+    ```
+
+    Setting `returnIdIfExists=True` makes the call idempotent — if a repository with that name already exists, the existing one is returned instead of raising.
+  </Step>
+
+  <Step title="Create a dataset">
+    Datasets live inside a repository. Provide a name, the parent `repo_id`, and an optional description:
+
+    ```python
+    dataset = alphacast.datasets.create(
+        "Quarterly GDP",
+        repo_id,
+        description="GDP series by country",
+        returnIdIfExists=True,
+    )
+    dataset_id = dataset["id"]
+    ```
+
+    The dataset is empty until you upload data. The next two steps configure its columns and push your first batch of rows.
+  </Step>
+
+  <Step title="Initialize columns">
+    Before uploading you must declare which column carries the date and which columns identify a row (the **entity** columns). Together, the date and the entity columns form a unique key — every `(Date, Entity)` pair must be unique in the file.
+
+    ```python
+    alphacast.datasets.dataset(dataset_id).initialize_columns(
+        dateColumnName="Date",
+        entitiesColumnNames=["country"],
+        dateFormat="%Y-%m-%d",
+    )
+    ```
+
+    <Note>
+      Alphacast's chart engine currently expects a single entity column. Multiple entity columns are supported for storage and download, but not for in-platform charting.
+    </Note>
+  </Step>
+
+  <Step title="Upload a DataFrame">
+    Build a `DataFrame` with at least your date column, your entity column, and one or more value columns. Then call `upload_data_from_df`:
+
+    ```python
+    import pandas as pd
+
+    df = pd.DataFrame({
+        "Date": ["2023-01-01", "2023-04-01", "2023-07-01"],
+        "country": ["USA", "USA", "USA"],
+        "GDP_USD_Billions": [6823.4, 6901.2, 6987.6],
+    })
+
+    raw = alphacast.datasets.dataset(dataset_id).upload_data_from_df(
+        df,
+        deleteMissingFromDB=False,
+        onConflictUpdateDB=True,
+        uploadIndex=False,
+    )
+    process = json.loads(raw)
+    print(process["id"], process["status"])
+    ```
+
+    Uploads are processed asynchronously. The call returns the response body as bytes; decode it with `json.loads` to get the process record. Use `dataset(id).processes()` or `dataset(id).process(process_id)` to poll status — see [Process status](/python-sdk/processes).
+  </Step>
+
+  <Step title="Download the data back">
+    Once the process finishes, download the data. Pass `format="pandas"` to get a ready-to-use `DataFrame`:
+
+    ```python
+    df = alphacast.datasets.dataset(dataset_id).download_data(format="pandas")
+    print(df.head())
+    ```
+
+    Other supported formats: `"csv"`, `"json"`, `"xlsx"`, `"tsv"`. See [Downloading data](/python-sdk/downloading) for filtering by date, country, or column.
+  </Step>
+</Steps>
+
+## End-to-end script
+
+Here is the full quickstart in a single file you can run as `python quickstart.py`:
+
+```python
+import os
+import pandas as pd
+from alphacast import Alphacast
+
+alphacast = Alphacast(os.environ["ALPHACAST_API_KEY"])
+
+repo = alphacast.repository.create(
+    "My First Repo",
+    repo_description="Sandbox for the SDK quickstart",
+    privacy="Private",
+    returnIdIfExists=True,
+)
+repo_id = repo["id"]
+
+dataset = alphacast.datasets.create(
+    "Quarterly GDP",
+    repo_id,
+    description="GDP series by country",
+    returnIdIfExists=True,
+)
+dataset_id = dataset["id"]
+
+alphacast.datasets.dataset(dataset_id).initialize_columns(
+    dateColumnName="Date",
+    entitiesColumnNames=["country"],
+    dateFormat="%Y-%m-%d",
+)
+
+df = pd.DataFrame({
+    "Date": ["2023-01-01", "2023-04-01", "2023-07-01"],
+    "country": ["USA", "USA", "USA"],
+    "GDP_USD_Billions": [6823.4, 6901.2, 6987.6],
+})
+
+alphacast.datasets.dataset(dataset_id).upload_data_from_df(
+    df,
+    deleteMissingFromDB=False,
+    onConflictUpdateDB=True,
+    uploadIndex=False,
+)
+
+# Re-download once the upload has been processed
+result = alphacast.datasets.dataset(dataset_id).download_data(format="pandas")
+print(result.head())
+```
+
+## Next steps
+
+- Learn the full surface of the [Datasets class](/python-sdk/datasets) — finding by name, listing, inspecting columns and date stats.
+- Combine multiple flags when uploading — see [Uploading data](/python-sdk/uploading).
+- Use [Search](/python-sdk/search) to find existing datasets you can pull instead of building your own.

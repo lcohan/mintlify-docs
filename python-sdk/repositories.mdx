@@ -1,0 +1,158 @@
+---
+title: "Repositories"
+description: "Use the Alphacast Python SDK's repository client to list, look up, create, and delete repositories — the top-level containers for your datasets."
+---
+
+Every dataset in Alphacast lives inside a **repository**. Repositories control privacy (Public vs Private) and grant permissions to users. The SDK exposes repository operations through the `repository` attribute on the `Alphacast` client.
+
+```python
+from alphacast import Alphacast
+
+alphacast = Alphacast("YOUR_API_KEY")
+alphacast.repository  # the repository client
+```
+
+<Info>
+  For the conceptual overview of what a repository is and how permissions work, see [Repositories](/concepts/repositories) in the Documentation tab.
+</Info>
+
+## List your repositories
+
+`read_all()` returns every repository where you have at least read permission, including public repositories you have explicitly subscribed to.
+
+```python
+repos = alphacast.repository.read_all()
+
+for repo in repos:
+    print(repo["id"], repo["name"], repo["privacy"])
+```
+
+The response is a list of dicts. Each dict includes at least `id`, `name`, `description`, `privacy`, `slug`, and `permission`.
+
+## Look up a repository by ID
+
+```python
+repo = alphacast.repository.read_by_id(42)
+print(repo["name"])
+```
+
+Use this when you already have the repository ID — for example from a previous `create()` call or from the URL `https://www.alphacast.io/repositories/{id}` in the Alphacast UI.
+
+## Look up a repository by name
+
+```python
+repo = alphacast.repository.read_by_name("My First Repo")
+
+if repo:
+    print("Found:", repo["id"])
+else:
+    print("Not found")
+```
+
+`read_by_name` scans the list returned by `read_all()` and returns the first repository whose `name` matches exactly. If no repository matches, it returns `False`.
+
+<Note>
+  Name lookup is case-sensitive and matches the exact string. If you have repositories with similar names, prefer looking them up by ID.
+</Note>
+
+## Create a repository
+
+```python
+repo = alphacast.repository.create(
+    "Macro Indicators",
+    repo_description="A repository for macroeconomic indicators",
+    privacy="Private",
+    slug="macro-indicators",
+    returnIdIfExists=True,
+)
+print(repo["id"])
+```
+
+### Parameters
+
+<ParamField path="repo_name" type="str" required>
+  Display name for the repository. Must be unique within your account.
+</ParamField>
+
+<ParamField path="repo_description" type="str">
+  Long-form description shown on the repository page. Defaults to `repo_name` if omitted.
+</ParamField>
+
+<ParamField path="privacy" type="str" default="Private">
+  `"Private"` or `"Public"`. Public repositories are discoverable by all Alphacast users.
+</ParamField>
+
+<ParamField path="slug" type="str">
+  URL-safe identifier used in the repository's web URL. Defaults to a slugified version of `repo_name` if omitted.
+</ParamField>
+
+<ParamField path="returnIdIfExists" type="bool" default="False">
+  Controls behavior when a repository with the same `repo_name` already exists. When `True`, the existing repository is returned. When `False`, a `ValueError` is raised.
+</ParamField>
+
+### Idempotent create
+
+Pass `returnIdIfExists=True` to make repository creation safe to re-run — for example in a script that bootstraps an environment:
+
+```python
+repo = alphacast.repository.create(
+    "Sandbox",
+    privacy="Private",
+    returnIdIfExists=True,
+)
+repo_id = repo["id"]
+```
+
+The first run creates the repository; subsequent runs return the existing one without raising.
+
+## Delete a repository
+
+```python
+alphacast.repository.delete(42)
+```
+
+<Warning>
+  Deleting a repository permanently removes the repository **and every dataset inside it**, including all uploaded data. This action cannot be undone.
+</Warning>
+
+Pass the repository's numeric ID. The call returns the raw response body from the API as bytes — the SDK does not parse it.
+
+## Common patterns
+
+### Find or create
+
+When you want a single canonical repository for a workflow:
+
+```python
+repo = (
+    alphacast.repository.read_by_name("Macro Indicators")
+    or alphacast.repository.create("Macro Indicators", privacy="Private")
+)
+repo_id = repo["id"]
+```
+
+Or, equivalently, with `returnIdIfExists`:
+
+```python
+repo = alphacast.repository.create(
+    "Macro Indicators",
+    privacy="Private",
+    returnIdIfExists=True,
+)
+```
+
+### List only repositories you can write to
+
+`read_all()` returns repositories where you have *any* permission. Filter on the `permission` field to keep only writeable ones:
+
+```python
+writable = [
+    r for r in alphacast.repository.read_all()
+    if r["permission"] in ("Owner", "Admin", "Write")
+]
+```
+
+## Next steps
+
+- Add datasets to a repository — see [Datasets](/python-sdk/datasets).
+- Push data into a dataset — see [Uploading data](/python-sdk/uploading).
