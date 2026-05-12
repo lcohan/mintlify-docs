@@ -152,7 +152,9 @@
             "pages": [
               "mcp/tools/overview",
               "mcp/tools/search-and-datasets",
-              "mcp/tools/providers"
+              "mcp/tools/providers",
+              "mcp/tools/tickers",
+              "mcp/tools/pipelines"
             ]
           },
           {

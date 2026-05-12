@@ -166,7 +166,7 @@ Returns full detail for a single provider including its configurable parameters,
 **Path parameters**
 
 <ParamField path="slug" type="string" required>
-  Provider slug. Use the `slug` field from `GET /providers`.
+  Provider slug. Use the `slug` field from `GET /providers`. Matching is **case-insensitive** — `fred`, `FRED`, and `Fred` all resolve to the same provider.
 </ParamField>
 
 ```bash

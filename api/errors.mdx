@@ -1,6 +1,6 @@
 ---
 title: "API Error Codes and Troubleshooting"
-description: "Reference for every HTTP error code returned by the Alphacast API — 400, 401, 402, 403, 404, 409, 500, 503, 504 — with causes, example responses, and fixes."
+description: "Reference for every HTTP error code returned by the Alphacast API — 400, 401, 402, 403, 404, 409, 429, 500, 503, 504 — with causes, example responses, and fixes."
 ---
 
 When an API request fails, Alphacast returns a standard HTTP error status code and, where possible, a JSON body that describes what went wrong. This page covers every error code you may encounter, what typically causes it, and how to fix it.
@@ -134,6 +134,23 @@ The request could not be completed because it conflicts with an existing resourc
 
 ---
 
+### 429 Too Many Requests
+
+You hit a rate limit. Alphacast does not enforce a global API limit, but the provider connectors honor each upstream's limits on your behalf — if FRED, BLS, or any other source caps requests per minute or per day, Alphacast surfaces that as a `429`.
+
+```json
+{
+  "error": "Upstream provider rate limit exceeded for fred. Try again in a few seconds."
+}
+```
+
+**Common causes and fixes:**
+
+- The upstream provider's rate limit was reached. Save your own API key with `PUT /user-keys/{slug}` to raise the limit (especially for FRED and BLS, which are far more generous with an authenticated key).
+- Many concurrent series fetches against the same provider. Serialize the calls or add backoff.
+
+---
+
 ### 500 Internal Server Error
 
 An unexpected error occurred on the server. This is not caused by your request.
@@ -142,6 +159,10 @@ An unexpected error occurred on the server. This is not caused by your request.
 
 - Wait a moment and retry the request — transient errors often resolve on their own.
 - If the error persists, note the endpoint, request body, and approximate time of the failure, then contact Alphacast support.
+
+<Note>
+  For errors that originate inside a provider connector, the response message is **sanitized** — it does not include upstream URLs, internal tokens, or stack traces. The unredacted detail is kept in Alphacast's server logs, so include the endpoint and timestamp when filing a support request.
+</Note>
 
 <Note>
   A `500` response is never caused by invalid input in your request. If you see one consistently for the same request, it is a server-side issue worth reporting.

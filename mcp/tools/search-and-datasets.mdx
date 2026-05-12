@@ -1,10 +1,10 @@
 ---
 title: "Search & Datasets Tools"
 sidebarTitle: "Search & datasets"
-description: "Tools for discovering content in the Alphacast catalog and reading dataset metadata, schemas, and rows."
+description: "Tools for discovering content in the Alphacast catalog, reading dataset metadata, schemas, and rows, and resolving the user's Home repository."
 ---
 
-These six tools cover discovery and read access. None of them mutate state, so you can safely chain them together to explore Alphacast.
+These seven tools cover discovery and read access. None of them mutate state, so you can safely chain them together to explore Alphacast.
 
 ## `search_catalog`
 
@@ -110,6 +110,10 @@ List repositories where the API key can publish (Owner, Admin, or Write).
 
 No input parameters. Filtered server-side; read-only repositories are excluded so the model only sees repositories it can write to.
 
+<Tip>
+  Tools that accept an optional `repositoryId` (for example [`create_pipeline`](/mcp/tools/pipelines#create_pipeline)) **default to the user's Home repository** when no ID is provided — the server does not interrupt to ask you to pick one. Call `list_repositories` only when you want to write somewhere other than Home, or `get_home_repository` to check which repo Home resolves to.
+</Tip>
+
 **Example prompt**
 
 > "Which repos can I publish into?"
@@ -133,3 +137,17 @@ Returns name, description, privacy, your permission level, and timestamps.
 > "What's the description of repository 1042 and who owns it?"
 
 **Underlying endpoint:** `GET /repositories/{id}`.
+
+---
+
+## `get_home_repository`
+
+Resolve the user's **Home repository** — the default workspace where pipelines and datasets land when no specific repository is named. Use it to inspect what Home points at before creating a pipeline, or to share its ID with collaborators.
+
+No input parameters. Returns the repository as if you had called `get_repository` on it.
+
+**Example prompt**
+
+> "What's my Home repository?"
+
+**Underlying endpoint:** `GET /repositories/home`.

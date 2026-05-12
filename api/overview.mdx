@@ -41,6 +41,12 @@ curl "https://api.alphacast.io/repositories?apiKey=YOUR_API_KEY"
   For production integrations, use HTTP Basic Auth or the [Alphacast Python SDK](/python-sdk/overview) which handles authentication for you.
 </Tip>
 
+## Path conventions
+
+Provider and user-key slugs in path parameters (`/providers/{slug}`, `/user-keys/{slug}`) are **case-insensitive**. `FRED`, `fred`, and `Fred` all resolve to the same provider, so you do not need to normalize casing on the client.
+
+Series IDs in `/providers/{slug}/series/{series_id}` may contain forward slashes (for example, SDMX-style dataflow paths). See the [fetch series reference](/api/providers/series) for examples.
+
 ## Request format
 
 For `POST` and `PUT` requests, send a JSON body with the `Content-Type: application/json` header:
@@ -93,10 +99,12 @@ The API does not currently honor an `Idempotency-Key` header. If you need at-mos
 
 ## Rate limits
 
-Alphacast does not enforce a global rate limit on the API. However, some third-party data providers impose their own restrictions. For example, the BLS (Bureau of Labor Statistics) provider allows up to **25 requests per day** without a registered BLS API key. If you exceed this, requests to BLS-sourced data will fail until the limit resets.
+Alphacast does not enforce a global rate limit on the API. However, some third-party data providers impose their own restrictions, which Alphacast respects on your behalf. When an upstream limit is hit, the API returns **`429 Too Many Requests`** with an error message naming the provider. For example, FRED inherits its public rate limit; BLS allows up to **25 requests per day** without a registered BLS API key.
+
+If you exceed an upstream limit, requests to that provider's data will fail with `429` until the limit resets. Other providers are not affected.
 
 <Info>
-  To raise the BLS request limit, register for a free BLS API key at [bls.gov](https://www.bls.gov/developers/) and add it to your Alphacast provider settings.
+  Raise an upstream limit by saving your own API key for that provider with `PUT /user-keys/{slug}`. For BLS, register for a free key at [bls.gov](https://www.bls.gov/developers/); for FRED, at [fred.stlouisfed.org](https://fred.stlouisfed.org/docs/api/api_key.html).
 </Info>
 
 ## API resources

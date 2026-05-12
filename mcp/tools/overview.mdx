@@ -1,10 +1,10 @@
 ---
 title: "MCP Tools Overview"
 sidebarTitle: "Overview"
-description: "Reference for all 13 tools exposed by the Alphacast MCP server, grouped by capability."
+description: "Reference for all 27 tools exposed by the Alphacast MCP server, grouped by capability: search & datasets, providers, tickers, and pipelines."
 ---
 
-The Alphacast MCP server exposes 13 tools across two functional areas. Use this page as a high-level map; click any tool name to jump to its full input schema and example prompt on the corresponding detail page.
+The Alphacast MCP server exposes 27 tools across four functional areas. Use this page as a high-level map; click any tool name to jump to its full input schema and example prompt on the corresponding detail page.
 
 ## All tools
 
@@ -16,6 +16,7 @@ The Alphacast MCP server exposes 13 tools across two functional areas. Use this 
 | [`list_datasets`](/mcp/tools/search-and-datasets#list_datasets) | Search & datasets | Read | List every dataset the API key can access. |
 | [`list_repositories`](/mcp/tools/search-and-datasets#list_repositories) | Search & datasets | Read | List repositories where the API key has Write access or higher. |
 | [`get_repository`](/mcp/tools/search-and-datasets#get_repository) | Search & datasets | Read | Retrieve repository metadata and your permission level. |
+| [`get_home_repository`](/mcp/tools/search-and-datasets#get_home_repository) | Search & datasets | Read | Resolve the user's Home repository — used implicitly when other tools accept an optional `repositoryId`. |
 | [`list_providers`](/mcp/tools/providers#list_providers) | Providers | Read | List all external data providers, or the top 5 matching a keyword. |
 | [`get_provider`](/mcp/tools/providers#get_provider) | Providers | Read | Retrieve a provider's parameters, popular series, and key requirements. |
 | [`browse_provider`](/mcp/tools/providers#browse_provider) | Providers | Read | Walk a provider's hierarchical catalog by path. |
@@ -23,18 +24,32 @@ The Alphacast MCP server exposes 13 tools across two functional areas. Use this 
 | [`get_series`](/mcp/tools/providers#get_series) | Providers | Read | Preview or fetch full data for a provider series. |
 | [`list_user_keys`](/mcp/tools/providers#list_user_keys) | Providers | Read | List which third-party providers have a stored API key. |
 | [`set_user_key`](/mcp/tools/providers#set_user_key) | Providers | Write | Save or remove your third-party API key for a provider. |
+| [`search_tickers`](/mcp/tools/tickers#search_tickers) | Tickers | Read | Search public market tickers, ETFs, indexes, and ISINs by keyword. |
+| [`get_ticker`](/mcp/tools/tickers#get_ticker) | Tickers | Read | Retrieve a single ticker's profile metadata. |
+| [`get_ticker_data`](/mcp/tools/tickers#get_ticker_data) | Tickers | Read | Pull historical OHLCV price data over a lookback period. |
+| [`list_pipelines`](/mcp/tools/pipelines#list_pipelines) | Pipelines | Read | List every pipeline the API key can read. |
+| [`get_pipeline`](/mcp/tools/pipelines#get_pipeline) | Pipelines | Read | Get full pipeline definition, step list, validation status, and last-run summary. |
+| [`get_pipeline_run`](/mcp/tools/pipelines#get_pipeline_run) | Pipelines | Read | Retrieve a specific pipeline run with status and per-step logs. |
+| [`wait_pipeline_run`](/mcp/tools/pipelines#wait_pipeline_run) | Pipelines | Read | Poll a run until it reaches a terminal state and return logs. |
+| [`get_step_data`](/mcp/tools/pipelines#get_step_data) | Pipelines | Read | Fetch the cached output of a step without triggering a run. |
+| [`get_step_preview`](/mcp/tools/pipelines#get_step_preview) | Pipelines | Read | Materialize a fresh preview for a step and return rows as CSV. |
+| [`create_pipeline`](/mcp/tools/pipelines#create_pipeline) | Pipelines | Write | Create a new pipeline, optionally with initial steps. Defaults to Home repo. |
+| [`add_pipeline_step`](/mcp/tools/pipelines#add_pipeline_step) | Pipelines | Write | Append or insert a step into a pipeline. |
+| [`edit_pipeline_step`](/mcp/tools/pipelines#edit_pipeline_step) | Pipelines | Write | Replace the configuration of an existing step. |
+| [`delete_pipeline_step`](/mcp/tools/pipelines#delete_pipeline_step) | Pipelines | Write | Remove a step from a pipeline. |
 
 ## Safety boundaries
 
 <Warning>
-  The MCP surface is intentionally read-only with the single exception of `set_user_key`. Repository and dataset deletion, and any other destructive or irreversible operation, are only available from the Alphacast web UI — never from an agent.
+  The MCP surface is read-only **except** for `set_user_key` and the four pipeline write tools (`create_pipeline`, `add_pipeline_step`, `edit_pipeline_step`, `delete_pipeline_step`). Deleting repositories, datasets, or whole pipelines is intentionally **not** exposed — those actions are only available from the Alphacast web UI, never from an agent.
 </Warning>
 
 ## Tool conventions
 
 - **IDs** are always numeric (`integer`). Tools accept strings and coerce them — `"42"` works the same as `42`.
-- **Formats** for downloads: `json` (default for `download_dataset`) or `csv`.
+- **Formats** for downloads: `json` (default for `download_dataset`) or `csv`. For pipeline step output the default is `csv`.
 - **Permissions** mirror the REST API. The API key's permission on each repository determines which tools succeed.
+- **Home repository fallback.** When a tool accepts an optional `repositoryId` (for example `create_pipeline`), omitting it resolves to the user's Home repository automatically — the server does not interrupt to ask.
 
 ## Underlying API
 

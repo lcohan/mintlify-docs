@@ -1,0 +1,79 @@
+---
+title: "Ticker Tools"
+sidebarTitle: "Tickers"
+description: "Look up market tickers, ETFs, indexes, and ISINs from an MCP client, fetch their profile metadata, and pull historical price data. Three read-only tools that pair naturally with the fetch-yahoo pipeline step."
+---
+
+Three read-only tools for working with public market tickers. Use them to discover the right symbol from a free-text query, inspect a ticker's profile, and pull historical OHLCV data — for ad-hoc questions or to feed a pipeline.
+
+<Tip>
+  Symbols returned by these tools drop straight into the `fetch-yahoo` step in pipelines: `{ type: "fetch-yahoo", configuration: { tickers: ["MSFT"], period: "5y" } }`. See [`create_pipeline`](/mcp/tools/pipelines#create_pipeline) and [`add_pipeline_step`](/mcp/tools/pipelines#add_pipeline_step).
+</Tip>
+
+## `search_tickers`
+
+Search the public ticker catalog by company name, symbol, or ISIN. Returns the top matches with each symbol and short name.
+
+<ParamField body="query" type="string" required>
+  Company name, ticker symbol, ETF or index symbol, or ISIN. Examples: `"MSFT"`, `"Microsoft"`, `"SPY"`, `"US0378331005"`.
+</ParamField>
+
+<ParamField body="limit" type="number" default="10">
+  Maximum number of matches to return.
+</ParamField>
+
+**Example prompt**
+
+> "Find tickers related to Microsoft and pick the primary listing."
+
+**Underlying endpoint:** `GET /tickers/search/{query}`.
+
+---
+
+## `get_ticker`
+
+Get the profile and metadata for a single ticker — exchange, asset class, sector, currency, and similar fields. Use it to confirm you have the right symbol before pulling data.
+
+<ParamField body="symbol" type="string" required>
+  Ticker symbol or ISIN. Examples: `"MSFT"`, `"AAPL"`, `"^GSPC"`.
+</ParamField>
+
+**Example prompt**
+
+> "What is `^GSPC` and what currency is it quoted in?"
+
+**Underlying endpoint:** `GET /tickers/{symbol}`.
+
+---
+
+## `get_ticker_data`
+
+Fetch historical price data (OHLCV) for a ticker over a fixed lookback period.
+
+<ParamField body="symbol" type="string" required>
+  Ticker symbol or ISIN.
+</ParamField>
+
+<ParamField body="period" type="string" default="5y">
+  Historical lookback period. One of `1d`, `5d`, `1mo`, `3mo`, `6mo`, `1y`, `2y`, `5y`, `10y`, `ytd`, `max`.
+</ParamField>
+
+<ParamField body="top" type="number">
+  Return only the most recent N rows. Useful for quick answers like "what was MSFT's close yesterday".
+</ParamField>
+
+<ParamField body="format" type="string" default="json">
+  Response format: `json` or `csv`.
+</ParamField>
+
+**Example prompt**
+
+> "Pull the last 30 days of AAPL prices and tell me the high, low, and average close."
+
+**Underlying endpoint:** `GET /tickers/{symbol}/data`.
+
+---
+
+## Tickers vs. providers
+
+Tickers are a curated dataset of public market instruments maintained by Alphacast — they are **not** part of the external data providers surface ([`list_providers`](/mcp/tools/providers#list_providers), [`get_series`](/mcp/tools/providers#get_series), etc.). Use tickers for equity, ETF, index, and ISIN lookups; use providers for macroeconomic and statistical series.

@@ -1,0 +1,261 @@
+---
+title: "Pipeline Tools"
+sidebarTitle: "Pipelines"
+description: "Build, inspect, edit, and run Alphacast pipelines from natural-language prompts. Ten MCP tools for the full pipeline lifecycle — six read-only, four write — with auto-validation and auto-run after every mutation."
+---
+
+Ten tools for working with Alphacast pipelines from an MCP client. Six are read-only (inspect definitions, fetch runs, preview step output); four are write (create a pipeline, add/edit/remove steps). After every write the server auto-validates and auto-runs the pipeline, then waits for the editor run to finish so the response carries the new state.
+
+<Tip>
+  When `repositoryId` is omitted from `create_pipeline`, the server resolves the user's **Home repository** automatically. You don't need to call `list_repositories` first unless the pipeline belongs somewhere else.
+</Tip>
+
+## `list_pipelines`
+
+List every pipeline the API key can read.
+
+No input parameters. Returns one row per pipeline with `id`, `name`, and `repositoryId`.
+
+**Example prompt**
+
+> "List my pipelines and group them by repository."
+
+**Underlying endpoint:** `GET /pipelines`.
+
+---
+
+## `get_pipeline`
+
+Get the full definition of a pipeline: name, repository, every step in order with its type and configuration, validation errors, and a deep link to each step in the editor. Also returns a summary of the last run if one exists.
+
+<ParamField body="pipelineId" type="number" required>
+  Numeric pipeline ID.
+</ParamField>
+
+Validation errors that depend on a fresh run are marked `PENDING RUN` instead of `ERROR`, so the response distinguishes "step is broken" from "step needs the upstream to materialize first."
+
+**Example prompt**
+
+> "Show me pipeline 4821 — what does each step do and is anything broken?"
+
+**Underlying endpoint:** `GET /pipelines/{id}` (plus the last run, fetched in parallel).
+
+---
+
+## `get_pipeline_run`
+
+Get a specific run by ID, including status, timestamps, and per-step logs.
+
+<ParamField body="pipelineId" type="number" required>
+  Pipeline ID.
+</ParamField>
+
+<ParamField body="runId" type="number" required>
+  Run ID (from the pipeline's run history).
+</ParamField>
+
+**Example prompt**
+
+> "What happened in run 91722 of pipeline 4821? Did step 3 fail?"
+
+**Underlying endpoint:** `GET /pipelines/{id}/runs/{runId}`.
+
+---
+
+## `wait_pipeline_run`
+
+Block until a specific run reaches a terminal state (`completed`, `failed`, `cancelled`, or `skipped`) and return its status and logs. Useful when you just triggered a run via the web UI or another tool and want to poll exactly that run instead of guessing which is the latest.
+
+<ParamField body="pipelineId" type="number" required>
+  Pipeline ID.
+</ParamField>
+
+<ParamField body="runId" type="number" required>
+  Run ID to wait on.
+</ParamField>
+
+<ParamField body="timeoutSeconds" type="number" default="60">
+  Maximum seconds to poll before returning `timeout`. The tool polls every 2 seconds.
+</ParamField>
+
+**Example prompt**
+
+> "Wait up to 2 minutes for run 91722 to finish and tell me how it ended."
+
+**Underlying endpoints:** `GET /pipelines/{id}/runs/{runId}/status` (polled) and `GET /pipelines/{id}/runs/{runId}/logs` (fetched once terminal).
+
+---
+
+## `get_step_data`
+
+Fetch the cached output of a single pipeline step directly, without triggering a new run. Returns the materialized data of the most recent successful run.
+
+<ParamField body="pipelineId" type="number" required>
+  Pipeline ID.
+</ParamField>
+
+<ParamField body="stepId" type="number" required>
+  Step ID (from `get_pipeline`).
+</ParamField>
+
+<ParamField body="format" type="string" default="csv">
+  `csv` for tabular text (default) or `json` for structured data.
+</ParamField>
+
+**Example prompt**
+
+> "Get the CSV output of step 11 in pipeline 4821."
+
+**Underlying endpoint:** `GET /pipelines/{id}/steps/{stepId}/data`.
+
+---
+
+## `get_step_preview`
+
+Run a fresh **editor preview** materialization for a step, poll the run to completion, and return the preview rows as CSV. Use this when you want the output of a step *right now* — for example after editing its configuration — rather than reading whatever was cached last.
+
+<ParamField body="pipelineId" type="number" required>
+  Pipeline ID.
+</ParamField>
+
+<ParamField body="stepOrder" type="number" required>
+  0-based order of the step to preview. The pipeline runs up to and including this step.
+</ParamField>
+
+<ParamField body="top" type="number" default="100">
+  Maximum number of preview rows to return. Output is truncated at ~10 000 characters regardless of `top`.
+</ParamField>
+
+**Example prompt**
+
+> "Preview the data after step 2 in pipeline 4821 — first 50 rows."
+
+**Underlying endpoints:** `POST /pipelines/{id}/steps/{stepId}/editor-preview-data` (triggers the run) and `GET /pipelines/{id}/steps/{stepId}/editor-preview-data` (fetches the materialized rows once the run completes).
+
+---
+
+## `create_pipeline`
+
+Create a new pipeline, optionally with initial steps. When `steps` are provided, the server validates and runs the pipeline before returning, so the response includes the run status and any validation errors.
+
+<ParamField body="name" type="string" required>
+  Pipeline name.
+</ParamField>
+
+<ParamField body="repositoryId" type="number">
+  Target repository. **Optional** — when omitted, the MCP server resolves and uses the user's Home repository automatically.
+</ParamField>
+
+<ParamField body="steps" type="object[]">
+  Optional initial steps. Each entry has `type`, `order` (0-based), and `configuration` (a step-specific object).
+
+  Common step types and their configuration are documented in the tool's input schema. Highlights:
+
+  - `fetch-dataset { datasetId }`
+  - `fetch-yahoo { tickers, period }` — use [`search_tickers`](/mcp/tools/tickers#search_tickers) to discover symbols first
+  - `fetch-fred { series }`
+  - `merge { datasetId, how }`
+  - `transform { transformation, columns }` — built-in transformations with auto-fetched auxiliary data (USD conversion, constant prices, per capita, seasonal adjustment)
+  - `ai-transform { code }` — Python with `def run(df): return df, 'log'`
+  - `publish { datasetId }` or `publish { datasetName }`
+</ParamField>
+
+**Example prompt**
+
+> "Create a pipeline named 'US inflation YoY' that fetches FRED CPIAUCSL and applies a `pc1` transformation."
+
+**Underlying endpoint:** `POST /pipelines`.
+
+<Warning>
+  Writes are **not** reversible from MCP. Deleting a pipeline requires the Alphacast web UI — the agent surface does not expose `DELETE /pipelines/{id}`.
+</Warning>
+
+---
+
+## `add_pipeline_step`
+
+Append or insert a step into an existing pipeline. Auto-validates and auto-runs after the change.
+
+<ParamField body="pipelineId" type="number" required>
+  Pipeline ID.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Step type. The tool's input schema enumerates every supported step type with its required configuration shape (`fetch-yahoo`, `fetch-fred`, `merge`, `transform`, `ai-transform`, `publish`, etc.).
+</ParamField>
+
+<ParamField body="order" type="number" required>
+  0-based position in the pipeline. Use the next available order to append.
+</ParamField>
+
+<ParamField body="configuration" type="object" required>
+  Step-specific configuration. For `calculate-variable`, reference columns as `#'Column Name'` in raw MCP/API formulas — not the `@Column` shorthand used in the visual editor.
+</ParamField>
+
+**Example prompt**
+
+> "Append an `ai-transform` step to pipeline 4821 that computes a 12-month rolling average of the `Value` column."
+
+**Underlying endpoint:** `POST /pipelines/{id}/steps`.
+
+---
+
+## `edit_pipeline_step`
+
+Replace the full configuration of an existing step. Auto-validates and auto-runs after the change. The new configuration replaces the old one entirely — partial updates are not supported.
+
+<ParamField body="pipelineId" type="number" required>
+  Pipeline ID.
+</ParamField>
+
+<ParamField body="stepId" type="number" required>
+  Step ID to edit.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Step type — must match the existing step's type.
+</ParamField>
+
+<ParamField body="order" type="number" required>
+  Step order (0-based).
+</ParamField>
+
+<ParamField body="configuration" type="object" required>
+  Full updated configuration for the step.
+</ParamField>
+
+**Example prompt**
+
+> "Change step 11 in pipeline 4821 to filter dates from 2010-01-01 onwards."
+
+**Underlying endpoint:** `PUT /pipelines/{id}/steps/{stepId}`.
+
+---
+
+## `delete_pipeline_step`
+
+Remove a step from a pipeline. The remaining steps keep their order numbers — you may want to reorder them with `edit_pipeline_step` afterwards. Auto-validates and auto-runs after the change.
+
+<ParamField body="pipelineId" type="number" required>
+  Pipeline ID.
+</ParamField>
+
+<ParamField body="stepId" type="number" required>
+  Step ID to remove.
+</ParamField>
+
+**Example prompt**
+
+> "Remove step 14 from pipeline 4821."
+
+**Underlying endpoint:** `DELETE /pipelines/{id}/steps/{stepId}`.
+
+---
+
+## Common patterns
+
+**Branching and merging.** Fetch source A, optionally reshape or resample it, then `stash`. Fetch source B, then `merge` with `{ stash: true, how: 'left', columns: [{ name: 'Date', matchTo: 'Date' }] }`. When the two sources have different frequencies, resample one branch first.
+
+**Appending.** Fetch source A, `stash`, fetch source B, then `append-dataset` with `{ stash: true }`.
+
+**Publish.** Use `publish { datasetId }` to write into an existing dataset, or `publish { datasetName }` to create a new dataset in the pipeline's repository.

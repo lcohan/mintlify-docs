@@ -1,7 +1,7 @@
 ---
 title: "Fetch Series Data from External Providers"
 sidebarTitle: "Fetch series data"
-description: "Preview or download complete time-series data from FRED, BLS, World Bank, OECD, IMF, BIS, and Latin American central banks using the Alphacast provider API."
+description: "Preview or download complete time-series data from FRED, BLS, World Bank, OECD, IMF, BIS, ECB, Eurostat, and central banks across Latin America, Europe, and Asia using the Alphacast provider API."
 ---
 
 Once you have found a series ID — through browsing, searching, or the popular series list — you can fetch its data in two steps: a lightweight preview that returns the most recent data points, followed by a full historical fetch. For FRED series, a dedicated shortcut endpoint is also available that bypasses the provider slug workflow.
@@ -36,13 +36,20 @@ Use this endpoint to confirm you have the right series before fetching the full 
 
 <ParamField path="series_id" type="string" required>
   The series identifier as recognized by the upstream provider. Format varies by provider — for example, `UNRATE` for FRED, `CUUR0000SA0` for BLS, or `NY.GDP.PCAP.CD` for World Bank.
+
+  Some providers — notably SDMX-style sources (UNICEF, ECB, INSEE, BOI, FAOSTAT, Norges Bank) — use hierarchical IDs that contain forward slashes, such as `IMF/IFS/Q.US.NGDP_XDC`. Alphacast accepts these in the URL as-is; you do **not** need to URL-encode the `/` characters.
 </ParamField>
 
 <RequestExample>
 
 ```bash cURL
+# Flat ID
 curl -u YOUR_API_KEY: \
   https://api.alphacast.io/providers/fred/series/UNRATE
+
+# Hierarchical SDMX-style ID with slashes — passed through verbatim
+curl -u YOUR_API_KEY: \
+  https://api.alphacast.io/providers/ecb/series/EXR/D.USD.EUR.SP00.A
 ```
 
 ```python Python

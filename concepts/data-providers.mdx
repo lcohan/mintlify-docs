@@ -1,10 +1,10 @@
 ---
 title: "Data Providers: Built-In Sources for Market Data"
 sidebarTitle: "Data providers"
-description: "Alphacast includes built-in data provider connectors for FRED, BLS, World Bank, OECD, IMF, BIS, and Latin American central banks. Browse, search, and pull series through a single unified REST API."
+description: "Alphacast ships built-in connectors for 30+ external sources — FRED, BLS, World Bank, OECD, IMF, BIS, ECB, Eurostat, Banxico, BCRA, and many more. Browse, search, and pull series through a single unified REST API."
 ---
 
-Alphacast ships with built-in connectors for a curated set of data providers, covering central banks, statistical agencies, and international organizations from around the world. You can browse a provider's catalog hierarchically, search it by keyword, or fetch a specific series by ID — all through the same REST API.
+Alphacast ships with built-in connectors for a curated set of 30+ data providers, covering central banks, national statistics offices, market data sources, and international organizations from around the world. You can browse a provider's catalog hierarchically, search it by keyword, or fetch a specific series by ID — all through the same REST API.
 
 <Card title="Browse the live provider catalog →" icon="compass" href="https://www.alphacast.io/explore/apis">
   The authoritative list of providers — with their popular series, parameters, and key requirements — lives at **alphacast.io/explore/apis**.
@@ -12,18 +12,46 @@ Alphacast ships with built-in connectors for a curated set of data providers, co
 
 ## Available providers
 
-| Slug | Provider |
-|------|----------|
-| `bls` | U.S. Bureau of Labor Statistics |
-| `fred` | Federal Reserve Economic Data (St. Louis Fed) |
-| `worldbank` | World Bank Open Data |
-| `inegi` | INEGI — Instituto Nacional de Estadística y Geografía (Mexico) |
-| `bcra` | BCRA — Banco Central de la República Argentina |
-| `bis` | BIS — Bank for International Settlements |
-| `oecd` | OECD Statistics |
-| `imf` | IMF — International Monetary Fund |
-| `bcb-opendata` | BCB — Banco Central do Brasil |
-| `banxico` | Banxico — Banco de México |
+| Slug | Provider | Category |
+|------|----------|----------|
+| `a3` | A3 Mercados (Matba/Rofex) | Markets |
+| `abs` | Australian Bureau of Statistics | Statistics |
+| `banrep` | Banco de la República (Colombia) | Central bank |
+| `banxico` | Banxico — Banco de México | Central bank |
+| `bcch` | Banco Central de Chile (BDE) | Central bank |
+| `bcb-opendata` | BCB — Banco Central do Brasil | Markets |
+| `bcra` | BCRA — Banco Central de la República Argentina | Central bank |
+| `bcrp` | BCRP — Banco Central de Reserva del Perú | Central bank |
+| `bea` | U.S. Bureau of Economic Analysis | U.S. federal |
+| `bis` | BIS — Bank for International Settlements | Markets |
+| `bls` | U.S. Bureau of Labor Statistics | Statistics |
+| `boc` | Bank of Canada (Valet) | Central bank |
+| `boe` | Bank of England | Central bank |
+| `boi` | Bank of Israel | Central bank |
+| `cepalstat` | CEPALSTAT (ECLAC) | Curated |
+| `coingecko` | CoinGecko | Markets |
+| `ecb` | European Central Bank | Central bank |
+| `eia` | U.S. Energy Information Administration | U.S. federal |
+| `eurostat` | Eurostat | Statistics |
+| `faostat` | FAO FAOSTAT | Statistics |
+| `fred` | Federal Reserve Economic Data (St. Louis Fed) | U.S. federal |
+| `hkma` | Hong Kong Monetary Authority | Central bank |
+| `ilo` | International Labour Organization | International |
+| `imf` | International Monetary Fund | International |
+| `inegi` | INEGI (Mexico) | Statistics |
+| `insee` | INSEE (France) | Statistics |
+| `mae` | MAE — Mercado Abierto Electrónico (Argentina) | Markets |
+| `norges` | Norges Bank | Central bank |
+| `oecd` | OECD Statistics | Statistics |
+| `opendosm` | OpenDOSM (Malaysia) | Statistics |
+| `owid` | Our World in Data | Curated |
+| `scb` | Statistics Sweden | Statistics |
+| `sidra` | IBGE SIDRA (Brazil) | Statistics |
+| `ssb` | Statistics Norway | Statistics |
+| `taiwan-cbc` | Central Bank of Taiwan (CBC DataAPI) | Central bank |
+| `unicef` | UNICEF Data Warehouse | International |
+| `unsd` | UN Statistics Division | Statistics |
+| `worldbank` | World Bank Open Data | International |
 
 <Info>
 Not all providers support all three capability modes. Check the `capabilities` array in `GET /providers/{slug}` to know which modes are available for a given provider.

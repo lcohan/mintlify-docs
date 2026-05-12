@@ -1,30 +1,87 @@
 ---
 title: "Connect to External Data Providers"
-description: "Pull series from central banks, statistical agencies, and international organizations through a single unified Alphacast API. Browse the live catalog at alphacast.io/explore/apis."
+description: "Pull series from central banks, statistical agencies, market data sources, and international organizations through a single unified Alphacast API. Browse the live catalog at alphacast.io/explore/apis."
 ---
 
-Alphacast connects you to a curated catalog of external data providers — central banks, statistical agencies, and international organizations — through a single unified interface. Every provider follows the same REST conventions: browse, search, preview, then fetch. You do not need to learn each provider's native API.
+Alphacast connects you to a curated catalog of 30+ external data providers — central banks, national statistics offices, market data sources, and international organizations — through a single unified interface. Every provider follows the same REST conventions: browse, search, preview, then fetch. You do not need to learn each provider's native API.
 
 <Card title="Browse the live catalog →" icon="compass" href="https://www.alphacast.io/explore/apis">
-  The full list of supported providers, their capabilities, popular series, and any API-key requirements lives at **alphacast.io/explore/apis**. That page is always the source of truth — this documentation only describes how to use the API surface.
+  The authoritative list of providers, their capabilities, popular series, and any API-key requirements lives at **alphacast.io/explore/apis**. That page is always the source of truth — this documentation only describes how to use the API surface.
 </Card>
 
 ## Currently supported providers
 
-| Slug | Provider | API key required |
-|---|---|---|
-| `bls` | U.S. Bureau of Labor Statistics | Optional (25 req/day limit without) |
-| `fred` | Federal Reserve Economic Data (St. Louis Fed) | Yes |
-| `worldbank` | World Bank Open Data | No |
-| `inegi` | INEGI — Instituto Nacional de Estadística y Geografía (Mexico) | Yes |
-| `bcra` | BCRA — Banco Central de la República Argentina | No |
-| `bis` | BIS — Bank for International Settlements | No |
-| `oecd` | OECD Statistics | No |
-| `imf` | IMF — International Monetary Fund | No |
-| `bcb-opendata` | BCB — Banco Central do Brasil | No |
-| `banxico` | Banxico — Banco de México | Yes |
+The catalog is grouped below by provider type. All slugs are case-insensitive — `FRED`, `fred`, and `Fred` resolve to the same provider. Use them in the API paths described later on this page.
 
-Use these slugs in the API paths below. To see capabilities (`hierarchical`, `search`, `direct`), parameters, and popular series for any provider, call `GET /providers/{slug}` or open it in [the live catalog](https://www.alphacast.io/explore/apis).
+### Central banks
+
+| Slug | Provider | API key |
+|---|---|---|
+| `banrep` | Banco de la República (Colombia) | — |
+| `banxico` | Banxico — Banco de México | Required |
+| `bcch` | Banco Central de Chile (BDE) | Required |
+| `bcra` | BCRA — Banco Central de la República Argentina | — |
+| `bcrp` | BCRP — Banco Central de Reserva del Perú | — |
+| `boc` | Bank of Canada (Valet) | — |
+| `boe` | Bank of England | — |
+| `boi` | Bank of Israel | — |
+| `ecb` | European Central Bank | — |
+| `hkma` | Hong Kong Monetary Authority | — |
+| `norges` | Norges Bank | — |
+| `taiwan-cbc` | Central Bank of Taiwan (CBC DataAPI) | — |
+
+### National statistics offices
+
+| Slug | Provider | API key |
+|---|---|---|
+| `abs` | Australian Bureau of Statistics | — |
+| `bls` | U.S. Bureau of Labor Statistics | Optional |
+| `eurostat` | Eurostat | — |
+| `faostat` | FAO FAOSTAT | — |
+| `inegi` | INEGI — Instituto Nacional de Estadística y Geografía (Mexico) | Required |
+| `insee` | INSEE (France) | — |
+| `oecd` | OECD Statistics | — |
+| `opendosm` | OpenDOSM (Malaysia) | — |
+| `scb` | Statistics Sweden | — |
+| `sidra` | IBGE SIDRA (Brazil) | — |
+| `ssb` | Statistics Norway | — |
+| `unsd` | UN Statistics Division | — |
+
+### Markets and finance
+
+| Slug | Provider | API key |
+|---|---|---|
+| `a3` | A3 Mercados (Matba/Rofex, Argentina) | — |
+| `bcb-opendata` | BCB — Banco Central do Brasil (Open Data) | — |
+| `bis` | BIS — Bank for International Settlements | — |
+| `coingecko` | CoinGecko | Optional |
+| `mae` | MAE — Mercado Abierto Electrónico (Argentina) | — |
+
+### U.S. federal agencies
+
+| Slug | Provider | API key |
+|---|---|---|
+| `bea` | U.S. Bureau of Economic Analysis | Required |
+| `eia` | U.S. Energy Information Administration | Required |
+| `fred` | Federal Reserve Economic Data (St. Louis Fed) | Required |
+
+### International organizations
+
+| Slug | Provider | API key |
+|---|---|---|
+| `ilo` | International Labour Organization | — |
+| `imf` | International Monetary Fund | — |
+| `unicef` | UNICEF Data Warehouse | — |
+| `worldbank` | World Bank Open Data | — |
+
+### Curated and other
+
+| Slug | Provider | API key |
+|---|---|---|
+| `cepalstat` | CEPALSTAT (ECLAC) | — |
+| `owid` | Our World in Data | — |
+
+To see capabilities (`hierarchical`, `search`, `direct`), parameters, and popular series for any provider, call `GET /providers/{slug}` or open it in [the live catalog](https://www.alphacast.io/explore/apis).
 
 ## API endpoints
 
@@ -67,7 +124,7 @@ PUT /user-keys/{slug}
 ```
 
 <Info>
-  For providers that require a key (FRED, BLS, INEGI, Banxico), save your key once using `PUT /user-keys/{slug}`. Alphacast stores it securely and passes it automatically on every subsequent request. You never need to include it in individual calls.
+  For providers that require a key (FRED, BLS, INEGI, Banxico, BEA, EIA, BCCH), save your key once using `PUT /user-keys/{slug}`. Alphacast stores it securely and passes it automatically on every subsequent request. You never need to include it in individual calls.
 </Info>
 
 ## Capability types

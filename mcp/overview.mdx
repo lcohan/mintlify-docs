@@ -1,10 +1,10 @@
 ---
 title: "Alphacast MCP Server"
 sidebarTitle: "Overview"
-description: "Connect Claude Desktop, Claude Code, Cursor, and other MCP-compatible clients to Alphacast. Search the catalog, download datasets, and browse data providers from natural-language prompts."
+description: "Connect Claude Desktop, Claude Code, Cursor, and other MCP-compatible clients to Alphacast. Search the catalog, download datasets, browse 30+ data providers, look up tickers, and build pipelines from natural-language prompts."
 ---
 
-The Alphacast Model Context Protocol (MCP) server lets any MCP-compatible client interact with the Alphacast platform through structured tool calls. Search the curated catalog, download dataset rows, and browse external data providers — all from inside Claude Desktop, Claude Code, Cursor, or any other client that speaks MCP.
+The Alphacast Model Context Protocol (MCP) server lets any MCP-compatible client interact with the Alphacast platform through structured tool calls. Search the curated catalog, download dataset rows, browse 30+ external data providers, look up market tickers, and build full data pipelines — all from inside Claude Desktop, Claude Code, Cursor, or any other client that speaks MCP.
 
 ## Server endpoint
 
@@ -12,22 +12,28 @@ The Alphacast Model Context Protocol (MCP) server lets any MCP-compatible client
   **Public endpoint:** `https://mcp.alphacast.io` (HTTP streamable transport). Authenticate with the same API key you use for the REST API, sent as a Bearer token in the `Authorization` header.
 </Note>
 
-There is nothing to install. Point your client at the URL above, paste your API key, and the 13 tools below become available immediately.
+There is nothing to install. Point your client at the URL above, paste your API key, and the 27 tools below become available immediately.
 
 ## What you can do
 
 <CardGroup cols={2}>
   <Card title="Discover data" icon="magnifying-glass">
-    Search the Alphacast catalog and the curated public catalog of Seido. Browse FRED, BLS, World Bank, OECD, IMF, BIS, and major Latin American central banks without learning each provider's native API.
+    Search the Alphacast catalog and the curated public catalog of Seido. Browse 30+ providers — FRED, BLS, World Bank, OECD, IMF, BIS, ECB, Eurostat, Banxico, and many more — without learning each provider's native API.
   </Card>
   <Card title="Read datasets" icon="table">
-    Download dataset rows in CSV or JSON, fetch column schemas, and inspect repository metadata.
+    Download dataset rows in CSV or JSON, fetch column schemas, and inspect repository metadata. The Home repository is resolved automatically when you don't specify one.
+  </Card>
+  <Card title="Look up tickers" icon="chart-line">
+    Search public market tickers, ETFs, indexes, and ISINs, then pull historical OHLCV prices over `5y`, `ytd`, `max`, and other lookback periods.
+  </Card>
+  <Card title="Build pipelines" icon="diagram-project">
+    Create pipelines, add or edit steps, run them, and preview the output of any step. Auto-validates and auto-runs after every mutation.
   </Card>
   <Card title="Browse providers" icon="globe">
     Walk hierarchical catalogs, search series by keyword, and preview or fetch full historical data.
   </Card>
   <Card title="Manage provider keys" icon="key">
-    Save and remove third-party API keys (FRED, BLS, INEGI, Banxico) so Alphacast applies them automatically on every fetch.
+    Save and remove third-party API keys (FRED, BLS, INEGI, Banxico, BEA, EIA, BCCH) so Alphacast applies them automatically on every fetch.
   </Card>
 </CardGroup>
 
@@ -41,7 +47,7 @@ There is nothing to install. Point your client at the URL above, paste your API 
     Step-by-step setup for Claude Desktop, Claude Code, Cursor, and other clients.
   </Card>
   <Card title="Tools reference" icon="wrench" href="/mcp/tools/overview">
-    All 22 tools, grouped by capability, with input schemas and example prompts.
+    All 27 tools, grouped by capability, with input schemas and example prompts.
   </Card>
   <Card title="Examples" icon="lightbulb" href="/mcp/examples">
     End-to-end walkthroughs that combine multiple tools to solve real research workflows.
@@ -50,4 +56,4 @@ There is nothing to install. Point your client at the URL above, paste your API 
 
 ## Safety boundaries
 
-The server intentionally does **not** expose destructive operations. Repositories and datasets can only be deleted from the Alphacast web UI — never from an agent. The MCP surface is read-only with the single exception of `set_user_key`, which stores or removes your third-party provider key.
+The server intentionally does **not** expose destructive operations. Repositories, datasets, and pipelines can only be deleted from the Alphacast web UI — never from an agent. Of the 27 tools, 22 are read-only; the 5 write tools (`set_user_key`, `create_pipeline`, `add_pipeline_step`, `edit_pipeline_step`, `delete_pipeline_step`) are scoped to provider key storage and pipeline authoring.
