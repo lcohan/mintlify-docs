@@ -10,8 +10,6 @@ drafts/
 api/pipelines/
 pipelines/
 concepts/pipelines.mdx
-mcp/tools/pipelines-read.mdx
-mcp/tools/pipelines-write.mdx
 
 # Drafts and Excel/Google Drive integrations are not exposed in the public docs.
 integrations/

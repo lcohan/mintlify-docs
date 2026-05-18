@@ -76,6 +76,7 @@
             "pages": [
               "api/datasets/list",
               "api/datasets/get",
+              "api/datasets/columns",
               "api/datasets/create",
               "api/datasets/delete",
               "api/datasets/data",

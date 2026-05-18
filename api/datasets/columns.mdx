@@ -1,0 +1,100 @@
+---
+title: "GET /datasets/{id}/columns — List Dataset Columns"
+sidebarTitle: "Get columns"
+description: "Retrieve just the column schema of a dataset — name, ID, data type, and whether the column is an entity/dimension — without the rest of the dataset metadata."
+---
+
+Returns the column definitions for a dataset as a standalone array. Use this endpoint when you only need to inspect the schema — for example, to build a `$select` list for the [download endpoint](/api/datasets/data) or to validate that a column name exists before referencing it in an OData filter. The full dataset metadata (description, source, date range) is available from [`GET /datasets/{id}`](/api/datasets/get) instead.
+
+## Authentication
+
+Authenticate using HTTP Basic Auth. Pass your API key as the username and leave the password empty. You must have at least `Read` permission on the dataset.
+
+## Request
+
+**Method:** `GET`
+**URL:** `https://api.alphacast.io/datasets/{dataset_id}/columns`
+
+## Path parameters
+
+<ParamField path="dataset_id" type="integer" required>
+  The numeric ID of the dataset whose columns you want to retrieve.
+</ParamField>
+
+## Response
+
+Returns an array of column definition objects. Each object has the same shape as the entries in the `columns` array returned by [`GET /datasets/{id}`](/api/datasets/get).
+
+<ResponseField name="id" type="integer">
+  Unique column ID. Use this value with `$select` to reference columns reliably across renames.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Column display name.
+</ResponseField>
+
+<ResponseField name="dataType" type="string">
+  Data type of the column. One of `Date`, `String`, or `Decimal`.
+</ResponseField>
+
+<ResponseField name="isEntity" type="boolean">
+  When `true`, this column is a dimension or index column (e.g., `Date`, `Country`). When `false`, it is a value column.
+</ResponseField>
+
+## Examples
+
+<RequestExample>
+
+```bash cURL
+curl -u YOUR_API_KEY: https://api.alphacast.io/datasets/123/columns
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.alphacast.io/datasets/123/columns",
+    auth=("YOUR_API_KEY", ""),
+)
+columns = response.json()
+```
+
+```javascript Node.js
+const response = await fetch("https://api.alphacast.io/datasets/123/columns", {
+  headers: { Authorization: "Basic " + btoa("YOUR_API_KEY:") },
+});
+const columns = await response.json();
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200
+[
+  { "id": 1, "name": "Date", "dataType": "Date", "isEntity": true },
+  { "id": 2, "name": "Country", "dataType": "String", "isEntity": true },
+  { "id": 3, "name": "GDP", "dataType": "Decimal", "isEntity": false },
+  { "id": 4, "name": "Population", "dataType": "Decimal", "isEntity": false }
+]
+```
+
+```json 404
+{
+  "message": "Dataset not found"
+}
+```
+
+</ResponseExample>
+
+## Error responses
+
+| Status | Cause |
+|--------|-------|
+| `401 Unauthorized` | No API key provided and the dataset is not publicly accessible. |
+| `403 Forbidden` | Your account does not have read access to this dataset. |
+| `404 Not Found` | No dataset exists with the given ID. |
+
+<Tip>
+  To use a column with `$select` on the download endpoint, prefer the numeric `id` over the `name` — IDs are stable across column renames, so download links remain valid even if the schema is reorganised.
+</Tip>

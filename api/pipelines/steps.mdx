@@ -12,18 +12,18 @@ Steps are the building blocks of a pipeline. Each step has a `type` that determi
 
 ## Supported step types
 
-Alphacast supports more than 40 step types. The most commonly used are:
+Alphacast supports more than 40 step types, grouped into eight categories. See [Step types reference](/pipelines/step-types) for the full configuration schema of each.
 
 | Category | Step types |
 |---|---|
-| **Data fetching** | `fetch-dataset`, `fetch-yahoo`, `fetch-eod`, `fetch-fred`, `fetch-series` |
-| **Column operations** | `select-columns`, `rename-columns`, `reorder-columns`, `calculate-variable`, `apply-formula` |
-| **Row operations** | `filter-rows`, `filter-entity`, `filter-dates`, `sort-rows`, `reorder-rows` |
-| **Joins & reshaping** | `merge`, `append-dataset`, `melt-dataset`, `unstack-dataset`, `resample`, `regroup-entities` |
-| **Transforms** | `transform`, `change-units`, `rename-values`, `talib`, `arima-sa` |
-| **AI** | `ai-transform`, `ai-summary` |
-| **Publishing & views** | `publish`, `chart-data`, `table-view`, `deck-view`, `scoreboard-view`, `markdown` |
-| **Utilities** | `stash`, `data-snapshot`, `manual-configuration`, `portfolio-analysis`, `debt-sustainability-analysis`, `country-validator`, `select-series` |
+| **Data fetch** | `fetch-dataset`, `fetch-yahoo`, `fetch-fred`, `fetch-eod`, `fetch-series` |
+| **Data shaping** | `select-columns`, `rename-columns`, `reorder-columns`, `melt-dataset`, `unstack-dataset`, `append-dataset`, `merge` |
+| **Filtering** | `filter-rows`, `filter-entity`, `filter-dates`, `select-series` |
+| **Transformation** | `calculate-variable`, `apply-formula`, `transform`, `resample`, `change-units`, `regroup-entities`, `rename-values`, `reorder-rows`, `sort-rows` |
+| **AI** | `ai-transform`, `ai-summary`, `arima-sa` |
+| **Analysis** | `talib`, `portfolio-analysis`, `debt-sustainability-analysis` |
+| **Output and views** | `publish`, `chart-data`, `table-view`, `deck-view`, `scoreboard-view`, `markdown`, `stash`, `data-snapshot` |
+| **Validation** | `country-validator`, `manual-configuration` |
 
 ---
 
