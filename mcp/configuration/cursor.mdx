@@ -4,7 +4,7 @@ sidebarTitle: "Cursor"
 description: "Configure Cursor to use the Alphacast MCP server via .cursor/mcp.json."
 ---
 
-Cursor supports remote MCP servers natively. You configure the server in `.cursor/mcp.json` either at the project root (shared with collaborators) or in your user directory (private to you).
+Cursor launches MCP servers as local processes. You configure the server in `.cursor/mcp.json` either at the project root (shared with collaborators) or in your user directory (private to you).
 
 ## Configuration file location
 
@@ -21,9 +21,10 @@ Project-scoped configuration takes precedence when both exist. Use the user-scop
 {
   "mcpServers": {
     "alphacast": {
-      "url": "https://mcp.alphacast.io",
-      "headers": {
-        "Authorization": "Bearer YOUR_API_KEY"
+      "command": "npx",
+      "args": ["-y", "@alphacast/mcp"],
+      "env": {
+        "ALPHACAST_API_KEY": "YOUR_API_KEY"
       }
     }
   }
@@ -41,8 +42,8 @@ Project-scoped configuration takes precedence when both exist. Use the user-scop
 
 ## Verify
 
-Open the MCP panel in Cursor's settings. The `alphacast` server should appear with a green dot and 27 tools listed. In the chat, try:
+Open the MCP panel in Cursor's settings. The `alphacast` server should appear with a green dot and 32 tools listed. In the chat, try:
 
 > "Use the alphacast tools to list my repositories."
 
-If the server fails to connect, the most common causes are an invalid API key in the `Authorization` header or a corporate proxy that blocks outbound traffic to `mcp.alphacast.io`.
+If the server fails to connect, the most common causes are an invalid `ALPHACAST_API_KEY` or Node.js 18+ not being on the system PATH.

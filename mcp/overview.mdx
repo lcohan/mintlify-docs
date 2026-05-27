@@ -6,19 +6,19 @@ description: "Connect Claude Desktop, Claude Code, Cursor, and other MCP-compati
 
 The Alphacast Model Context Protocol (MCP) server lets any MCP-compatible client interact with the Alphacast platform through structured tool calls. Search the curated catalog, download dataset rows, browse 30+ external data providers, look up market tickers, and build full data pipelines — all from inside Claude Desktop, Claude Code, Cursor, or any other client that speaks MCP.
 
-## Server endpoint
+## Installation
 
 <Note>
-  **Public endpoint:** `https://mcp.alphacast.io` (HTTP streamable transport). Authenticate with the same API key you use for the REST API, sent as a Bearer token in the `Authorization` header.
+  **npm package:** `@alphacast/mcp`. Run it with `npx -y @alphacast/mcp` — your MCP client spawns it as a local subprocess. Authenticate by setting the `ALPHACAST_API_KEY` environment variable.
 </Note>
 
-There is nothing to install. Point your client at the URL above, paste your API key, and the 27 tools below become available immediately.
+The server requires Node.js 18+ and communicates over stdio. Install it once via your client's MCP configuration, and the 32 tools below become available immediately.
 
 ## What you can do
 
 <CardGroup cols={2}>
   <Card title="Discover data" icon="magnifying-glass">
-    Search the Alphacast catalog and the curated public catalog of Seido. Browse 30+ providers — FRED, BLS, World Bank, OECD, IMF, BIS, ECB, Eurostat, Banxico, and many more — without learning each provider's native API.
+    Search the curated Alphacast catalog. Browse 30+ providers — FRED, BLS, World Bank, OECD, IMF, BIS, ECB, Eurostat, Banxico, and many more — without learning each provider's native API.
   </Card>
   <Card title="Read datasets" icon="table">
     Download dataset rows in CSV or JSON, fetch column schemas, and inspect repository metadata. The Home repository is resolved automatically when you don't specify one.
@@ -32,8 +32,8 @@ There is nothing to install. Point your client at the URL above, paste your API 
   <Card title="Browse providers" icon="globe">
     Walk hierarchical catalogs, search series by keyword, and preview or fetch full historical data.
   </Card>
-  <Card title="Manage provider keys" icon="key">
-    Save and remove third-party API keys (FRED, BLS, INEGI, Banxico, BEA, EIA, BCCH) so Alphacast applies them automatically on every fetch.
+  <Card title="Author charts" icon="chart-bar">
+    Look up chart-authoring recipes for any Grapher chart type, validate configurations before saving, and inspect existing chart metadata.
   </Card>
 </CardGroup>
 
@@ -47,7 +47,7 @@ There is nothing to install. Point your client at the URL above, paste your API 
     Step-by-step setup for Claude Desktop, Claude Code, Cursor, and other clients.
   </Card>
   <Card title="Tools reference" icon="wrench" href="/mcp/tools/overview">
-    All 27 tools, grouped by capability, with input schemas and example prompts.
+    All 32 tools, grouped by capability, with input schemas and example prompts.
   </Card>
   <Card title="Examples" icon="lightbulb" href="/mcp/examples">
     End-to-end walkthroughs that combine multiple tools to solve real research workflows.
@@ -56,4 +56,4 @@ There is nothing to install. Point your client at the URL above, paste your API 
 
 ## Safety boundaries
 
-The server intentionally does **not** expose destructive operations. Repositories, datasets, and pipelines can only be deleted from the Alphacast web UI — never from an agent. Of the 27 tools, 22 are read-only; the 5 write tools (`set_user_key`, `create_pipeline`, `add_pipeline_step`, `edit_pipeline_step`, `delete_pipeline_step`) are scoped to provider key storage and pipeline authoring.
+The server intentionally does **not** expose destructive operations. Repositories, datasets, and pipelines can only be deleted from the Alphacast web UI — never from an agent. Of the 32 tools, 28 are read-only; the 4 write tools (`create_pipeline`, `add_pipeline_step`, `edit_pipeline_step`, `delete_pipeline_step`) are scoped to pipeline authoring. Provider API keys are managed through the [Alphacast settings](https://www.alphacast.io/settings/api-keys) web UI.

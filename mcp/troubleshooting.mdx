@@ -10,13 +10,13 @@ This page covers the failures you'll most likely run into. If your issue isn't h
 
 ### `401 Unauthorized` on every tool call
 
-The `Authorization` header is missing or the API key is invalid.
+The `ALPHACAST_API_KEY` environment variable is missing, empty, or the key is invalid.
 
 **Fixes:**
-- Verify the header is `Authorization: Bearer YOUR_API_KEY` — not `Bearer base64(YOUR_API_KEY)`. The MCP server takes the raw API key, unlike the REST API's HTTP Basic Auth.
+- Verify the key is set in your client's MCP configuration under `"env": { "ALPHACAST_API_KEY": "..." }`.
 - Regenerate the key in [Alphacast → Settings → API Keys](https://www.alphacast.io/settings/api-keys) if the original was rotated, leaked, or revoked.
-- For Claude Code, run `claude mcp list` and confirm the URL and headers match exactly.
-- For Cursor, open Settings → MCP and re-paste the header. The UI sometimes drops trailing whitespace.
+- For Claude Code, run `claude mcp list` and confirm the environment variable is configured correctly.
+- For Cursor, open Settings → MCP and verify the `env` block in `.cursor/mcp.json`.
 
 ### `403 Forbidden` on a specific tool call
 
@@ -38,20 +38,21 @@ The action exceeds your plan's quota — typically downloads or paid-tier provid
 
 ### Client says "MCP server failed to start" or shows a red status
 
-The client could not connect to `https://mcp.alphacast.io`.
+The client could not spawn the `npx -y @alphacast/mcp` subprocess.
 
 **Fixes:**
-- Confirm DNS and TCP reachability: `curl -I https://mcp.alphacast.io`. You should get an HTTP response (any status); `curl: (6) Could not resolve host` means a DNS or network issue.
-- If you're behind a corporate proxy or VPN, allow-list `mcp.alphacast.io` on port 443.
-- For Claude Desktop using `mcp-remote`, ensure Node.js 18+ is on `PATH` so `npx` can run.
+- Ensure **Node.js 18+** is installed and `npx` is on your system PATH. Run `npx --version` in a terminal to check.
+- Verify the command in your MCP config: `"command": "npx"`, `"args": ["-y", "@alphacast/mcp"]`.
+- On Windows, you may need the full path to `npx.cmd` if it's not on PATH.
+- Check your client's MCP logs for the specific error message (e.g., Claude Desktop → **Developer → Open MCP Logs**).
 
-### Tool calls hang or stream nothing
+### Tool calls hang or time out
 
-Streamable HTTP can be sensitive to intermediaries that buffer responses.
+The server calls the Alphacast REST API internally. If those calls fail or hang, tool calls will too.
 
 **Fixes:**
-- Disable HTTP/2 in your client if it has the option (some proxies mishandle h2 streaming).
-- Bypass the proxy temporarily to confirm whether the proxy is the source.
+- Confirm network access to `api.alphacast.io` and `www.alphacast.io`: `curl -I https://api.alphacast.io`.
+- If you're behind a corporate proxy or VPN, ensure the proxy allows outbound traffic to those domains on port 443.
 
 ## Data quirks
 

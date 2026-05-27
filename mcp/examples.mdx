@@ -22,16 +22,36 @@ Tips:
 
 ---
 
-## Save a FRED key once, then fetch any FRED series
+## Profile a dataset before downloading
 
-> "Save my FRED API key `abc123`, then fetch the full GDP series as year-over-year percent change."
+> "Profile dataset 12345 and tell me if it's worth downloading — what entities does it cover and how fresh is it?"
 
 What the model does:
 
-1. **`set_user_key`** with `slug: "fred"` and `api_key: "abc123"`.
-2. **`get_series`** with `slug: "fred"`, `series_id: "GDP"`, `full_data: true`, `params: { units: "pc1" }`.
+1. **`get_dataset_profile`** with `datasetId: 12345` and `sampleRows: 5`.
+2. Reports the entity breakdown, date range and frequency, total row count, and a small sample — without downloading the full dataset.
 
-After step 1, every subsequent FRED fetch (in this session and future ones) uses the saved key automatically. Run **`list_user_keys`** any time to see which providers you have credentials stored for.
+Tips:
+- Profiling is much faster than downloading when you just need to decide whether a dataset is relevant.
+- Combine with `search_catalog` to profile multiple search results in sequence before committing to a full download.
+
+---
+
+## Author a chart from an existing pipeline
+
+> "Show me how to configure a line chart for pipeline 4821, validate the config, and add it as a chart-data step."
+
+What the model does:
+
+1. **`get_pipeline`** with `pipelineId: 4821` to see the step list and output columns.
+2. **`get_grapher_config_reference`** with `chartType: "LineChart"` to get the minimal config template and text length limits.
+3. Fills in the template using column names from the pipeline's output.
+4. **`validate_grapher_config`** with `pipelineId: 4821` and `stepOrder` to confirm the config is valid against the actual upstream data.
+5. **`add_pipeline_step`** to append a `chart-data` step with the validated config.
+
+Tips:
+- Always validate before adding the step — the validator catches missing column references and invalid option values that would fail silently otherwise.
+- Use **`get_chart_details`** on an existing chart to clone its style rather than building from scratch.
 
 ---
 
@@ -44,11 +64,11 @@ What the model does:
 1. **`list_providers`** with `query: "Brazil"` to surface BCB, IBGE, etc.
 2. For each candidate provider: **`browse_provider`** to find the relevant categories.
 3. **`search_provider`** with focused keywords (`"selic"`, `"IPCA"`).
-4. **`get_series`** (preview) on the top candidates to confirm date range and frequency.
+4. **`get_series`** on the top candidates to confirm date range and frequency.
 5. Reports the combinations that align in frequency and date coverage.
 
 Tips:
-- Always preview before pulling full data — it keeps the conversation fast and avoids token bloat.
+- Use `search_provider` to narrow results before fetching full series data — it keeps the conversation fast and avoids token bloat.
 - If two providers carry the same series, prefer the one whose `license` field is most permissive for your use case.
 
 ---
@@ -60,7 +80,7 @@ Tips:
 What the model does:
 
 1. **`search_provider`** on `fred` with `query: "unemployment rate"`, then on `bls` and `oecd` with similar queries.
-2. **`get_series`** (preview) on the top candidate from each provider.
+2. **`get_series`** on the top candidate from each provider.
 3. Compares frequency, seasonal adjustment, and date coverage across the three.
 
 Tips:

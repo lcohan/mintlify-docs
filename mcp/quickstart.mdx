@@ -4,7 +4,7 @@ sidebarTitle: "Quickstart"
 description: "Connect Claude Code or Cursor to the Alphacast MCP server in three steps and run your first prompt."
 ---
 
-The Alphacast MCP server is a hosted endpoint at `https://mcp.alphacast.io`. There is no installer or binary — you just point your client at the URL and authenticate with your Alphacast API key.
+The Alphacast MCP server is an npm package (`@alphacast/mcp`) that your client runs as a local subprocess via `npx`. It communicates over stdio and requires Node.js 18+.
 
 <Steps>
   <Step title="Get your API key">
@@ -19,8 +19,7 @@ The Alphacast MCP server is a hosted endpoint at `https://mcp.alphacast.io`. The
     Run the command for your client. The example below uses Claude Code.
 
     ```bash
-    claude mcp add --transport http alphacast https://mcp.alphacast.io \
-      --header "Authorization: Bearer YOUR_API_KEY"
+    claude mcp add alphacast -e ALPHACAST_API_KEY=YOUR_API_KEY -- npx -y @alphacast/mcp
     ```
 
     For Claude Desktop, Cursor, and others, see the [configuration guides](/mcp/configuration/claude-desktop).
@@ -31,7 +30,7 @@ The Alphacast MCP server is a hosted endpoint at `https://mcp.alphacast.io`. The
 
     > "List my Alphacast repositories."
 
-    The client should call `list_repositories` and display the result. If you see an authentication error, double-check the `Authorization` header in step 2.
+    The client should call `list_repositories` and display the result. If you see an authentication error, double-check that the `ALPHACAST_API_KEY` environment variable is set correctly in step 2.
   </Step>
 </Steps>
 
@@ -39,7 +38,7 @@ The Alphacast MCP server is a hosted endpoint at `https://mcp.alphacast.io`. The
 
 <CardGroup cols={2}>
   <Card title="Tools reference" icon="wrench" href="/mcp/tools/overview">
-    Browse all 27 tools and their input schemas.
+    Browse all 32 tools and their input schemas.
   </Card>
   <Card title="Examples" icon="lightbulb" href="/mcp/examples">
     See full prompts that combine search, download, and provider tools.

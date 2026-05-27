@@ -1,0 +1,75 @@
+---
+title: "Grapher & Chart Tools"
+sidebarTitle: "Grapher & Charts"
+description: "Tools for looking up chart-authoring recipes, validating Grapher configurations, and inspecting existing chart metadata. Three read-only tools."
+---
+
+Three read-only tools for working with Alphacast Grapher charts. Use them to discover how to configure a chart type, validate a configuration object before saving, and inspect an existing chart's metadata and config.
+
+## `get_grapher_config_reference`
+
+Returns chart-authoring recipes, minimal configuration examples, text length limits, and common pitfalls for a given chart type. Use this before building or editing a `chart-data` pipeline step to understand what the Grapher expects.
+
+<ParamField body="chartType" type="string" required>
+  The chart type to query. Examples: `"LineChart"`, `"ScatterPlot"`, `"Map"`, `"DiscreteBar"`.
+</ParamField>
+
+<ParamField body="detail" type="string" default="default">
+  Level of detail. `"default"` returns compact authoring recipes and minimal examples. `"full"` includes exhaustive field definitions for the chart type.
+</ParamField>
+
+Response includes `availableChartTypes`, `minimalCreationConfig`, `editRecipes`, `textLengthLimits` (title ≤ 100 chars, subtitle ≤ 140, footer note ≤ 140), and `pitfalls`.
+
+**Example prompt**
+
+> "What's the minimal config for a line chart in Alphacast Grapher?"
+
+---
+
+## `validate_grapher_config`
+
+Validates a `chart-data` step configuration or a raw Grapher config object against the schema. Returns errors and warnings without saving anything. Use this to check your config before passing it to `edit_pipeline_step` or `add_pipeline_step`.
+
+<ParamField body="configuration" type="object" required>
+  The configuration object to validate. Can be a `chart-data` step configuration or a raw Grapher config (set `validateRawGrapher: true` for the latter).
+</ParamField>
+
+<ParamField body="outputManifest" type="object[]">
+  Upstream output columns (`name`, `isEntity`, `dataType`). Helps the validator check that referenced columns exist. When omitted and `pipelineId` + `stepOrder` are provided, the manifest is derived automatically.
+</ParamField>
+
+<ParamField body="pipelineId" type="number">
+  Pipeline ID. Used together with `stepOrder` to automatically derive the upstream output manifest.
+</ParamField>
+
+<ParamField body="stepOrder" type="number">
+  0-based step order of the chart-data step. Used together with `pipelineId`.
+</ParamField>
+
+<ParamField body="validateRawGrapher" type="boolean" default="false">
+  When `true`, treats `configuration` as a raw Grapher config object rather than a `chart-data` step configuration.
+</ParamField>
+
+Response includes `valid` (boolean), `issues` (array of `{severity, code, message, path}`), and `context` with the resolved output manifest.
+
+**Example prompt**
+
+> "Validate this chart config before I save it to the pipeline."
+
+---
+
+## `get_chart_details`
+
+Fetches a chart's metadata and its full Grapher configuration from a chart URL or slug. Also returns pipeline ownership when the chart is backed by a pipeline step, so you can navigate directly to the editor.
+
+<ParamField body="chartUrl" type="string" required>
+  Full Alphacast chart URL (e.g. `https://www.alphacast.io/p/account/charts/chart-slug-12345`) or just the chart slug.
+</ParamField>
+
+Response includes `chartId`, `slug`, `title`, `chartUrl`, the full `grapher` config object, and an optional `pipeline` block with `pipelineId`, `stepId`, and `editUrl`.
+
+**Example prompt**
+
+> "Show me the Grapher config of the chart at https://www.alphacast.io/charts/12345 — I want to replicate its style."
+
+**Underlying endpoint:** `GET /charts/{id}/config`.

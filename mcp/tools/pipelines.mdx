@@ -1,10 +1,10 @@
 ---
 title: "Pipeline Tools"
 sidebarTitle: "Pipelines"
-description: "Build, inspect, edit, and run Alphacast pipelines from natural-language prompts. Ten MCP tools for the full pipeline lifecycle — six read-only, four write — with auto-validation and auto-run after every mutation."
+description: "Build, inspect, edit, and run Alphacast pipelines from natural-language prompts. Thirteen MCP tools for the full pipeline lifecycle — nine read-only, four write — with auto-validation and auto-run after every mutation."
 ---
 
-Ten tools for working with Alphacast pipelines from an MCP client. Six are read-only (inspect definitions, fetch runs, preview step output); four are write (create a pipeline, add/edit/remove steps). After every write the server auto-validates and auto-runs the pipeline, then waits for the editor run to finish so the response carries the new state.
+Thirteen tools for working with Alphacast pipelines from an MCP client. Nine are read-only (inspect definitions, fetch runs, preview step output, discover step types and formulas); four are write (create a pipeline, add/edit/remove steps). After every write the server auto-validates and auto-runs the pipeline, then waits for the editor run to finish so the response carries the new state.
 
 <Tip>
   When `repositoryId` is omitted from `create_pipeline`, the server resolves the user's **Home repository** automatically. You don't need to call `list_repositories` first unless the pipeline belongs somewhere else.
@@ -12,15 +12,19 @@ Ten tools for working with Alphacast pipelines from an MCP client. Six are read-
 
 ## `list_pipelines`
 
-List every pipeline the API key can read.
+List pipelines in a specific repository.
 
-No input parameters. Returns one row per pipeline with `id`, `name`, and `repositoryId`.
+<ParamField body="repositoryId" type="number" required>
+  Repository ID. The tool returns only pipelines that belong to this repository.
+</ParamField>
+
+Returns one row per pipeline with `id`, `name`, and `repositoryId`.
 
 **Example prompt**
 
-> "List my pipelines and group them by repository."
+> "List the pipelines in my Home repository."
 
-**Underlying endpoint:** `GET /pipelines`.
+**Underlying endpoint:** `GET /pipelines?repositoryId={id}`.
 
 ---
 
@@ -131,6 +135,54 @@ Run a fresh **editor preview** materialization for a step, poll the run to compl
 > "Preview the data after step 2 in pipeline 4821 — first 50 rows."
 
 **Underlying endpoints:** `POST /pipelines/{id}/steps/{stepId}/editor-preview-data` (triggers the run) and `GET /pipelines/{id}/steps/{stepId}/editor-preview-data` (fetches the materialized rows once the run completes).
+
+---
+
+## `list_pipeline_step_types`
+
+Lists all available pipeline step types grouped by category (data fetch, data shaping, filtering, transformation, AI, analysis, output/views, validation). Use this to discover what types are available before calling `add_pipeline_step` or `create_pipeline`.
+
+No input parameters. Returns a structured list of step type groups, each containing type IDs, labels, and descriptions.
+
+**Example prompt**
+
+> "What pipeline step types are available in Alphacast?"
+
+**Underlying endpoint:** `GET /api/pipelines/assistant/reference?section=step-types`.
+
+---
+
+## `get_pipeline_step_config`
+
+Returns the configuration schema, validation rules, and AI-facing authoring examples for a specific pipeline step type. Use this to understand what `configuration` object to pass when calling `add_pipeline_step` or `edit_pipeline_step`.
+
+<ParamField body="stepType" type="string" required>
+  The step type ID (e.g. `"fetch-dataset"`, `"fetch-fred"`, `"merge"`, `"ai-transform"`, `"calculate-variable"`, `"chart-data"`, `"publish"`).
+</ParamField>
+
+**Example prompt**
+
+> "What configuration fields does the `merge` step type accept?"
+
+**Underlying endpoint:** `GET /api/pipelines/assistant/reference?stepType={type}`.
+
+---
+
+## `get_pipeline_formula_reference`
+
+Returns the complete formula syntax and built-in functions reference for `calculate-variable`, `apply-formula`, and `filter-rows` pipeline steps. Covers arithmetic operators, column references (`#'Column Name'`), aggregation functions, date functions, and conditional logic.
+
+No input parameters.
+
+<Tip>
+  In raw MCP/API formulas, reference columns as `#'Column Name'` — not the `@Column` shorthand used in the visual editor.
+</Tip>
+
+**Example prompt**
+
+> "What formula syntax can I use in a calculate-variable step?"
+
+**Underlying endpoint:** `GET /api/pipelines/assistant/reference?section=formula`.
 
 ---
 

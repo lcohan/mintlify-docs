@@ -1,10 +1,10 @@
 ---
 title: "Provider Tools"
 sidebarTitle: "Providers"
-description: "Tools for discovering 30+ external data providers (FRED, BLS, World Bank, OECD, IMF, BIS, ECB, Eurostat, and central banks across Latin America, Europe, and Asia), browsing their catalogs, fetching series, and managing third-party API keys."
+description: "Tools for discovering 30+ external data providers (FRED, BLS, World Bank, OECD, IMF, BIS, ECB, Eurostat, and central banks across Latin America, Europe, and Asia), browsing their catalogs, and fetching series."
 ---
 
-Seven tools for working with the external data providers Alphacast integrates with. Six are read-only; `set_user_key` writes a stored credential. Browse the live catalog at [alphacast.io/explore/apis](https://www.alphacast.io/explore/apis).
+Five read-only tools for working with the external data providers Alphacast integrates with. Browse the live catalog at [alphacast.io/explore/apis](https://www.alphacast.io/explore/apis).
 
 ## `list_providers`
 
@@ -102,7 +102,7 @@ Search series within a single provider by keyword. Only for providers with the `
 
 ## `get_series`
 
-Preview or fetch the full data of one provider series. Defaults to a preview (last ~24 observations) to keep responses small.
+Fetch the full historical data of one provider series.
 
 <ParamField body="slug" type="string" required>
   Provider slug.
@@ -112,52 +112,20 @@ Preview or fetch the full data of one provider series. Defaults to a preview (la
   The provider's series identifier. Format varies: `UNRATE` for FRED, `CUUR0000SA0` for BLS, `NY.GDP.PCAP.CD` for World Bank.
 </ParamField>
 
-<ParamField body="full_data" type="boolean" default="false">
-  When `true`, returns the full historical series instead of a preview.
-</ParamField>
-
 <ParamField body="params" type="object">
-  Provider-specific parameters (FRED `units`, BLS `startyear`, etc.). Only used when `full_data=true`. See `get_provider` for valid keys.
+  Provider-specific parameters (FRED `units`, BLS `startyear`, etc.). See `get_provider` for valid keys.
 </ParamField>
 
 **Example prompt**
 
 > "Fetch the full FRED CPIAUCSL series as year-over-year percent change."
 
-**Underlying endpoints:** `GET /providers/{slug}/series/{series_id}` (preview) or `POST /providers/{slug}/series/{series_id}/data` (full).
+**Underlying endpoint:** `POST /providers/{slug}/series/{series_id}/data`.
 
 ---
 
-## `list_user_keys`
+## Managing provider API keys
 
-Show which third-party providers have a stored API key for the current user.
-
-No input parameters. Returns a list of `{slug, configured}` pairs.
-
-**Example prompt**
-
-> "Do I have a FRED API key saved?"
-
-**Underlying endpoint:** `GET /user-keys`.
-
----
-
-## `set_user_key`
-
-Save or remove your third-party API key for a provider.
-
-<ParamField body="slug" type="string" required>
-  Provider slug.
-</ParamField>
-
-<ParamField body="api_key" type="string | null" required>
-  The key to store. Pass `null` to remove a previously stored key.
-</ParamField>
-
-After saving, every subsequent call to `get_series` for that provider transparently uses the key. You do not pass it manually each time.
-
-**Example prompt**
-
-> "Save my FRED API key — it's `abc123`."
-
-**Underlying endpoint:** `PUT /user-keys/{slug}`.
+<Note>
+  Third-party API keys (FRED, BLS, INEGI, Banxico, BEA, EIA, BCCH, and others) are managed through the [Alphacast settings page](https://www.alphacast.io/settings/api-keys). Once saved, every call to `get_series` for that provider uses the key automatically.
+</Note>

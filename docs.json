@@ -66,6 +66,7 @@
             "pages": [
               "api/repositories/list",
               "api/repositories/get",
+              "api/repositories/home",
               "api/repositories/create",
               "api/repositories/update",
               "api/repositories/delete"
@@ -155,6 +156,7 @@
               "mcp/tools/search-and-datasets",
               "mcp/tools/providers",
               "mcp/tools/tickers",
+              "mcp/tools/grapher",
               "mcp/tools/pipelines"
             ]
           },

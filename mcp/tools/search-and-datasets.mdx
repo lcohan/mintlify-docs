@@ -4,11 +4,11 @@ sidebarTitle: "Search & datasets"
 description: "Tools for discovering content in the Alphacast catalog, reading dataset metadata, schemas, and rows, and resolving the user's Home repository."
 ---
 
-These seven tools cover discovery and read access. None of them mutate state, so you can safely chain them together to explore Alphacast.
+These eight tools cover discovery and read access. None of them mutate state, so you can safely chain them together to explore Alphacast.
 
 ## `search_catalog`
 
-Search the curated Alphacast and Seido catalogs (default) or every public repository.
+Search the curated Alphacast catalog (default) or every public repository.
 
 <ParamField body="query" type="string" required>
   Search query. Tokenized server-side; multi-word queries score every term.
@@ -151,3 +151,25 @@ No input parameters. Returns the repository as if you had called `get_repository
 > "What's my Home repository?"
 
 **Underlying endpoint:** `GET /repositories/home`.
+
+---
+
+## `get_dataset_profile`
+
+Comprehensive inspection of a dataset: column schema, entity values, date range and frequency, total row count, and a sample of rows. Use this for a quick understanding of what a dataset contains before downloading it.
+
+<ParamField body="datasetId" type="number" required>
+  Numeric dataset ID.
+</ParamField>
+
+<ParamField body="sampleRows" type="number" default="10">
+  Number of sample rows to include in the response. Maximum 50. Set to `0` to skip the sample entirely.
+</ParamField>
+
+Returns `dataset` metadata, `columns`, `entities`, `dateStats` (date range and frequency), `rowCount`, and a `sample` array. Individual sections gracefully degrade if unavailable.
+
+**Example prompt**
+
+> "Profile dataset 12345 — how many rows does it have, what entities does it cover, and show me 5 sample rows."
+
+**Underlying endpoints:** `GET /datasets/{id}` + `GET /datasets/{id}/columns` + `GET /datasets/{id}/entities` + `GET /datasets/{id}/date-stats` + `GET /datasets/{id}/data?$top=N` (called in parallel).

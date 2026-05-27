@@ -1,23 +1,27 @@
 ---
 title: "MCP Authentication"
 sidebarTitle: "Authentication"
-description: "How the Alphacast MCP server authenticates clients with your Alphacast API key over a Bearer token."
+description: "How the Alphacast MCP server authenticates with your Alphacast API key via the ALPHACAST_API_KEY environment variable."
 ---
 
 The Alphacast MCP server reuses the same API key as the REST API. There is no separate token to manage and no OAuth flow.
 
-## Bearer token
+## Environment variable
 
-Every MCP request must include an `Authorization` header in this exact form:
+The server reads your API key from the `ALPHACAST_API_KEY` environment variable at startup. You set this once in your client's MCP configuration:
 
+```json
+{
+  "env": {
+    "ALPHACAST_API_KEY": "YOUR_ALPHACAST_API_KEY"
+  }
+}
 ```
-Authorization: Bearer YOUR_ALPHACAST_API_KEY
-```
 
-Your client sets this header once during configuration. The MCP runtime forwards it on every call to the server.
+The server uses this key internally when calling the Alphacast REST API on your behalf.
 
 <Note>
-  The token is **your raw API key**, not a base64-encoded value. The REST API accepts the key as the username in HTTP Basic Auth; the MCP server accepts the same key as a Bearer token. Both authenticate as the same Alphacast account.
+  The key is **the same raw API key** you use for the REST API (where it goes as the HTTP Basic Auth username). Both authenticate as the same Alphacast account.
 </Note>
 
 ## Permissions
@@ -40,4 +44,4 @@ If a tool call returns `403 Forbidden`, the API key does not have the required p
 
 ## What the server does *not* see
 
-The server only ever sees the Bearer token you send. It does not store the conversation history of your MCP client, the prompts you wrote, or the responses the model generated. Tool inputs and outputs travel only between your client, the Alphacast MCP server, and the Alphacast REST API.
+The server only ever sees the API key from the environment variable. It does not store the conversation history of your MCP client, the prompts you wrote, or the responses the model generated. Tool inputs and outputs travel only between your client, the Alphacast MCP server (running locally), and the Alphacast REST API.
