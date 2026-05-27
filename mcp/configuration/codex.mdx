@@ -1,0 +1,53 @@
+---
+title: "Connect Codex"
+sidebarTitle: "Codex"
+description: "Add the Alphacast MCP server to OpenAI Codex with the codex mcp add command or by editing config.toml directly."
+---
+
+Codex launches the Alphacast MCP server as a local subprocess via `npx`. You can add it with a single CLI command, or by editing `config.toml`. The CLI and IDE extension share the same configuration.
+
+## CLI (recommended)
+
+```bash
+codex mcp add alphacast --env ALPHACAST_API_KEY=YOUR_API_KEY -- npx -y @alphacast/mcp
+```
+
+To check configured servers:
+
+```bash
+codex mcp list
+```
+
+## `config.toml` (manual)
+
+Edit `~/.codex/config.toml` for user scope, or create `.codex/config.toml` at your project root for project scope.
+
+```toml config.toml
+[mcp_servers.alphacast]
+command = "npx"
+args = ["-y", "@alphacast/mcp"]
+
+[mcp_servers.alphacast.env]
+ALPHACAST_API_KEY = "YOUR_API_KEY"
+```
+
+<Warning>
+  Do not commit a real API key to a project-scoped `config.toml`. Use environment variable forwarding instead:
+
+  ```toml
+  [mcp_servers.alphacast]
+  command = "npx"
+  args = ["-y", "@alphacast/mcp"]
+  env_vars = ["ALPHACAST_API_KEY"]
+  ```
+
+  This reads `ALPHACAST_API_KEY` from your local environment at runtime.
+</Warning>
+
+## Verify
+
+In a Codex session, type `/mcp` to see active servers. The `alphacast` server should appear with its 32 tools. Try a prompt:
+
+> "Use the alphacast tools to list my repositories."
+
+If the server fails to start, ensure Node.js 18+ is installed and `npx` is on your system PATH.

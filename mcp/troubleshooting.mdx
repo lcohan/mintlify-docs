@@ -16,7 +16,7 @@ The `ALPHACAST_API_KEY` environment variable is missing, empty, or the key is in
 - Verify the key is set in your client's MCP configuration under `"env": { "ALPHACAST_API_KEY": "..." }`.
 - Regenerate the key in [Alphacast → Settings → API Keys](https://www.alphacast.io/settings/api-keys) if the original was rotated, leaked, or revoked.
 - For Claude Code, run `claude mcp list` and confirm the environment variable is configured correctly.
-- For Cursor, open Settings → MCP and verify the `env` block in `.cursor/mcp.json`.
+- For Codex, run `codex mcp list` and verify the `env` block in your `config.toml`.
 
 ### `403 Forbidden` on a specific tool call
 
@@ -44,7 +44,7 @@ The client could not spawn the `npx -y @alphacast/mcp` subprocess.
 - Ensure **Node.js 18+** is installed and `npx` is on your system PATH. Run `npx --version` in a terminal to check.
 - Verify the command in your MCP config: `"command": "npx"`, `"args": ["-y", "@alphacast/mcp"]`.
 - On Windows, you may need the full path to `npx.cmd` if it's not on PATH.
-- Check your client's MCP logs for the specific error message (e.g., Claude Desktop → **Developer → Open MCP Logs**).
+- Check your client's MCP logs for the specific error message (e.g., run `claude mcp list` in Claude Code or `codex mcp list` in Codex).
 
 ### Tool calls hang or time out
 
@@ -68,4 +68,4 @@ Error messages may show IDs as strings even though the API expects integers. The
 
 - For server-side issues, contact Alphacast support with the time of failure and the tool name. Server logs include the request ID.
 - For protocol-level questions about MCP itself, see the [official MCP spec](https://modelcontextprotocol.io/).
-- For client-specific issues (Claude Desktop, Cursor, etc.), check that client's documentation — the way each client surfaces tool-call errors varies.
+- For client-specific issues (Claude Code, Codex, etc.), check that client's documentation — the way each client surfaces tool-call errors varies.
