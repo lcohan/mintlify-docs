@@ -143,8 +143,11 @@
           {
             "group": "Configuration",
             "pages": [
+              "mcp/configuration/claude-desktop",
               "mcp/configuration/claude-code",
-              "mcp/configuration/codex"
+              "mcp/configuration/codex",
+              "mcp/configuration/cursor",
+              "mcp/configuration/other-clients"
             ]
           },
           {

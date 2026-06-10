@@ -6,6 +6,57 @@ description: "Common errors and fixes when connecting clients to the Alphacast M
 
 This page covers the failures you'll most likely run into. If your issue isn't here, check your client's MCP logs first — they almost always reveal the underlying HTTP status code or message.
 
+## Setup issues
+
+### `claude_desktop_config.json` is not where the docs say
+
+Enterprise deployments of Claude Desktop can install under a different directory than the standard `%APPDATA%\Claude\` — for example `%LOCALAPPDATA%\Claude-3p\`. The documented paths are defaults, not guarantees.
+
+**Fixes:**
+- In Claude Desktop, open your profile → **Settings** → **Developer** → **Edit Config**. This always opens the folder containing the config file that *your* installation actually reads — use it instead of navigating to a hardcoded path.
+- Alternatively, search for `claude_desktop_config.json` with Windows Search (or Spotlight on macOS).
+
+### No admin rights to install Node.js (Windows)
+
+The standard Node.js `.msi` installer requires administrator privileges, which many corporate machines don't allow. You don't need admin rights to run the MCP server — use the portable binary instead:
+
+1. Download the **Windows Binary (.zip)** from [nodejs.org/en/download](https://nodejs.org/en/download) (choose "Standalone binary", not the installer).
+2. Extract it to a folder you own, for example `C:\Users\<you>\nodejs\`.
+3. Add that folder to your **user-level PATH** (no admin needed): open the Start menu, search for **"Edit environment variables for your account"**, select `Path` → **Edit** → **New**, and add the folder. Then fully restart your MCP client so it picks up the new PATH.
+4. Verify in a new terminal: `npx --version`.
+
+If you can't (or don't want to) modify PATH, skip step 3 and point your MCP config at the binary directly with an absolute path:
+
+```json
+{
+  "mcpServers": {
+    "alphacast": {
+      "command": "C:\\Users\\<you>\\nodejs\\npx.cmd",
+      "args": ["-y", "@alphacast/mcp"],
+      "env": {
+        "ALPHACAST_API_KEY": "YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+Note the doubled backslashes — JSON requires `\\` for each `\` in Windows paths.
+
+### The config JSON is invalid (server disappears or never loads)
+
+If your client ignores the server after a restart — it doesn't appear in the server list at all — the config file is almost certainly malformed JSON.
+
+**Common causes:**
+- A missing comma between two server entries, or an extra trailing comma after the last one.
+- Unbalanced braces after pasting a snippet into an existing file.
+- The file was saved as `claude_desktop_config.json.txt` (Windows hides extensions by default).
+
+**Fixes:**
+- Paste the full file content into a Claude chat and ask it to find and fix the JSON error — this catches formatting mistakes immediately.
+- If it still fails, replace the entire file content with the complete config block from the [Claude Desktop guide](/mcp/configuration/claude-desktop) instead of merging snippets.
+- When saving with **Save As** on Windows, set "Save as type" to **All Files** to avoid the hidden `.txt` extension.
+
 ## Authentication errors
 
 ### `401 Unauthorized` on every tool call
@@ -14,7 +65,7 @@ The `ALPHACAST_API_KEY` environment variable is missing, empty, or the key is in
 
 **Fixes:**
 - Verify the key is set in your client's MCP configuration under `"env": { "ALPHACAST_API_KEY": "..." }`.
-- Regenerate the key in [Alphacast → Settings → API Keys](https://www.alphacast.io/settings/api-keys) if the original was rotated, leaked, or revoked.
+- Regenerate the key in [Alphacast → Settings](https://www.alphacast.io/settings) if the original was rotated, leaked, or revoked.
 - For Claude Code, run `claude mcp list` and confirm the environment variable is configured correctly.
 - For Codex, run `codex mcp list` and verify the `env` block in your `config.toml`.
 
@@ -41,10 +92,19 @@ The action exceeds your plan's quota — typically downloads or paid-tier provid
 The client could not spawn the `npx -y @alphacast/mcp` subprocess.
 
 **Fixes:**
-- Ensure **Node.js 18+** is installed and `npx` is on your system PATH. Run `npx --version` in a terminal to check.
+- Ensure **Node.js 18+** is installed and `npx` is on your system PATH. Run `npx --version` in a terminal to check. No admin rights to install it? See [the portable install](#no-admin-rights-to-install-nodejs-windows).
 - Verify the command in your MCP config: `"command": "npx"`, `"args": ["-y", "@alphacast/mcp"]`.
-- On Windows, you may need the full path to `npx.cmd` if it's not on PATH.
+- On Windows, if `npx` is not on PATH, use the full path to `npx.cmd` as the command, e.g. `"command": "C:\\Program Files\\nodejs\\npx.cmd"` (or wherever Node is installed — note the doubled backslashes).
 - Check your client's MCP logs for the specific error message (e.g., run `claude mcp list` in Claude Code or `codex mcp list` in Codex).
+
+### Server shows "running" but no tools appear in chat
+
+In Claude Desktop, the server can show a "running" badge in **Settings → Developer** even when it failed to start or authenticate. The chat gives no error: there's no tools icon, and Claude answers your questions from general knowledge as if the MCP server didn't exist.
+
+**Fixes:**
+- Don't trust the badge — verify in a new chat: the tools menu (slider icon) should list **alphacast** with 32 tools, and a test prompt like *"List my Alphacast repositories"* should produce a visible tool call. An answer with no tool call means the server isn't connected.
+- Open **Settings → Developer → Open MCP Logs**. The logs are the only reliable way to diagnose this state. Typical causes: `npx` not found (Node.js missing or not on PATH), an invalid `ALPHACAST_API_KEY`, or a malformed config file.
+- After fixing, quit Claude Desktop completely from the system tray (closing the window is not enough) and relaunch.
 
 ### Tool calls hang or time out
 

@@ -56,4 +56,4 @@ The server requires Node.js 18+ and communicates over stdio. Install it once via
 
 ## Safety boundaries
 
-The server intentionally does **not** expose destructive operations. Repositories, datasets, and pipelines can only be deleted from the Alphacast web UI — never from an agent. Of the 32 tools, 28 are read-only; the 4 write tools (`create_pipeline`, `add_pipeline_step`, `edit_pipeline_step`, `delete_pipeline_step`) are scoped to pipeline authoring. Provider API keys are managed through the [Alphacast settings](https://www.alphacast.io/settings/api-keys) web UI.
+The server intentionally does **not** expose destructive operations. Repositories, datasets, and pipelines can only be deleted from the Alphacast web UI — never from an agent. Of the 32 tools, 28 are read-only; the 4 write tools (`create_pipeline`, `add_pipeline_step`, `edit_pipeline_step`, `delete_pipeline_step`) are scoped to pipeline authoring. Provider API keys are managed through the [Alphacast settings](https://www.alphacast.io/settings) web UI.

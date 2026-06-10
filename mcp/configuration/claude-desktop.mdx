@@ -1,51 +1,116 @@
 ---
 title: "Connect Claude Desktop"
 sidebarTitle: "Claude Desktop"
-description: "Configure Claude Desktop to use the Alphacast MCP server via npx."
+description: "Configure Claude Desktop to use the Alphacast MCP server via npx — including enterprise setups with non-standard paths or no admin rights."
 ---
 
 Claude Desktop launches MCP servers as local processes defined in `claude_desktop_config.json`. The Alphacast MCP server runs via `npx` and communicates over stdio.
 
-## Configuration file location
-
-| OS | Path |
-|---|---|
-| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
-| Linux | `~/.config/Claude/claude_desktop_config.json` |
-
-If the file does not exist, create it with an empty `{}` and add the snippet below.
-
-## Add the server
-
-```json claude_desktop_config.json
-{
-  "mcpServers": {
-    "alphacast": {
-      "command": "npx",
-      "args": ["-y", "@alphacast/mcp"],
-      "env": {
-        "ALPHACAST_API_KEY": "YOUR_API_KEY"
-      }
-    }
-  }
-}
-```
-
 <Note>
-  `npx` ships with Node.js. If `npx` is not found, install Node 18 or later from [nodejs.org](https://nodejs.org/) and try again.
+  `npx` ships with Node.js. If `npx` is not found, install Node 18 or later from [nodejs.org](https://nodejs.org/). On a corporate machine without admin rights, see [Install Node.js without admin rights](/mcp/troubleshooting#no-admin-rights-to-install-nodejs-windows).
 </Note>
 
-## Apply the change
+<Steps>
+  <Step title="Get your API key">
+    Sign in to Alphacast and open [Settings](https://www.alphacast.io/settings). Copy your API key. If you belong to multiple teams, make sure your active team subscription is selected first — the key inherits that team's permissions.
+  </Step>
 
-1. Save `claude_desktop_config.json`.
-2. Quit Claude Desktop completely (right-click the menu bar / system tray icon → **Quit**, not just close the window).
-3. Relaunch Claude Desktop.
+  <Step title="Open the config file">
+    The most reliable way — it works no matter where Claude Desktop is installed:
 
-## Verify
+    1. In Claude Desktop, open your profile → **Settings** → **Developer**.
+    2. Click **Edit Config**. This opens the folder containing `claude_desktop_config.json`.
+    3. Open `claude_desktop_config.json` in any text editor.
 
-In a new chat, open the tools menu (the slider icon). You should see the **alphacast** server listed with its 32 tools enabled. Try:
+    For reference, the standard locations are:
 
-> "List my Alphacast repositories."
+    | OS | Path |
+    |---|---|
+    | macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+    | Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
+    | Linux | `~/.config/Claude/claude_desktop_config.json` |
 
-If the tools menu shows a red dot or the server is missing, open Claude Desktop's **Developer → Open MCP Logs** menu to inspect the failure. The most common causes are an invalid `ALPHACAST_API_KEY` or Node.js not being on the system PATH.
+    <Note>
+      Enterprise deployments of Claude Desktop may use a different directory (for example `%LOCALAPPDATA%\Claude-3p\` on Windows). If the standard path doesn't exist on your machine, use the **Edit Config** button above, or search for `claude_desktop_config.json` with Windows Search.
+    </Note>
+  </Step>
+
+  <Step title="Add the server">
+    **If the file is empty or doesn't exist**, paste this entire block (replace `YOUR_API_KEY` with your key):
+
+    ```json claude_desktop_config.json
+    {
+      "mcpServers": {
+        "alphacast": {
+          "command": "npx",
+          "args": ["-y", "@alphacast/mcp"],
+          "env": {
+            "ALPHACAST_API_KEY": "YOUR_API_KEY"
+          }
+        }
+      }
+    }
+    ```
+
+    **If the file already has content** (other MCP servers or settings), add the `alphacast` entry inside the existing `mcpServers` object — don't paste the whole block again:
+
+    ```json claude_desktop_config.json
+    {
+      "mcpServers": {
+        "some-other-server": {
+          "command": "..."
+        },
+        "alphacast": {
+          "command": "npx",
+          "args": ["-y", "@alphacast/mcp"],
+          "env": {
+            "ALPHACAST_API_KEY": "YOUR_API_KEY"
+          }
+        }
+      }
+    }
+    ```
+
+    <Warning>
+      The most common failure at this step is invalid JSON: a missing comma between server entries, an extra trailing comma, or unbalanced braces. If Claude Desktop silently ignores your server after a restart, the JSON is almost certainly malformed. Quick fix: paste the full file content into a Claude chat and ask it to find and fix the JSON error.
+    </Warning>
+
+    When saving on Windows, if your editor offers **Save As**, set "Save as type" to **All Files** so the file isn't saved as `claude_desktop_config.json.txt`.
+  </Step>
+
+  <Step title="Restart Claude Desktop">
+    Quit Claude Desktop completely — right-click the menu bar / system tray icon and choose **Quit**. Closing the window is not enough; the app keeps running in the background and won't reload the config. Then relaunch it.
+  </Step>
+
+  <Step title="Verify it actually works">
+    <Warning>
+      The "running" badge next to the server in **Settings → Developer** is **not** proof that the server works. It can show "running" even when the server failed to start or authenticate. Always verify in the chat itself.
+    </Warning>
+
+    1. Open a **new chat** and click the tools menu (the slider icon). You should see the **alphacast** server listed with its 32 tools enabled.
+    2. Send a test prompt:
+
+       > "List my Alphacast repositories."
+
+    3. Confirm that Claude **calls a tool** — you'll see a `list_repositories` tool-call block in the response. If Claude answers from general knowledge with no tool call (and no tools icon appears), the server is not actually connected, even if the Developer tab says "running".
+
+    If verification fails, open **Settings → Developer → Open MCP Logs** — the logs are the only reliable way to diagnose a failed server. What to look for:
+
+    | Log message | Cause | Fix |
+    |---|---|---|
+    | `npx` not found / spawn error | Node.js missing or not on PATH | [Install Node.js](/mcp/troubleshooting#no-admin-rights-to-install-nodejs-windows) or use the [full path to `npx.cmd`](/mcp/troubleshooting#client-says-mcp-server-failed-to-start-or-shows-a-red-status) |
+    | `401 Unauthorized` | Invalid or missing API key | [Authentication errors](/mcp/troubleshooting#401-unauthorized-on-every-tool-call) |
+    | JSON parse error / server missing entirely | Malformed config file | [Fix the config JSON](/mcp/troubleshooting#the-config-json-is-invalid-server-disappears-or-never-loads) |
+  </Step>
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Troubleshooting" icon="wrench" href="/mcp/troubleshooting">
+    Setup, authentication, and connection fixes — including enterprise Windows environments.
+  </Card>
+  <Card title="Examples" icon="lightbulb" href="/mcp/examples">
+    Full prompts that combine search, download, and provider tools.
+  </Card>
+</CardGroup>
