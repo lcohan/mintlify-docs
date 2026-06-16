@@ -1,12 +1,32 @@
 ---
 title: "Connect Codex"
 sidebarTitle: "Codex"
-description: "Add the Alphacast MCP server to OpenAI Codex with the codex mcp add command or by editing config.toml directly."
+description: "Add the Alphacast MCP server to OpenAI Codex — the hosted server over OAuth, or the local npm package via npx."
 ---
 
-Codex launches the Alphacast MCP server as a local subprocess via `npx`. You can add it with a single CLI command, or by editing `config.toml`. The CLI and IDE extension share the same configuration.
+Codex supports both transports. Use the **hosted** server (no install, OAuth login) or the **local** npm package (spawned via `npx`). The CLI and IDE extension share the same configuration.
 
-## CLI (recommended)
+## Hosted (remote, OAuth)
+
+Codex's native remote-MCP support over streamable HTTP is still rolling out and varies by version. The most reliable way to reach the hosted server today is the `mcp-remote` bridge — a small stdio-to-HTTP adapter that performs the browser OAuth login for you:
+
+```toml config.toml
+[mcp_servers.alphacast]
+command = "npx"
+args = ["-y", "mcp-remote", "https://mcp.alphacast.io/mcp"]
+```
+
+The first time Codex starts the server, `mcp-remote` opens your browser to sign in with your Alphacast account and caches the token under `~/.mcp-auth`. No API key is needed.
+
+<Note>
+  If your Codex version supports native streamable-HTTP servers, you can instead point it directly at `url = "https://mcp.alphacast.io/mcp"` (enabling `experimental_use_rmcp_client = true` if your version requires it) and authenticate with `codex mcp login alphacast`. If that fails, fall back to the `mcp-remote` bridge above.
+</Note>
+
+## Local (npm package)
+
+Codex launches the Alphacast MCP server as a local subprocess via `npx`. You can add it with a single CLI command, or by editing `config.toml`.
+
+### CLI (recommended)
 
 ```bash
 codex mcp add alphacast --env ALPHACAST_API_KEY=YOUR_API_KEY -- npx -y @alphacast/mcp
@@ -18,7 +38,7 @@ To check configured servers:
 codex mcp list
 ```
 
-## `config.toml` (manual)
+### `config.toml` (manual)
 
 Edit `~/.codex/config.toml` for user scope, or create `.codex/config.toml` at your project root for project scope.
 

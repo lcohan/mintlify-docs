@@ -4,7 +4,41 @@ sidebarTitle: "Quickstart"
 description: "Connect Claude Desktop, Claude Code, or Codex to the Alphacast MCP server in three steps and run your first prompt."
 ---
 
-The Alphacast MCP server is an npm package (`@alphacast/mcp`) that your client runs as a local subprocess via `npx`. It communicates over stdio and requires Node.js 18+.
+The Alphacast MCP server can be reached two ways: the **hosted** server at `https://mcp.alphacast.io/mcp` (no install, sign in with OAuth) or the **local** npm package (`@alphacast/mcp`) that your client runs via `npx`. Both expose the same 32 tools. Pick one path below.
+
+## Option A — Hosted (recommended, no install)
+
+Nothing to install and no API key to copy. Your client connects to the remote URL and you authorize it in the browser with your Alphacast account.
+
+<Steps>
+  <Step title="Add the remote server to your client">
+    **Claude Code**: run this in a terminal.
+
+    ```bash
+    claude mcp add --transport http alphacast https://mcp.alphacast.io/mcp
+    ```
+
+    **Claude Desktop**: open **Settings → Connectors → Add custom connector**, name it `alphacast`, and paste the URL `https://mcp.alphacast.io/mcp`. See the [Claude Desktop guide](/mcp/configuration/claude-desktop).
+
+    For Codex, Cursor, and other clients, see their [configuration guides](/mcp/configuration/cursor) — each shows the remote URL setup.
+  </Step>
+
+  <Step title="Sign in with OAuth">
+    The first time the client connects, it opens your browser to `auth.alphacast.io`. Sign in (or approve if already signed in) and grant the requested `mcp:read` / `mcp:write` scopes. The client stores the token and reconnects automatically afterwards.
+
+    In Claude Code, if the browser doesn't open on its own, run `/mcp`, select `alphacast`, and choose **Authenticate**.
+  </Step>
+
+  <Step title="Run your first prompt">
+    > "List my Alphacast repositories."
+
+    The client should call `list_repositories` and display the result. If you get a `401`, re-run the OAuth step — the token may have expired or been declined.
+  </Step>
+</Steps>
+
+## Option B — Local (npm package)
+
+Runs the server as a local subprocess. Requires Node.js 18+ and an API key.
 
 <Steps>
   <Step title="Get your API key">
@@ -16,15 +50,13 @@ The Alphacast MCP server is an npm package (`@alphacast/mcp`) that your client r
   </Step>
 
   <Step title="Add the server to your client">
-    **Claude Desktop** (no terminal required): follow the [Claude Desktop guide](/mcp/configuration/claude-desktop) — it walks through editing `claude_desktop_config.json` step by step, including non-standard install paths.
-
     **Claude Code**: run this command in a terminal.
 
     ```bash
     claude mcp add alphacast -e ALPHACAST_API_KEY=YOUR_API_KEY -- npx -y @alphacast/mcp
     ```
 
-    For Codex, see the [Codex configuration guide](/mcp/configuration/codex); for Cursor and other clients, see [Configuration](/mcp/configuration/cursor).
+    **Claude Desktop**: follow the [Claude Desktop guide](/mcp/configuration/claude-desktop) — it walks through editing `claude_desktop_config.json` step by step, including non-standard install paths. For Codex, Cursor, and other clients, see [Configuration](/mcp/configuration/cursor).
   </Step>
 
   <Step title="Run your first prompt">
@@ -32,7 +64,7 @@ The Alphacast MCP server is an npm package (`@alphacast/mcp`) that your client r
 
     > "List my Alphacast repositories."
 
-    The client should call `list_repositories` and display the result. If you see an authentication error, double-check that the `ALPHACAST_API_KEY` environment variable is set correctly in step 2.
+    The client should call `list_repositories` and display the result. If you see an authentication error, double-check that the `ALPHACAST_API_KEY` environment variable is set correctly in the previous step.
   </Step>
 </Steps>
 

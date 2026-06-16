@@ -1,12 +1,45 @@
 ---
 title: "Connect Claude Code"
 sidebarTitle: "Claude Code"
-description: "Add the Alphacast MCP server to Claude Code with the claude mcp add command or by editing .mcp.json directly."
+description: "Add the Alphacast MCP server to Claude Code — the hosted server over OAuth, or the local npm package via npx."
 ---
+
+Claude Code supports both transports. Use the **hosted** server (no install, OAuth login) or the **local** npm package (spawned via `npx`).
+
+## Hosted (remote, OAuth)
+
+Add the remote server with the HTTP transport — no Node.js or API key required:
+
+```bash
+claude mcp add --transport http alphacast https://mcp.alphacast.io/mcp
+```
+
+The first time you use it, authorize the connection: run `/mcp`, select `alphacast`, and choose **Authenticate**. Claude Code opens your browser to sign in with your Alphacast account and stores the token for you.
+
+To remove it later:
+
+```bash
+claude mcp remove alphacast
+```
+
+Add `--scope project` to share a checked-in `.mcp.json` with collaborators (each person still authenticates with their own Alphacast account — no secret is committed):
+
+```json .mcp.json
+{
+  "mcpServers": {
+    "alphacast": {
+      "type": "http",
+      "url": "https://mcp.alphacast.io/mcp"
+    }
+  }
+}
+```
+
+## Local (npm package)
 
 Claude Code launches the Alphacast MCP server as a local subprocess via `npx`. You can add it with a single CLI command, or by editing the project-level `.mcp.json` file.
 
-## CLI (recommended)
+### CLI (recommended)
 
 Run this from any directory inside your project. The server is added at the user scope by default — pass `--scope project` to share it with collaborators via a checked-in `.mcp.json`.
 
@@ -26,7 +59,7 @@ To list configured servers and their status:
 claude mcp list
 ```
 
-## `.mcp.json` (project-scoped, checked into the repo)
+### `.mcp.json` (project-scoped, checked into the repo)
 
 If you want the server available to anyone who clones the project, create or edit `.mcp.json` at the repo root:
 

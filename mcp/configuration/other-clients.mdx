@@ -1,10 +1,26 @@
 ---
 title: "Other MCP Clients"
 sidebarTitle: "Other clients"
-description: "Connect VS Code, Zed, Windsurf, and any custom MCP client to the Alphacast MCP server."
+description: "Connect VS Code, Zed, Windsurf, and any custom MCP client to the Alphacast MCP server — hosted (OAuth) or local (npx)."
 ---
 
-The Alphacast MCP server is an npm package (`@alphacast/mcp`) that runs as a local subprocess via `npx`. It communicates over stdio. The exact configuration format varies by client, but the values are always the same:
+Every client can reach Alphacast either way. The **hosted** server lives at `https://mcp.alphacast.io/mcp` and authenticates with OAuth; the **local** npm package runs as a subprocess via `npx` and authenticates with `ALPHACAST_API_KEY`. Both expose the same 32 tools.
+
+## Hosted (remote, OAuth)
+
+Clients with native remote-MCP support take the URL directly (see VS Code and Windsurf below). For any client that only speaks local stdio — including Zed and most custom setups — use the **`mcp-remote`** bridge. It runs locally, connects to the hosted URL, and handles the browser OAuth login (caching the token under `~/.mcp-auth`):
+
+| Field | Value |
+|---|---|
+| Command | `npx` |
+| Args | `["-y", "mcp-remote", "https://mcp.alphacast.io/mcp"]` |
+| Environment | *(none — auth happens in the browser)* |
+
+So anywhere this page shows a local config below, you can swap in the hosted server by replacing `"@alphacast/mcp"` with `"mcp-remote", "https://mcp.alphacast.io/mcp"` and dropping the `env` block. The native-URL form is shown per client where supported.
+
+## Local (npm package)
+
+The exact configuration format varies by client, but the local values are always the same:
 
 | Field | Value |
 |---|---|
@@ -30,7 +46,18 @@ VS Code MCP support lives in `.vscode/mcp.json` for project scope or in user set
 }
 ```
 
-Reload VS Code after saving the file.
+Reload VS Code after saving the file. For the hosted server instead, use the HTTP transport — VS Code handles the OAuth login:
+
+```json .vscode/mcp.json
+{
+  "servers": {
+    "alphacast": {
+      "type": "http",
+      "url": "https://mcp.alphacast.io/mcp"
+    }
+  }
+}
+```
 
 ## Zed
 
@@ -52,6 +79,8 @@ Zed configures MCP servers in its `settings.json` under `context_servers`.
 }
 ```
 
+Zed runs context servers as local processes, so use the `mcp-remote` bridge to reach the hosted server: set `"path": "npx"` and `"args": ["-y", "mcp-remote", "https://mcp.alphacast.io/mcp"]`, with no `env` block.
+
 ## Windsurf
 
 Windsurf MCP servers are configured in `~/.codeium/windsurf/mcp_config.json`:
@@ -70,6 +99,21 @@ Windsurf MCP servers are configured in `~/.codeium/windsurf/mcp_config.json`:
 }
 ```
 
+For the hosted server, Windsurf accepts a remote URL directly:
+
+```json
+{
+  "mcpServers": {
+    "alphacast": {
+      "serverUrl": "https://mcp.alphacast.io/mcp"
+    }
+  }
+}
+```
+
 ## Custom clients
 
-If you're building your own MCP client with the [official SDKs](https://modelcontextprotocol.io/clients), spawn the server as a child process (`npx -y @alphacast/mcp`) with `ALPHACAST_API_KEY` in the environment, then connect via the SDK's stdio transport. The server requires no other handshake or registration step.
+You have two options when building your own MCP client with the [official SDKs](https://modelcontextprotocol.io/clients):
+
+- **Hosted** — connect over the Streamable HTTP transport to `https://mcp.alphacast.io/mcp`. The endpoint is an OAuth 2.0 protected resource (authorization-code + PKCE against `https://auth.alphacast.io/`); it advertises its metadata at `/.well-known/oauth-protected-resource` and supports Dynamic Client Registration, so a spec-compliant client can discover and complete the flow automatically. Present the resulting token as a `Bearer` header.
+- **Local** — spawn the server as a child process (`npx -y @alphacast/mcp`) with `ALPHACAST_API_KEY` in the environment, then connect via the SDK's stdio transport. No other handshake or registration step is required.

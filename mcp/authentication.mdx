@@ -1,12 +1,43 @@
 ---
 title: "MCP Authentication"
 sidebarTitle: "Authentication"
-description: "How the Alphacast MCP server authenticates with your Alphacast API key via the ALPHACAST_API_KEY environment variable."
+description: "How the Alphacast MCP server authenticates: OAuth for the hosted server, or the ALPHACAST_API_KEY environment variable for the local npm package."
 ---
 
-The Alphacast MCP server reuses the same API key as the REST API. There is no separate token to manage and no OAuth flow.
+How you authenticate depends on which transport you use:
 
-## Environment variable
+- **Hosted (remote) server** — OAuth. You sign in through your browser; there is no key to copy or store.
+- **Local (npm) server** — an API key in the `ALPHACAST_API_KEY` environment variable.
+
+Both authenticate as the same Alphacast account and inherit the same repository permissions.
+
+## OAuth (hosted server)
+
+The hosted server at `https://mcp.alphacast.io/mcp` is an OAuth 2.0 protected resource. The first time your client connects, it runs a standard authorization-code flow with PKCE:
+
+1. Your client opens a browser to the Alphacast authorization server at `https://auth.alphacast.io/`.
+2. You sign in with your Alphacast account (or approve the request if already signed in) and consent to the requested scopes.
+3. The client receives a token and uses it as a `Bearer` token on every request. Most clients refresh it automatically, so you only sign in once.
+
+The server requests these scopes:
+
+| Scope | Grants |
+|---|---|
+| `openid`, `profile`, `email` | Identifies your Alphacast account. |
+| `mcp:read` | The 28 read-only tools (search, download, providers, tickers, grapher). |
+| `mcp:write` | The 4 pipeline write tools (`create_pipeline`, `add_pipeline_step`, `edit_pipeline_step`, `delete_pipeline_step`). |
+
+No API key is involved in this path — nothing to paste into a config file and nothing to rotate. To revoke access, sign out / remove the connector in your client, or revoke the session from your Alphacast account.
+
+<Note>
+  Most clients that support remote MCP servers (Claude Code, Claude Desktop, Cursor, VS Code) handle this OAuth flow for you. Clients that only support local stdio servers can reach the hosted server through the `mcp-remote` bridge, which performs the same browser login — see [Other clients](/mcp/configuration/other-clients).
+</Note>
+
+## API key (local server)
+
+The local npm package reuses the same API key as the REST API. There is no OAuth flow on this path.
+
+### Environment variable
 
 The server reads your API key from the `ALPHACAST_API_KEY` environment variable at startup. You set this once in your client's MCP configuration:
 
@@ -44,4 +75,4 @@ If a tool call returns `403 Forbidden`, the API key does not have the required p
 
 ## What the server does *not* see
 
-The server only ever sees the API key from the environment variable. It does not store the conversation history of your MCP client, the prompts you wrote, or the responses the model generated. Tool inputs and outputs travel only between your client, the Alphacast MCP server (running locally), and the Alphacast REST API.
+The server does not store the conversation history of your MCP client, the prompts you wrote, or the responses the model generated. Tool inputs and outputs travel only between your client, the Alphacast MCP server, and the Alphacast REST API. On the local path the server runs entirely on your machine and only ever sees the API key from the environment variable; on the hosted path it sees only the OAuth token your client presents.

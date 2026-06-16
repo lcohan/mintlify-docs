@@ -6,13 +6,27 @@ description: "Connect Claude Code and Codex to Alphacast. Search the catalog, do
 
 The Alphacast Model Context Protocol (MCP) server lets AI coding agents interact with the Alphacast platform through structured tool calls. Search the curated catalog, download dataset rows, browse 30+ external data providers, look up market tickers, and build full data pipelines — all from inside Claude Code or Codex.
 
-## Installation
+## Two ways to connect
 
-<Note>
-  **npm package:** `@alphacast/mcp`. Run it with `npx -y @alphacast/mcp` — your MCP client spawns it as a local subprocess. Authenticate by setting the `ALPHACAST_API_KEY` environment variable.
-</Note>
+The same 32 tools are available through two transports. Pick whichever fits your client and environment — both expose identical functionality.
 
-The server requires Node.js 18+ and communicates over stdio. Install it once via your client's MCP configuration, and the 32 tools below become available immediately.
+<CardGroup cols={2}>
+  <Card title="Hosted (remote)" icon="cloud">
+    Point your client at `https://mcp.alphacast.io/mcp`. Nothing to install — no Node.js, no npm, no API key. You sign in once through your browser with **OAuth** and your Alphacast account. Best for most users and for clients that support remote MCP servers.
+  </Card>
+  <Card title="Local (npm)" icon="terminal">
+    Your client spawns the `@alphacast/mcp` package as a local subprocess via `npx -y @alphacast/mcp` over stdio. Requires Node.js 18+ and an `ALPHACAST_API_KEY`. Best for offline-ish setups, CI, or clients that don't yet support remote servers or OAuth.
+  </Card>
+</CardGroup>
+
+| | Hosted (remote) | Local (npm) |
+|---|---|---|
+| Endpoint | `https://mcp.alphacast.io/mcp` | `npx -y @alphacast/mcp` (stdio) |
+| Requirements | A browser to sign in | Node.js 18+ installed |
+| Authentication | OAuth (browser login) | `ALPHACAST_API_KEY` env var |
+| Tools | All 32 | All 32 |
+
+Both authenticate as your Alphacast account and respect the same repository permissions. See [Authentication](/mcp/authentication) for the details of each, then follow the [Quickstart](/mcp/quickstart) or your client's [configuration guide](/mcp/configuration/claude-code).
 
 ## What you can do
 

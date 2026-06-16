@@ -1,10 +1,38 @@
 ---
 title: "Connect Claude Desktop"
 sidebarTitle: "Claude Desktop"
-description: "Configure Claude Desktop to use the Alphacast MCP server via npx — including enterprise setups with non-standard paths or no admin rights."
+description: "Connect Claude Desktop to the Alphacast MCP server — the hosted server as a custom connector (OAuth), or the local npm package via npx."
 ---
 
-Claude Desktop launches MCP servers as local processes defined in `claude_desktop_config.json`. The Alphacast MCP server runs via `npx` and communicates over stdio.
+Claude Desktop can reach the Alphacast MCP server two ways: as a **hosted connector** (no install, sign in with OAuth) or as a **local process** launched via `npx` and defined in `claude_desktop_config.json`.
+
+## Hosted (remote, OAuth) — recommended, no terminal
+
+This is the simplest path: no JSON file to edit, no Node.js, no API key.
+
+<Steps>
+  <Step title="Add a custom connector">
+    Open Claude Desktop → your profile → **Settings → Connectors → Add custom connector**. Give it a name (`alphacast`) and paste the URL:
+
+    ```
+    https://mcp.alphacast.io/mcp
+    ```
+  </Step>
+  <Step title="Connect and sign in">
+    Click **Connect**. Claude Desktop opens your browser to sign in with your Alphacast account and authorize the `mcp:read` / `mcp:write` scopes. The connector then shows the 32 tools.
+  </Step>
+  <Step title="Verify in a new chat">
+    Open a new chat, confirm the **alphacast** tools appear in the tools menu, and send *"List my Alphacast repositories."* — you should see a `list_repositories` tool call.
+  </Step>
+</Steps>
+
+<Note>
+  Custom connectors require a Claude plan that supports them. If you don't see **Add custom connector**, use the local path below, or bridge the hosted server through `mcp-remote`: set `"command": "npx"`, `"args": ["-y", "mcp-remote", "https://mcp.alphacast.io/mcp"]` (no `env` block) in `claude_desktop_config.json` — it opens the same browser login.
+</Note>
+
+## Local (npm package)
+
+Claude Desktop launches the server as a local process defined in `claude_desktop_config.json`. The server runs via `npx` and communicates over stdio.
 
 <Note>
   `npx` ships with Node.js. If `npx` is not found, install Node 18 or later from [nodejs.org](https://nodejs.org/). On a corporate machine without admin rights, see [Install Node.js without admin rights](/mcp/troubleshooting#no-admin-rights-to-install-nodejs-windows).

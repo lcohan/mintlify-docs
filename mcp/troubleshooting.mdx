@@ -59,9 +59,28 @@ If your client ignores the server after a restart — it doesn't appear in the s
 
 ## Authentication errors
 
-### `401 Unauthorized` on every tool call
+### Hosted server: browser login doesn't open or won't complete
 
-The `ALPHACAST_API_KEY` environment variable is missing, empty, or the key is invalid.
+On the hosted server (`https://mcp.alphacast.io/mcp`) the first connection triggers an OAuth login in your browser. If nothing opens, or the flow never finishes:
+
+**Fixes:**
+- In Claude Code, run `/mcp`, select `alphacast`, and choose **Authenticate** to trigger the login manually. In Cursor, open **Settings → MCP** and click the server's **Login** button.
+- If the browser opened but the page errored, make sure you can reach `https://auth.alphacast.io` and `https://www.alphacast.io` directly (a VPN or proxy may block them).
+- Using the `mcp-remote` bridge? Clear its cached state and retry: delete the `~/.mcp-auth` folder, then restart the client so a fresh login is requested.
+- Confirm your client actually supports remote MCP servers. If it doesn't, reach the hosted server through the [`mcp-remote` bridge](/mcp/configuration/other-clients#hosted-remote-oauth) instead, or use the local npm package.
+
+### Hosted server: `401 Unauthorized` after it was working
+
+The OAuth token expired or was revoked, and the client didn't refresh it.
+
+**Fixes:**
+- Re-authenticate: in Claude Code run `/mcp → alphacast → Authenticate`; in other clients, reconnect / log in again from the MCP settings.
+- If you revoked the session in your Alphacast account, that's expected — sign in again to mint a new token.
+- For the `mcp-remote` bridge, delete `~/.mcp-auth` and restart the client to force a fresh login.
+
+### Local server: `401 Unauthorized` on every tool call
+
+The `ALPHACAST_API_KEY` environment variable is missing, empty, or the key is invalid. (This applies to the local npm package; the hosted server uses OAuth — see above.)
 
 **Fixes:**
 - Verify the key is set in your client's MCP configuration under `"env": { "ALPHACAST_API_KEY": "..." }`.
@@ -71,10 +90,11 @@ The `ALPHACAST_API_KEY` environment variable is missing, empty, or the key is in
 
 ### `403 Forbidden` on a specific tool call
 
-The API key authenticated successfully but does not have the permission required for this action.
+Authentication succeeded (OAuth token or API key) but your account does not have the permission required for this action.
 
 **Fixes:**
-- Read access required: ensure the API key's account has at least Read permission on the target repository.
+- Read access required: ensure your account has at least Read permission on the target repository.
+- Write tools (pipeline authoring) need Write access on the repository, and — on the hosted server — the `mcp:write` scope, which is granted during the OAuth consent step.
 - Have the repository owner grant your account the missing permission level.
 
 ## Quota errors
@@ -87,7 +107,16 @@ The action exceeds your plan's quota — typically downloads or paid-tier provid
 
 ## Connection errors
 
-### Client says "MCP server failed to start" or shows a red status
+### Hosted server: client can't connect to the URL
+
+The client can't establish the Streamable HTTP connection to `https://mcp.alphacast.io/mcp`.
+
+**Fixes:**
+- Confirm the URL is exact — `https://mcp.alphacast.io/mcp`, including the `/mcp` path. A trailing typo or a missing path returns a 404 the client reports as a connection failure.
+- Check outbound network access to `mcp.alphacast.io` and `auth.alphacast.io` on port 443: `curl -I https://mcp.alphacast.io/mcp` should return `401` (auth required), not a timeout or DNS error.
+- If your client doesn't support remote MCP servers at all, it will silently ignore the `url` field. Use the [`mcp-remote` bridge](/mcp/configuration/other-clients#hosted-remote-oauth) or the local npm package instead.
+
+### Local server: client says "MCP server failed to start" or shows a red status
 
 The client could not spawn the `npx -y @alphacast/mcp` subprocess.
 

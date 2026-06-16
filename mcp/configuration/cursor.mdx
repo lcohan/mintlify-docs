@@ -1,10 +1,10 @@
 ---
 title: "Connect Cursor"
 sidebarTitle: "Cursor"
-description: "Configure Cursor to use the Alphacast MCP server via .cursor/mcp.json."
+description: "Configure Cursor to use the Alphacast MCP server — the hosted server over OAuth, or the local npm package."
 ---
 
-Cursor launches MCP servers as local processes. You configure the server in `.cursor/mcp.json` either at the project root (shared with collaborators) or in your user directory (private to you).
+You configure the server in `.cursor/mcp.json` either at the project root (shared with collaborators) or in your user directory (private to you). Cursor supports both the hosted remote server and the local npm package.
 
 ## Configuration file location
 
@@ -15,7 +15,23 @@ Cursor launches MCP servers as local processes. You configure the server in `.cu
 
 Project-scoped configuration takes precedence when both exist. Use the user-scoped path when you want the server available across every project on your machine.
 
-## Add the server
+## Hosted (remote, OAuth)
+
+Point Cursor at the remote URL — no `npx`, no Node.js, no API key:
+
+```json .cursor/mcp.json
+{
+  "mcpServers": {
+    "alphacast": {
+      "url": "https://mcp.alphacast.io/mcp"
+    }
+  }
+}
+```
+
+After saving, open **Settings → MCP**. Cursor shows the `alphacast` server with a **Login** / **Authenticate** button — click it to sign in with your Alphacast account in the browser. Because no secret is stored, this config is safe to commit to a project-scoped file; each collaborator authenticates with their own account.
+
+## Local (npm package)
 
 ```json .cursor/mcp.json
 {
