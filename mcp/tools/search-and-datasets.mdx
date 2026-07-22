@@ -1,7 +1,7 @@
 ---
 title: "Search & Datasets Tools"
 sidebarTitle: "Search & datasets"
-description: "Tools for discovering content in the Alphacast catalog, reading dataset metadata, schemas, and rows, and resolving the user's Home repository."
+description: "Tools for discovering content in the Alphacast catalog, reading dataset metadata, schemas, and rows, and resolving the workspace's default repository."
 ---
 
 These eight tools cover discovery and read access. None of them mutate state, so you can safely chain them together to explore Alphacast.
@@ -111,7 +111,7 @@ List repositories where the API key can publish (Owner, Admin, or Write).
 No input parameters. Filtered server-side; read-only repositories are excluded so the model only sees repositories it can write to.
 
 <Tip>
-  Tools that accept an optional `repositoryId` (for example [`create_pipeline`](/mcp/tools/pipelines#create_pipeline)) **default to the user's Home repository** when no ID is provided — the server does not interrupt to ask you to pick one. Call `list_repositories` only when you want to write somewhere other than Home, or `get_home_repository` to check which repo Home resolves to.
+  Tools that accept an optional `repositoryId` (for example [`create_pipeline`](/mcp/tools/pipelines#create_pipeline)) **default to the workspace's default repository** when no ID is provided — the server does not interrupt to ask you to pick one. Call `list_repositories` only when you want to write somewhere other than the default, or `get_default_repository` to check which repo the default resolves to.
 </Tip>
 
 **Example prompt**
@@ -140,17 +140,17 @@ Returns name, description, privacy, your permission level, and timestamps.
 
 ---
 
-## `get_home_repository`
+## `get_default_repository`
 
-Resolve the user's **Home repository** — the default workspace where pipelines and datasets land when no specific repository is named. Use it to inspect what Home points at before creating a pipeline, or to share its ID with collaborators.
+Resolve the **default repository** — the current writable repository for this API key's active workspace, where pipelines and datasets land when no specific repository is named. Use it to inspect what the default points at before creating a pipeline, or to share its ID with collaborators.
 
 No input parameters. Returns the repository as if you had called `get_repository` on it.
 
 **Example prompt**
 
-> "What's my Home repository?"
+> "What's my default Alphacast repository?"
 
-**Underlying endpoint:** `GET /repositories/home`.
+**Underlying endpoint:** `GET /repositories/default`.
 
 ---
 

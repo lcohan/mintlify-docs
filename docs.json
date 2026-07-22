@@ -164,6 +164,7 @@
           {
             "group": "Guides",
             "pages": [
+              "mcp/prompting",
               "mcp/examples",
               "mcp/troubleshooting"
             ]

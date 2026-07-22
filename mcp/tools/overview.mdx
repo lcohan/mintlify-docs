@@ -17,7 +17,7 @@ The Alphacast MCP server exposes 32 tools across five functional areas. Use this
 | [`list_datasets`](/mcp/tools/search-and-datasets#list_datasets) | Search & datasets | Read | List every dataset the API key can access. |
 | [`list_repositories`](/mcp/tools/search-and-datasets#list_repositories) | Search & datasets | Read | List repositories where the API key has Write access or higher. |
 | [`get_repository`](/mcp/tools/search-and-datasets#get_repository) | Search & datasets | Read | Retrieve repository metadata and your permission level. |
-| [`get_home_repository`](/mcp/tools/search-and-datasets#get_home_repository) | Search & datasets | Read | Resolve the user's Home repository — used implicitly when other tools accept an optional `repositoryId`. |
+| [`get_default_repository`](/mcp/tools/search-and-datasets#get_default_repository) | Search & datasets | Read | Resolve the current/default writable repository for the active workspace — used implicitly when other tools accept an optional `repositoryId`. |
 | [`list_providers`](/mcp/tools/providers#list_providers) | Providers | Read | List all external data providers, or the top 5 matching a keyword. |
 | [`get_provider`](/mcp/tools/providers#get_provider) | Providers | Read | Retrieve a provider's parameters, popular series, and key requirements. |
 | [`browse_provider`](/mcp/tools/providers#browse_provider) | Providers | Read | Walk a provider's hierarchical catalog by path. |
@@ -29,7 +29,7 @@ The Alphacast MCP server exposes 32 tools across five functional areas. Use this
 | [`get_grapher_config_reference`](/mcp/tools/grapher#get_grapher_config_reference) | Grapher & Charts | Read | Returns chart-authoring recipes, minimal configs, and text length limits for a chart type. |
 | [`validate_grapher_config`](/mcp/tools/grapher#validate_grapher_config) | Grapher & Charts | Read | Validates a chart-data or raw Grapher configuration object. |
 | [`get_chart_details`](/mcp/tools/grapher#get_chart_details) | Grapher & Charts | Read | Fetches chart metadata and Grapher config from a chart URL or slug. |
-| [`list_pipelines`](/mcp/tools/pipelines#list_pipelines) | Pipelines | Read | List pipelines in a specific repository. |
+| [`list_pipelines`](/mcp/tools/pipelines#list_pipelines) | Pipelines | Read | List pipelines in a repository; defaults to the current/default writable repository when none is given. |
 | [`get_pipeline`](/mcp/tools/pipelines#get_pipeline) | Pipelines | Read | Get full pipeline definition, step list, validation status, and last-run summary. |
 | [`get_pipeline_run`](/mcp/tools/pipelines#get_pipeline_run) | Pipelines | Read | Retrieve a specific pipeline run with status and per-step logs. |
 | [`wait_pipeline_run`](/mcp/tools/pipelines#wait_pipeline_run) | Pipelines | Read | Poll a run until it reaches a terminal state and return logs. |
@@ -38,7 +38,7 @@ The Alphacast MCP server exposes 32 tools across five functional areas. Use this
 | [`list_pipeline_step_types`](/mcp/tools/pipelines#list_pipeline_step_types) | Pipelines | Read | Lists all available pipeline step types and their groups. |
 | [`get_pipeline_step_config`](/mcp/tools/pipelines#get_pipeline_step_config) | Pipelines | Read | Returns the configuration schema for a specific step type. |
 | [`get_pipeline_formula_reference`](/mcp/tools/pipelines#get_pipeline_formula_reference) | Pipelines | Read | Formula syntax and built-in functions reference for calculate-variable and apply-formula steps. |
-| [`create_pipeline`](/mcp/tools/pipelines#create_pipeline) | Pipelines | Write | Create a new pipeline, optionally with initial steps. Defaults to Home repo. |
+| [`create_pipeline`](/mcp/tools/pipelines#create_pipeline) | Pipelines | Write | Create a new pipeline, optionally with initial steps. Defaults to the workspace's default repo. |
 | [`add_pipeline_step`](/mcp/tools/pipelines#add_pipeline_step) | Pipelines | Write | Append or insert a step into a pipeline. |
 | [`edit_pipeline_step`](/mcp/tools/pipelines#edit_pipeline_step) | Pipelines | Write | Replace the configuration of an existing step. |
 | [`delete_pipeline_step`](/mcp/tools/pipelines#delete_pipeline_step) | Pipelines | Write | Remove a step from a pipeline. |
@@ -54,7 +54,7 @@ The Alphacast MCP server exposes 32 tools across five functional areas. Use this
 - **IDs** are always numeric (`integer`). Tools accept strings and coerce them — `"42"` works the same as `42`.
 - **Formats** for downloads: `json` (default for `download_dataset`) or `csv`. For pipeline step output the default is `csv`.
 - **Permissions** mirror the REST API. The API key's permission on each repository determines which tools succeed.
-- **Home repository fallback.** When a tool accepts an optional `repositoryId` (for example `create_pipeline`), omitting it resolves to the user's Home repository automatically — the server does not interrupt to ask.
+- **Default repository fallback.** When a tool accepts an optional `repositoryId` (for example `create_pipeline` or `list_pipelines`), omitting it resolves to the current/default writable repository for the active workspace automatically — the server does not interrupt to ask.
 
 ## Underlying API
 

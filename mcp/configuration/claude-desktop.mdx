@@ -11,20 +11,30 @@ Claude Desktop can reach the Alphacast MCP server two ways: as a **hosted connec
 This is the simplest path: no JSON file to edit, no Node.js, no API key.
 
 <Steps>
+  <Step title="Open Connectors">
+    In Claude, open **Customize** (left sidebar) → **Connectors**. (Depending on your Claude version this may also live under your profile → **Settings → Connectors**.)
+  </Step>
   <Step title="Add a custom connector">
-    Open Claude Desktop → your profile → **Settings → Connectors → Add custom connector**. Give it a name (`alphacast`) and paste the URL:
+    Click the **+** button → **Add custom connector**, and fill the two fields:
 
-    ```
-    https://mcp.alphacast.io/mcp
-    ```
+    | Field | Value |
+    |---|---|
+    | Name | `Alphacast` |
+    | URL | `https://mcp.alphacast.io/mcp` |
+
+    The **OAuth Client ID / Secret** fields under **Advanced settings** are optional — leave them empty. Click **Add**.
   </Step>
   <Step title="Connect and sign in">
-    Click **Connect**. Claude Desktop opens your browser to sign in with your Alphacast account and authorize the `mcp:read` / `mcp:write` scopes. The connector then shows the 32 tools.
+    The Alphacast connector opens showing *"You are not connected to Alphacast yet"* → click **Connect**. Claude opens your browser to sign in with your Alphacast account and authorize the `mcp:read` / `mcp:write` scopes. Once authorized, the connector shows the 32 tools.
   </Step>
   <Step title="Verify in a new chat">
-    Open a new chat, confirm the **alphacast** tools appear in the tools menu, and send *"List my Alphacast repositories."* — you should see a `list_repositories` tool call.
+    Open a new chat, confirm the **Alphacast** tools appear in the tools menu, and send *"List my Alphacast repositories."* — you should see a `list_repositories` tool call.
   </Step>
 </Steps>
+
+<Note>
+  **Usage notes for the hosted connector.** This version sometimes disconnects on its own, and it also disconnects if you log out of the Alphacast platform. To reconnect, go back to **Connectors** and click **Connect** again. You can check the state on that same Connectors screen: if Alphacast is really connected a check mark (✓) shows in the **Status** column; otherwise you'll see a **Connect** button.
+</Note>
 
 <Note>
   Custom connectors require a Claude plan that supports them. If you don't see **Add custom connector**, use the local path below, or bridge the hosted server through `mcp-remote`: set `"command": "npx"`, `"args": ["-y", "mcp-remote", "https://mcp.alphacast.io/mcp"]` (no `env` block) in `claude_desktop_config.json` — it opens the same browser login.

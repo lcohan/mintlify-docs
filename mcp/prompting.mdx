@@ -1,0 +1,152 @@
+---
+title: "Writing better prompts"
+sidebarTitle: "Writing better prompts"
+description: "How to frame requests so the Alphacast MCP returns exactly the data, pipeline, or diagnostic you need — five guidelines, a broad-to-precise example, copy-paste templates, and the safety pattern for write actions."
+---
+
+You don't need a rigid formula. The clearer the frame, the more direct and useful the result. You set the goal; the assistant reasons; the MCP does the heavy lifting against Alphacast. This page shows how to phrase requests so you spend less time re-asking and more time using the data.
+
+## Five guidelines for better results
+
+<CardGroup cols={2}>
+  <Card title="1 · Objective" icon="bullseye">
+    Say what you want to do: **find**, **compare**, **quality-check**, **download**, or **build a process**. The verb sets the whole task.
+  </Card>
+  <Card title="2 · Indicator" icon="tag">
+    Pin down **country, variable, source, and unit**. If you know the dataset name or ID, even better — it removes ambiguity between similar series.
+  </Card>
+  <Card title="3 · Frequency" icon="clock">
+    State whether you need **daily, monthly, quarterly, or annual** data. Mixing frequencies is a common cause of surprising results.
+  </Card>
+  <Card title="4 · Period & scope" icon="calendar">
+    Give the **dates** and say **where to look**: your repositories, the general catalog, or one specific provider.
+  </Card>
+</CardGroup>
+
+<Card title="5 · Format" icon="table-list">
+  Ask for the shape you want back: a **table**, a **download**, a **diagnostic**, a **chart**, or a **pipeline proposal**. For a large task, split the message into **context, task, and acceptance criteria**; if it has several stages, number them and validate the intermediate results before moving on.
+</Card>
+
+## From a broad ask to a precise one
+
+The same question, sharpened in three steps:
+
+<Steps>
+  <Step title="Too broad">
+    > "How's inflation doing?"
+
+    Missing country, source, frequency, period, and expected output — the model has to guess on every axis.
+  </Step>
+  <Step title="Better">
+    > "Give me Argentina's monthly inflation for the last year."
+
+    Now country and frequency are defined, but there may still be different sources and versions.
+  </Step>
+  <Step title="Precise">
+    > "In the Alphacast catalog, identify the monthly INDEC National CPI dataset. Give me the month-over-month change for 2024 in a table, and flag any missing observations or base changes. Include source, IDs, unit, and the latest available date."
+
+    Indicator, source, frequency, period, format, and quality checks are all defined — so is what "done" looks like.
+  </Step>
+</Steps>
+
+## Templates to copy
+
+<CodeGroup>
+```text Data query
+In the Alphacast catalog, find the monthly EMAE dataset from INDEC.
+1. Show me the candidates and confirm which one is the seasonally adjusted general level.
+2. Tell me the latest date it reaches.
+3. Give me 2023 and 2024 in a table with date and value.
+4. Include source, IDs, unit, and any transformation applied.
+```
+
+```text Pipeline change
+On pipeline 4319, I want to add a step that multiplies the variables by 100.
+1. Show me the current steps and their order.
+2. Propose where the new step goes and explain its impact.
+3. Preview the output.
+4. Don't save, run, or publish until I confirm.
+```
+</CodeGroup>
+
+## Traceability: ask where the data came from
+
+Every result can carry what you need to verify, cite, and reuse it. Ask for it explicitly and the model will include it:
+
+- Source and dataset name
+- Dataset and variable IDs
+- Unit, frequency, and period
+- Latest available observation
+- Formulas and transformations applied
+- Missing values, assumptions, and warnings
+
+<Tip>
+  A ready-to-use closer for any data prompt:
+
+  > "Include source, IDs, unit, frequency, latest available date, and the transformations applied."
+</Tip>
+
+## Preview before you commit
+
+<Warning>
+  For any action that changes Alphacast — creating or editing a pipeline, saving, running, or publishing — ask the model to **show what it will change, preview the result, and wait for your confirmation** before it writes anything.
+</Warning>
+
+A phrase that works well in write-capable clients:
+
+> "Show me the proposed change and a preview first. Don't save, run, or publish until I say so."
+
+The MCP surface is read-only except for the four pipeline write tools, and destructive actions (deleting repositories, datasets, or pipelines) are never exposed to an agent — but the preview-first habit still keeps edits predictable. See [Safety boundaries](/mcp/tools/overview#safety-boundaries) for the full list.
+
+## Who does what
+
+Understanding the division of labor helps you phrase requests — and know when something is genuinely out of scope rather than a bad prompt.
+
+| Actor | Role |
+|---|---|
+| 🧠 **The AI assistant** | Understands the request, organizes the task, and analyzes the results. |
+| 🔌 **The Alphacast MCP** | Gives the assistant the tools to search, read, and operate on Alphacast and its enabled providers. |
+| α **The Alphacast platform** | Manages permissions, stores datasets and charts, and runs or publishes pipelines. |
+
+Every task falls into one of three buckets:
+
+<CardGroup cols={3}>
+  <Card title="Yes — inside the MCP" icon="circle-check">
+    Search, download, transform, and operate on Alphacast within your permissions.
+  </Card>
+  <Card title="Depends on the assistant" icon="circle-half-stroke">
+    Reading an attached file, creating an Excel or document, generating an image, or browsing the web.
+  </Card>
+  <Card title="No — out of scope" icon="circle-xmark">
+    Bypassing permissions, modifying the original source, or inventing data that doesn't exist.
+  </Card>
+</CardGroup>
+
+<Note>
+  A few limits are worth keeping in mind:
+  - **It works with your permissions.** The MCP can only reach resources your account is authorized for.
+  - **Freshness depends on the source.** It retrieves the latest available observation but can't produce a data point that hasn't been published yet.
+  - **Detecting isn't always explaining.** It can flag a jump or a pattern change, but pinning down the cause may require checking metadata or official documentation.
+</Note>
+
+## If the answer isn't what you expected
+
+You can course-correct inside the same conversation — no need to start over:
+
+- **Refine** — "same series, but seasonally adjusted."
+- **Narrow** — "only from 2020, monthly frequency."
+- **Ask for alternatives** — "show me the candidate series before picking one."
+- **Ask for traceability** — "tell me which dataset it came from and what transformation you applied."
+- **Split the task** — search and validate first; transform or publish afterward.
+- **Stop a change** — if something isn't clear, tell it not to run and to show the proposal again.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Examples" icon="lightbulb" href="/mcp/examples">
+    End-to-end walkthroughs that combine several tools to solve realistic tasks.
+  </Card>
+  <Card title="Tools overview" icon="wrench" href="/mcp/tools/overview">
+    The full list of MCP tools, grouped by capability, with input schemas.
+  </Card>
+</CardGroup>

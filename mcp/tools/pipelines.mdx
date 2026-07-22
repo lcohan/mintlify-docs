@@ -7,22 +7,22 @@ description: "Build, inspect, edit, and run Alphacast pipelines from natural-lan
 Thirteen tools for working with Alphacast pipelines from an MCP client. Nine are read-only (inspect definitions, fetch runs, preview step output, discover step types and formulas); four are write (create a pipeline, add/edit/remove steps). After every write the server auto-validates and auto-runs the pipeline, then waits for the editor run to finish so the response carries the new state.
 
 <Tip>
-  When `repositoryId` is omitted from `create_pipeline`, the server resolves the user's **Home repository** automatically. You don't need to call `list_repositories` first unless the pipeline belongs somewhere else.
+  When `repositoryId` is omitted from `create_pipeline` or `list_pipelines`, the server resolves the workspace's **default repository** automatically. You don't need to call `list_repositories` first unless the pipeline belongs somewhere else.
 </Tip>
 
 ## `list_pipelines`
 
-List pipelines in a specific repository.
+List pipelines in a repository.
 
-<ParamField body="repositoryId" type="number" required>
-  Repository ID. The tool returns only pipelines that belong to this repository.
+<ParamField body="repositoryId" type="number">
+  Repository ID. **Optional** — when omitted, the MCP server resolves and uses the workspace's default writable repository. The tool returns only pipelines that belong to the resolved repository.
 </ParamField>
 
 Returns one row per pipeline with `id`, `name`, and `repositoryId`.
 
 **Example prompt**
 
-> "List the pipelines in my Home repository."
+> "List the pipelines in my default repository."
 
 **Underlying endpoint:** `GET /pipelines?repositoryId={id}`.
 
@@ -195,7 +195,7 @@ Create a new pipeline, optionally with initial steps. When `steps` are provided,
 </ParamField>
 
 <ParamField body="repositoryId" type="number">
-  Target repository. **Optional** — when omitted, the MCP server resolves and uses the user's Home repository automatically.
+  Target repository. **Optional** — when omitted, the MCP server resolves and uses the workspace's default writable repository automatically.
 </ParamField>
 
 <ParamField body="steps" type="object[]">

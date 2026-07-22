@@ -6,6 +6,10 @@ description: "Retrieve the authenticated user's Home repository — the default 
 
 Use this endpoint to resolve your account's Home repository. The Home repository is the default destination when creating pipelines or datasets without specifying a `repositoryId`. The response has the same shape as `GET /repositories/{id}`.
 
+<Note>
+  **Workspace-aware alternative — `GET /repositories/default`.** If your account belongs to multiple teams/workspaces, prefer `GET /repositories/default`. It returns the default writable repository for the API key's **currently active workspace**, whereas `/repositories/home` always resolves the single per-user Home repo. The Alphacast MCP server uses `/repositories/default` when it auto-resolves a repository. Both endpoints return the same repository object shape.
+</Note>
+
 ## Request
 
 ```bash
