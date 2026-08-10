@@ -1,0 +1,87 @@
+---
+title: "Portfolio Statistics and Tear Sheets"
+sidebarTitle: "Portfolio statistics"
+description: "Design and test portfolio and trading strategies — tear sheets from daily returns, plus dynamic rolling stats."
+---
+
+Alphacast pipelines can be used to design and test portfolio and trading strategies. The **Portfolio Analysis** step produces tear sheets from daily returns, and dynamic rolling statistics across timeframes.
+
+<Frame>
+  <img src="/images/steps/portfolio-analysis-1.png" alt="Portfolio Analysis step in the pipeline editor" />
+</Frame>
+
+## 1. Load data and calculate daily returns
+
+Any dataset works. As an example, load Yahoo Finance data and compute daily returns for three assets:
+
+<Steps>
+  <Step title="Open the pipeline editor">
+    **Create new → Pipeline**.
+  </Step>
+  <Step title="Add Yahoo Finance as the source">
+    Add the tickers you want to analyze — `MSFT`, `AAPL`, `GOOG` — and select the period.
+  </Step>
+  <Step title="Calculate the daily return">
+    Add a [Calculate Variable](/steps/calculate-variable) step with the formula:
+
+    ```
+    pct_change(@Close, 1, @Ticker)
+    ```
+
+    <Frame>
+      <img src="/images/steps/portfolio-analysis-2.png" alt="Yahoo Finance source configuration" />
+    </Frame>
+
+    <Frame>
+      <img src="/images/steps/portfolio-analysis-3.png" alt="Calculating daily returns" />
+    </Frame>
+
+    <Frame>
+      <img src="/images/steps/portfolio-analysis-4.png" alt="Daily returns in the pipeline output" />
+    </Frame>
+  </Step>
+</Steps>
+
+## 2. Calculate the tear sheet
+
+Add a **Portfolio Analysis** step, choose the metrics to compute, and select the column holding the daily returns — `pct_change` in this example.
+
+Available statistics: annual return, cumulative returns, annual volatility, Sharpe ratio, Calmar ratio, stability, max drawdown, Omega ratio, Sortino ratio, skew, kurtosis, tail ratio, daily value at risk, and total return.
+
+<Frame>
+  <img src="/images/steps/portfolio-analysis-5.png" alt="Selecting portfolio statistics" />
+</Frame>
+
+### Tear sheet on
+
+A single tear sheet is calculated for the whole sample period.
+
+<Frame>
+  <img src="/images/steps/portfolio-analysis-6.png" alt="A portfolio tear sheet" />
+</Frame>
+
+### Tear sheet off
+
+Statistics are estimated recursively for each day of the sample, each one computed from that day up to the most recent one. Two extra parameters apply:
+
+| Parameter | Meaning |
+|---|---|
+| `dropLastN` | Statistics are not calculated for timeframes beginning in the last N days. Defaults to excluding 252 trading days. |
+| `Skip days` | Start days are sampled every N days rather than daily. Matters for performance. Defaults to 10 days. |
+
+The result looks like [this dataset](https://www.alphacast.io/datasets/23156).
+
+## Optional: add technical indicators
+
+The [Technical Analysis](/steps/talib) step estimates 132 metrics on the same price data — cycle, momentum, volatility and volume indicators, overlap studies, pattern recognition and statistics functions.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Technical analysis" icon="chart-line" href="/steps/talib">
+    132 technical indicators for the same assets.
+  </Card>
+  <Card title="Publish dataset" icon="upload" href="/steps/publish">
+    Save the tear sheet as an auto-updating dataset.
+  </Card>
+</CardGroup>

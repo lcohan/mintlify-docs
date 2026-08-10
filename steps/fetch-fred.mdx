@@ -1,0 +1,54 @@
+---
+title: "Fetch FRED Data"
+sidebarTitle: "Fetch FRED"
+description: "Import economic time series from the St. Louis Fed's FRED database into a pipeline by series code."
+---
+
+[FRED](https://fred.stlouisfed.org/) is the database maintained by the Federal Reserve Bank of St. Louis, with hundreds of thousands of US and international time series drawn from over a hundred sources. The **Fetch FRED Data** step imports any of them into a pipeline.
+
+<Steps>
+  <Step title="Create a pipeline">
+    Click **Create new pipeline** in the top right corner, choose the repository and a name, then click **Create**.
+
+    <Frame>
+      <img src="/images/steps/fetch-fred-1.png" alt="Creating a new pipeline" />
+    </Frame>
+  </Step>
+
+  <Step title="Add the Fetch FRED Data step">
+    <Frame>
+      <img src="/images/steps/fetch-fred-2.png" alt="Selecting the Fetch FRED Data step" />
+    </Frame>
+  </Step>
+
+  <Step title="Enter the series codes">
+    Every FRED series has a unique code, shown both in the page URL and next to the series name. In the example below the codes are `T10Y2Y` and `MORTGAGE30US`.
+
+    <Frame>
+      <img src="/images/steps/fetch-fred-3.png" alt="Locating a series code on the FRED website" />
+    </Frame>
+
+    Add as many series as you need, separated by commas. See a [working example pipeline](https://www.alphacast.io/pipelines/2022-6-10-xaJGgt/view).
+
+    <Frame>
+      <img src="/images/steps/fetch-fred-4.png" alt="Entering FRED series codes in the step configuration" />
+    </Frame>
+  </Step>
+</Steps>
+
+Once the step runs you can publish the result as a dataset, chart it, or keep transforming it with further steps.
+
+<Note>
+FRED series can also be browsed and fetched through the Data Providers API — see [Data providers](/concepts/data-providers).
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Publish dataset" icon="upload" href="/steps/publish">
+    Save the result as an auto-updating dataset.
+  </Card>
+  <Card title="Apply transform" icon="wand-magic-sparkles" href="/steps/transform">
+    Compute year-over-year changes, moving averages and more.
+  </Card>
+</CardGroup>

@@ -1,0 +1,43 @@
+---
+title: "Reorder Rows"
+sidebarTitle: "Reorder rows"
+description: "Put entity values in a deliberate, non-alphabetical order — useful when chart and table legends should follow a specific sequence."
+---
+
+The **Reorder Rows** step arranges rows by putting the values of an entity column into an explicit order you define. Unlike [Sort Rows](/steps/sort-rows), which sorts by value, this step lets you impose an order that isn't alphabetical or numerical — regions ordered by size, categories in reporting order, countries in a conventional sequence.
+
+## Configuration
+
+<Frame>
+  <img src="/images/steps/reorder-rows-config.png" alt="Reorder Rows step with the draggable list of entity values" />
+</Frame>
+
+| Field | Description |
+|---|---|
+| Column to reorder | The entity column whose values you want to order. |
+| Values order | The distinct values found in that column, listed with their position. Drag a row by its handle to move it. |
+
+Rows are then sorted by that sequence and, within it, by date.
+
+<Note>
+Any value present in the data but missing from your list is appended after the ones you ordered, rather than dropped. You only need to list the values you care about positioning.
+</Note>
+
+<Warning>
+The step fails if the dataset has no entity columns, or if the selected column is not present at that point in the pipeline.
+</Warning>
+
+<Tip>
+This matters most right before an output step. Legend and series order in [Create a Chart](/steps/chart-data) and row order in [Create a Table](/steps/table-view) follow the order the data arrives in.
+</Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Sort Rows" icon="arrow-down-short-wide" href="/steps/sort-rows">
+    Sort by value rather than by an explicit sequence.
+  </Card>
+  <Card title="Reorder Columns" icon="arrow-down-a-z" href="/steps/reorder-columns">
+    Change column order instead.
+  </Card>
+</CardGroup>

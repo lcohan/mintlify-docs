@@ -1,0 +1,42 @@
+---
+title: "Publish to Dataset"
+sidebarTitle: "Publish dataset"
+description: "Write pipeline output to a dataset that updates automatically whenever the pipeline runs."
+---
+
+**Publish to Dataset** is one of the pipeline's output steps. It creates a dataset that is automatically kept up to date by the pipeline.
+
+<Frame>
+  <img src="/images/steps/publish-1.png" alt="Publish Dataset step in the pipeline editor" />
+</Frame>
+
+Once you have made every transformation you need, publish the result as a dataset. The step lets you choose the dataset name and the repository it is stored in.
+
+<Frame>
+  <img src="/images/steps/publish-2.jpg" alt="Naming the published dataset and choosing a repository" />
+</Frame>
+
+After naming and saving, click the link to navigate to the new dataset.
+
+<Frame>
+  <img src="/images/steps/publish-3.jpg" alt="Link to the newly published dataset" />
+</Frame>
+
+<Note>
+You need write access to the destination repository. See [Repositories](/concepts/repositories) for how permission levels work.
+</Note>
+
+<Tip>
+A published dataset is a first-class dataset: it can be queried through the [API](/api/datasets/data), read with the [Python SDK](/python-sdk/downloading), and fetched by other pipelines with [Fetch Dataset](/steps/fetch-dataset).
+</Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Chart data" icon="chart-simple" href="/steps/chart-data">
+    Chart the result instead of, or as well as, publishing it.
+  </Card>
+  <Card title="Data snapshot" icon="camera" href="/steps/data-snapshot">
+    Produce a downloadable, embeddable snapshot.
+  </Card>
+</CardGroup>

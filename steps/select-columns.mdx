@@ -1,0 +1,28 @@
+---
+title: "Select Columns"
+sidebarTitle: "Select columns"
+description: "Keep only the columns you need, reducing the data processed by every downstream step."
+---
+
+The **Select Columns** step filters columns down to the ones you care about, cutting the volume of data processed by the steps that follow. The variable selector shows the data as it stands at that point in the pipeline.
+
+<Frame>
+  <img src="/images/steps/select-columns-1.png" alt="Choosing which columns to keep in the Select Columns step" />
+</Frame>
+
+Entity columns — the date and dimension columns that uniquely identify a row — are always retained.
+
+<Warning>
+Remember to save the step before moving to the next one.
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Rename columns" icon="pen" href="/steps/rename-columns">
+    Give the surviving columns clearer names.
+  </Card>
+  <Card title="Reorder columns" icon="arrow-down-a-z" href="/steps/reorder-columns">
+    Set the order columns appear in.
+  </Card>
+</CardGroup>

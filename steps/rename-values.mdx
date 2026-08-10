@@ -1,0 +1,35 @@
+---
+title: "Rename Values"
+sidebarTitle: "Rename values"
+description: "Replace values inside an entity or string column — harmonizing country names, categories or labels across sources."
+---
+
+The **Rename Values** step replaces values *inside* a column, rather than renaming the column itself. Use it to harmonize labels that mean the same thing but are spelled differently across sources — `USA`, `U.S.A.` and `United States`, for example.
+
+## Configuration
+
+| Field | Description |
+|---|---|
+| Column | The entity or string column whose values you want to rename. |
+| Renaming rules | A set of old-value to new-value pairs. Values you don't list are left untouched. |
+
+The step reads the distinct values present in the chosen column and offers them for mapping, so you can see exactly what is there before writing rules.
+
+<Warning>
+The step fails if the dataset has no entity or string columns, if no column is selected, if the selected column is not present at that point in the pipeline, or if no renaming rules are defined.
+</Warning>
+
+<Note>
+To rename a **column**, use [Rename Columns](/steps/rename-columns). To harmonize country names specifically, [Validate Countries](/steps/country-validator) does it against a canonical country list instead of rules you write by hand.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Validate Countries" icon="globe" href="/steps/country-validator">
+    Harmonize country names automatically.
+  </Card>
+  <Card title="Rename Columns" icon="pen" href="/steps/rename-columns">
+    Rename the columns themselves.
+  </Card>
+</CardGroup>

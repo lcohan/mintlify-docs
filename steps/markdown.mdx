@@ -1,0 +1,39 @@
+---
+title: "Add Markdown Text"
+sidebarTitle: "Markdown"
+description: "Add formatted notes, documentation and section headers inline in a pipeline."
+---
+
+The **Add markdown text** step renders a block of Markdown inside the pipeline. It does not read or modify the data — it exists to document the pipeline for whoever opens it next.
+
+## Configuration
+
+| Field | Description |
+|---|---|
+| Content | The Markdown to render. Supports headings, lists, links, bold and italic, and code spans. |
+
+## What to use it for
+
+- Explaining a non-obvious transformation or the assumption behind a formula.
+- Recording where a source dataset came from and how often it updates.
+- Splitting a long pipeline into labelled sections so the step list is readable.
+- Noting known caveats in the data for downstream consumers.
+
+<Tip>
+A pipeline that publishes a dataset other people rely on is worth documenting inline. The Markdown step keeps that context next to the logic it describes, rather than in a separate document that drifts out of date.
+</Tip>
+
+<Note>
+This step affects only what is displayed in the pipeline editor. It passes its input through unchanged, so it is safe to insert anywhere.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Publish dataset" icon="upload" href="/steps/publish">
+    Save the pipeline output as a dataset.
+  </Card>
+  <Card title="Data snapshot" icon="camera" href="/steps/data-snapshot">
+    Produce a downloadable, embeddable snapshot.
+  </Card>
+</CardGroup>

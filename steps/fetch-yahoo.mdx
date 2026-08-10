@@ -1,0 +1,56 @@
+---
+title: "Fetch Financial Data"
+sidebarTitle: "Fetch financial data"
+description: "Import stocks, ETFs, indices and other financial assets from Yahoo Finance into a pipeline by ticker."
+---
+
+Yahoo Finance covers hundreds of thousands of financial assets — stocks, bonds, ETFs and indices — all reachable from an Alphacast pipeline.
+
+<Steps>
+  <Step title="Create a pipeline">
+    Click **Create new pipeline** in the top right corner, choose the repository and a name, then click **Create**.
+
+    <Frame>
+      <img src="/images/steps/fetch-yahoo-1.png" alt="Creating a new pipeline" />
+    </Frame>
+  </Step>
+
+  <Step title="Add the Fetch Financial Data step">
+    <Frame>
+      <img src="/images/steps/fetch-yahoo-2.png" alt="Selecting the Fetch Financial Data step" />
+    </Frame>
+  </Step>
+
+  <Step title="Enter tickers and a period">
+    Add as many tickers as you want, separated by commas — for example `NQ=F, AAPL, MSFT` — and choose the lookback period.
+
+    <Frame>
+      <img src="/images/steps/fetch-yahoo-3.png" alt="Entering tickers and period in the step configuration" />
+    </Frame>
+  </Step>
+
+  <Step title="Save">
+    Press **Save** to keep your changes in the step.
+  </Step>
+</Steps>
+
+The output includes open, close, high, low, volume, dividends and stock split data for every ticker.
+
+## Finding tickers
+
+A Yahoo Finance ticker is a short combination of letters and numbers identifying a company and its share class — `AAPL` for Apple Inc., `MSFT` for Microsoft Corporation. Look up the code on the official Yahoo Finance page for the asset.
+
+<Tip>
+Alphacast can resolve tickers for you. The MCP server exposes ticker search and ISIN lookup tools — see [Tickers](/mcp/tools/tickers).
+</Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Technical analysis" icon="chart-line" href="/steps/talib">
+    Estimate 132 technical indicators on the price series.
+  </Card>
+  <Card title="Portfolio statistics" icon="briefcase" href="/steps/portfolio-analysis">
+    Build tear sheets and rolling performance stats.
+  </Card>
+</CardGroup>

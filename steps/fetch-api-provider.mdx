@@ -1,0 +1,44 @@
+---
+title: "Fetch API Explorer Data"
+sidebarTitle: "Fetch API provider"
+description: "Import series from any connected external data provider — central banks, statistics offices and international organizations."
+---
+
+The **Fetch API Explorer Data** step imports series directly from an external data provider, without going through an Alphacast dataset first. It covers the same 30+ connectors documented in [Data providers](/concepts/data-providers) — central banks, national statistics offices, market data sources and international organizations.
+
+## Configuration
+
+| Field | Description |
+|---|---|
+| Provider | The external provider to pull from. One provider per step. |
+| Series | The series to fetch from that provider. Each entry carries the provider's own series identifier. |
+| Output format | **Wide** gives one column per series. **Long** stacks them with `Provider` and `Series` columns alongside the provider's own entity dimensions. |
+
+## Wide vs long
+
+In **long** format the output carries `Date`, `Provider`, `Series`, any entity dimensions the provider returns, and `Value`. This is the better choice when you are fetching many series from one provider and want to filter or group them downstream.
+
+In **wide** format each series becomes its own column, joined on date.
+
+<Note>
+Some providers require an API key. Keys are stored per user, not per pipeline — see [Data providers](/concepts/data-providers) for how to save one, and [Provider tools](/mcp/tools/providers) for managing them through an agent.
+</Note>
+
+<Warning>
+The step fails if no provider or no series is configured, if a series returns no data, or if a configured series is missing its identifier.
+</Warning>
+
+<Tip>
+To find the right provider and series identifier before building the step, browse the catalog through the [API](/api/providers/list) or ask an agent using the [provider tools](/mcp/tools/providers).
+</Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Data providers" icon="globe" href="/concepts/data-providers">
+    The full catalog of connected providers.
+  </Card>
+  <Card title="Publish to Dataset" icon="upload" href="/steps/publish">
+    Turn the fetched series into an auto-updating dataset.
+  </Card>
+</CardGroup>

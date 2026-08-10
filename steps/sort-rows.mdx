@@ -1,0 +1,39 @@
+---
+title: "Sort Rows"
+sidebarTitle: "Sort rows"
+description: "Order rows by one or more columns, each with its own ascending or descending direction."
+---
+
+The **Sort Rows** step reorders the rows of the dataset by the columns you choose.
+
+## Configuration
+
+Add one or more sort columns. Each one carries **its own direction**, so you can sort by date descending and then by country ascending in the same step.
+
+| Field | Description |
+|---|---|
+| Column | A column to sort by. Columns apply in the order you add them: the first is the primary sort key, later ones break ties. |
+| Sort order | Direction for **that column** — ascending (lowest to highest, A to Z) or descending. |
+
+At least one sort column is required; the step fails if none is selected, or if a selected column is not present in the data at that point in the pipeline.
+
+Sorting changes only row order — no rows are added, removed or recalculated.
+
+<Note>
+Sorting matters when a later step depends on row order, such as [Data snapshot](/steps/data-snapshot) or [Publish dataset](/steps/publish). It does **not** affect group or rolling-window functions in [Calculate Variable](/steps/calculate-variable), which resolve their own ordering by date and entity.
+</Note>
+
+<Tip>
+To place rows in an explicit, arbitrary sequence rather than sorting by value, use the **Reorder Rows** step instead.
+</Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Filter rows" icon="filter" href="/steps/filter-rows">
+    Drop rows that don't meet a condition.
+  </Card>
+  <Card title="Reorder columns" icon="arrow-down-a-z" href="/steps/reorder-columns">
+    Change column order rather than row order.
+  </Card>
+</CardGroup>

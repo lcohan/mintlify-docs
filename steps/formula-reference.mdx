@@ -1,0 +1,180 @@
+---
+title: "Formula Reference"
+sidebarTitle: "Formula reference"
+description: "Every operator, comparison and function available in the Alphacast formula editor — row, group, rolling window and date functions."
+---
+
+This is the complete grammar accepted by the Alphacast formula editor. It applies to [Calculate Variable](/steps/calculate-variable), the conditions in [Filter Rows](/steps/filter-rows), and the **Apply Formula** step.
+
+<Note>
+[Regroup Entities](/steps/regroup-entities) does **not** use this grammar — it offers a fixed list of aggregations instead.
+</Note>
+
+Reference a column with `@` followed by its name — `@Close`, `@Date`, `@sales`.
+
+<Note>
+Function names are case-insensitive: `SUM`, `sum` and `Sum` all resolve to the same function.
+</Note>
+
+## Operators
+
+| Operator | Meaning | Example |
+|---|---|---|
+| `+` | Add | `A + B` |
+| `-` | Subtract | `A - B` |
+| `*` | Multiply | `A * B` |
+| `/` | Divide | `A / B` |
+| `^` | Power | `A ^ B` |
+
+## Comparison
+
+| Operator | Meaning |
+|---|---|
+| `>` | Greater than |
+| `>=` | Greater than or equal |
+| `<` | Less than |
+| `<=` | Less than or equal |
+| `=` | Equal |
+| `!=` | Not equal |
+| `<>` | Not equal |
+
+## Logical
+
+| Function | Syntax |
+|---|---|
+| `and` | `and(conditionA, conditionB)` |
+| `or` | `or(conditionA, conditionB)` |
+| `xor` | `xor(conditionA, conditionB)` |
+| `not` | `not(conditionA)` |
+| `is_null` | `is_null(@variable)` |
+
+## Shift and IF
+
+| Function | Description | Syntax |
+|---|---|---|
+| `SHIFT` | Shifts the index by a number of periods, giving access to lagging or leading values. | `SHIFT(variable, lags_or_leads)` |
+| `IF` | Returns one value or another based on a condition. | `IF(condition, value_if_true, value_if_false)` |
+
+```
+Daily percent change of @Close
+@Close / SHIFT(@Close, 1) - 1
+
+Return 1 if the change is positive, -1 otherwise
+IF(@pct_change >= 0, 1, -1)
+```
+
+## Row functions
+
+Calculated across all values of the column, using only the current row — unlike the group functions below.
+
+| Function | Description | Syntax |
+|---|---|---|
+| `power` | Power | `power(A, B)` |
+| `exp` | Exponential | `exp(A)` |
+| `sqrt` | Square root | `sqrt(A)` |
+| `log` | Natural logarithm | `log(A)` |
+| `log10` | Base-10 logarithm | `log10(A)` |
+| `sgn` | Sign: 1 if positive, -1 if negative | `sgn(A)` |
+| `abs` | Absolute value | `abs(A)` |
+| `trunc` | Truncate to integer | `trunc(A)` |
+| `round` | Round to N digits | `round(A, N)` |
+| `floor` | Closest integer lower than or equal to the value | `floor(A)` |
+| `ceil` | Closest integer higher than or equal to the value | `ceil(A)` |
+| `sin` | Sine | `sin(A)` |
+| `cos` | Cosine | `cos(A)` |
+| `tan` | Tangent | `tan(A)` |
+| `hypot` | Euclidean distance — the hypotenuse of A and B | `hypot(A, B)` |
+| `multiply` | Multiplies two values, equivalent to `A * B` | `multiply(A, B)` |
+| `nan_to_num` | Replaces NaN with 0, and infinities with large finite numbers | `nan_to_num(A)` |
+| `all` | True when every argument is true. Accepts any number of arguments | `all(A, B, ...)` |
+
+## Group functions
+
+Calculated within groups. Groups are defined by the columns passed as parameters; by default they are the entities of the dataset, excluding the date column.
+
+| Function | Description |
+|---|---|
+| `rank` | Numerical data ranks, 1 through n — `rank(@Variable, @entity1, @entity2, ...)` |
+| `cummax` | Cumulative maximum per group |
+| `cummin` | Cumulative minimum per group |
+| `cumprod` | Cumulative product per group |
+| `cumsum` | Cumulative sum per group |
+| `cumcount` | Cumulative count per group |
+| `backfill` | Backfills NA values, up to a limit of consecutive values — `backfill(@Variable, limit, @entity1, ...)` |
+| `pad` | Forward-fills NA values — `pad(@Variable, @entity1, ...)` |
+| `pct_change` | Percent change against N leading or lagging values within the group — `pct_change(@Variable, N, @entity1, ...)` |
+| `quantile` | Quantile position within the group — `quantile(@Variable, quantile, @entity1, ...)` |
+| `count` | Count of values in the group |
+| `nunique` | Number of unique values in the group |
+| `first` | First value of the group |
+| `last` | Last value of the group |
+| `max` | Maximum of the group values |
+| `min` | Minimum of the group values |
+| `mean` | Mean of the group values |
+| `median` | Median of the group values |
+| `prod` | Product of the group values |
+| `size` | Size of the group |
+| `sem` | Standard error of the mean of the group |
+| `std` | Standard deviation of the group |
+| `sum` | Sum of the group values |
+| `var` | Variance of the group values |
+
+## Rolling window functions
+
+Calculated over a rolling window, within groups. Groups are defined the same way as above.
+
+| Function | Description |
+|---|---|
+| `rollingcount` | Count over a rolling window |
+| `rollingsum` | Sum over a rolling window |
+| `rollingmean` | Mean over a rolling window |
+| `rollingmedian` | Median over a rolling window |
+| `rollingvar` | Variance over a rolling window |
+| `rollingstd` | Standard deviation over a rolling window |
+| `rollingmin` | Minimum over a rolling window |
+| `rollingmax` | Maximum over a rolling window |
+| `rollingsem` | Standard error of the mean over a rolling window |
+| `rollingrank` | Numerical data ranks over a rolling window — `rollingrank(@Variable, window_N, @entity1, ...)` |
+| `rollingcov` | Covariance between two variables over a rolling window — `rollingcov(@VariableA, @VariableB, window_N, @entity1, ...)` |
+
+## Date and time functions
+
+| Function | Returns |
+|---|---|
+| `now` | Current time — `now()` |
+| `today` | Current date — `today()` |
+| `year` | The year of the datetime |
+| `month` | The month of the datetime |
+| `day` | The day of the datetime |
+| `hour` | The hour of the datetime |
+| `minute` | The minutes of the datetime |
+| `second` | The seconds of the datetime |
+| `date` | The date part of the datetime |
+| `time` | The time part of the datetime |
+| `dayofyear` / `day_of_year` | The ordinal day of the year |
+| `weekofyear` / `week` | The week ordinal of the year |
+| `dayofweek` / `day_of_week` / `weekday` | Day of the week, Monday = 0 to Sunday = 6 |
+| `quarter` | Quarter of the date: Jan–Mar = 1, Apr–Jun = 2, and so on |
+| `days_in_month` | Number of days in the month of the datetime |
+| `is_month_start` | Whether it is the first day of the month, as defined by the frequency |
+| `is_month_end` | Whether it is the last day of the month |
+| `is_quarter_start` | Whether it is the first day of the quarter |
+| `is_quarter_end` | Whether it is the last day of the quarter |
+| `is_year_start` | Whether it is the first day of the year |
+| `is_year_end` | Whether it is the last day of the year |
+| `is_leap_year` | Whether the date falls in a leap year |
+
+<Note>
+The same grammar is available to AI agents through the `get_pipeline_formula_reference` tool on the Alphacast MCP server — see [Pipeline tools](/mcp/tools/pipelines).
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Calculate variable" icon="function" href="/steps/calculate-variable">
+    How to use these formulas in a pipeline step.
+  </Card>
+  <Card title="Filter rows" icon="filter" href="/steps/filter-rows">
+    Use comparisons and logical functions as row conditions.
+  </Card>
+</CardGroup>

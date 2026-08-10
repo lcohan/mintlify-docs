@@ -1,0 +1,34 @@
+---
+title: "Fetch Alphacast Dataset"
+sidebarTitle: "Fetch dataset"
+description: "Pull an existing Alphacast dataset into a pipeline as its starting point."
+---
+
+The **Fetch Alphacast Dataset** step chooses the dataset that the rest of your pipeline steps operate on. It is predefined when you create a pipeline and is almost always the first step.
+
+<Frame>
+  <img src="/images/steps/fetch-dataset-1.png" alt="Fetch Dataset step in the pipeline editor" />
+</Frame>
+
+## Select a dataset
+
+Start typing in the search box and matching datasets appear as you type. Pick the one you want and save the step.
+
+<Frame>
+  <img src="/images/steps/fetch-dataset-2.png" alt="Searching for a dataset in the Fetch Dataset step" />
+</Frame>
+
+<Note>
+You can only fetch datasets you have read access to. See [Repositories](/concepts/repositories) for how access levels work.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Select columns" icon="table-columns" href="/steps/select-columns">
+    Narrow the dataset down to the columns you need.
+  </Card>
+  <Card title="Filter dates" icon="calendar" href="/steps/filter-dates">
+    Restrict the pipeline to a date range.
+  </Card>
+</CardGroup>

@@ -48,6 +48,81 @@
             "pages": [
               "providers/overview"
             ]
+          },
+          {
+            "group": "Pipeline Steps",
+            "pages": [
+              "steps/overview",
+              {
+                "group": "Import data",
+                "pages": [
+                  "steps/fetch-dataset",
+                  "steps/fetch-fred",
+                  "steps/fetch-yahoo",
+                  "steps/fetch-series",
+                  "steps/fetch-api-provider"
+                ]
+              },
+              {
+                "group": "Filter and select",
+                "pages": [
+                  "steps/select-columns",
+                  "steps/filter-entity",
+                  "steps/filter-dates",
+                  "steps/filter-rows",
+                  "steps/sort-rows",
+                  "steps/select-series"
+                ]
+              },
+              {
+                "group": "Reshape",
+                "pages": [
+                  "steps/reorder-columns",
+                  "steps/rename-columns",
+                  "steps/regroup-entities",
+                  "steps/resample",
+                  "steps/merge",
+                  "steps/append-dataset",
+                  "steps/unstack-dataset",
+                  "steps/melt-dataset",
+                  "steps/rename-values",
+                  "steps/reorder-rows"
+                ]
+              },
+              {
+                "group": "Transform and analyze",
+                "pages": [
+                  "steps/transform",
+                  "steps/change-units",
+                  "steps/apply-formula",
+                  "steps/calculate-variable",
+                  "steps/formula-reference",
+                  "steps/arima-sa",
+                  "steps/country-validator",
+                  "steps/talib",
+                  "steps/portfolio-analysis"
+                ]
+              },
+              {
+                "group": "AI steps",
+                "pages": [
+                  "steps/ai-transform",
+                  "steps/ai-summary",
+                  "steps/ai-visualization"
+                ]
+              },
+              {
+                "group": "Outputs",
+                "pages": [
+                  "steps/publish",
+                  "steps/chart-data",
+                  "steps/table-view",
+                  "steps/deck-view",
+                  "steps/data-snapshot",
+                  "steps/markdown"
+                ]
+              }
+            ]
           }
         ]
       },

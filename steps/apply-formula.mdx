@@ -1,0 +1,40 @@
+---
+title: "Apply Formula"
+sidebarTitle: "Apply formula"
+description: "Apply one formula to many columns at once, producing a new suffixed column for each."
+---
+
+The **Apply Formula** step runs a single formula across several columns in one go. Where [Calculate Variable](/steps/calculate-variable) creates one new column from a formula you write, this step applies the same formula to each column you select and produces one new column per input.
+
+## Configuration
+
+| Field | Description |
+|---|---|
+| Formula | The formula to apply. It operates on each selected column in turn. |
+| Columns | The columns to apply it to. |
+| Suffix | Appended to each column name to name the result. |
+
+Output columns are named `{original column} - {suffix}`. So applying a formula with the suffix `real` to `Exports` and `Imports` produces `Exports - real` and `Imports - real`, leaving the originals in place.
+
+<Note>
+The formula uses the same grammar as [Calculate Variable](/steps/calculate-variable) — see the [formula reference](/steps/formula-reference) for every operator and function.
+</Note>
+
+<Warning>
+The step fails if the formula, the suffix, or the column selection is missing. All three are required.
+</Warning>
+
+<Tip>
+Reach for this when you would otherwise add the same Calculate Variable step five times with only the column name changing — deflating several nominal series, or converting a group of columns to an index.
+</Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Formula reference" icon="function" href="/steps/formula-reference">
+    Every operator and function available.
+  </Card>
+  <Card title="Calculate variable" icon="function" href="/steps/calculate-variable">
+    Write a formula producing a single new column.
+  </Card>
+</CardGroup>

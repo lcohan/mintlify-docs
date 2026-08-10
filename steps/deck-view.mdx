@@ -1,0 +1,35 @@
+---
+title: "Create a Deck of Views"
+sidebarTitle: "Create a deck of views"
+description: "Build multiple charts and tables over one dataset, sharing a common set of filters, for use in dashboards."
+---
+
+The **Create a Deck of views** step produces several views — charts, tables and filters — over the same data, sharing one set of controls. In a dashboard, changing a filter updates every view in the deck at once.
+
+Use it when the same dataset deserves more than one perspective: a headline chart, a breakdown table, and a country selector that drives both.
+
+## How it differs from the single-view steps
+
+| Step | Produces |
+|---|---|
+| [Create a Chart](/steps/chart-data) | One chart from the current data. |
+| [Create a Table](/steps/table-view) | One table from the current data. |
+| **Create a Deck of views** | Several views over the current data, with shared filters. |
+| [Create AI View](/steps/ai-visualization) | A view combining the output of **several different steps**. |
+
+The deck operates on the single stream of data reaching it. If you need to combine separate branches of the pipeline into one view, that is what [Create AI View](/steps/ai-visualization) does.
+
+<Note>
+The deck captures the data as it stands at that point, so place the step after every transformation, filter and ordering step you want reflected in the views.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Create AI View" icon="sparkles" href="/steps/ai-visualization">
+    Combine output from several steps into one view.
+  </Card>
+  <Card title="Publish to Dataset" icon="upload" href="/steps/publish">
+    Also persist the underlying data as a dataset.
+  </Card>
+</CardGroup>

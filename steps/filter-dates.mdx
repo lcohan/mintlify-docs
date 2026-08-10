@@ -1,0 +1,44 @@
+---
+title: "Filter Dates"
+sidebarTitle: "Filter dates"
+description: "Restrict a pipeline to a fixed date range or to a window defined relative to today."
+---
+
+The **Filter Dates** step narrows the pipeline to the time period you want to focus on. It supports two modes.
+
+## Absolute date range
+
+Specify a start and end date by clicking the calendar.
+
+You can also click **earliest available** to pull the full history, and **latest available** to always track the most recent data point without editing the step again.
+
+<Frame>
+  <img src="/images/steps/filter-dates-1.jpg" alt="Setting an absolute date range" />
+</Frame>
+
+## Relative dates
+
+Click **relative dates** to filter against a window measured from the current date. Choose a number of years, quarters, months or days.
+
+<Frame>
+  <img src="/images/steps/filter-dates-2.jpg" alt="Setting a relative date window" />
+</Frame>
+
+<Tip>
+Relative dates keep a scheduled pipeline pointed at a rolling window — for example the last 24 months — without any maintenance.
+</Tip>
+
+<Warning>
+Remember to save the step before moving to the next one.
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Change frequency" icon="clock" href="/steps/resample">
+    Resample the series to a different time frequency.
+  </Card>
+  <Card title="Filter rows" icon="filter" href="/steps/filter-rows">
+    Filter by value rather than by date.
+  </Card>
+</CardGroup>

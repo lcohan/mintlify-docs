@@ -1,0 +1,36 @@
+---
+title: "Filter Entity"
+sidebarTitle: "Filter entity"
+description: "Keep only the entities you want to work with — countries, categories or tickers — and drop the rest."
+---
+
+The **Filter Entity** step narrows a dataset down to specific entity values, so the following steps only process the rows you care about.
+
+In this example, you pick the category you want to work with:
+
+<Frame>
+  <img src="/images/steps/filter-entity-1.png" alt="Selecting entity values to keep" />
+</Frame>
+
+From this point on the pipeline carries only "Capital Accounts" — every other entity is dropped.
+
+Click **Save** and the pipeline reruns with the filter applied.
+
+<Frame>
+  <img src="/images/steps/filter-entity-2.png" alt="Pipeline result after filtering to a single entity" />
+</Frame>
+
+<Note>
+Entity columns are the columns that uniquely identify a row. See [Regroup entities](/steps/regroup-entities) if you need to collapse an entity rather than filter it.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Filter rows" icon="filter" href="/steps/filter-rows">
+    Filter by value instead of by entity.
+  </Card>
+  <Card title="Filter dates" icon="calendar" href="/steps/filter-dates">
+    Restrict the pipeline to a date range.
+  </Card>
+</CardGroup>

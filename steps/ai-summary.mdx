@@ -1,0 +1,42 @@
+---
+title: "Summarize with AI"
+sidebarTitle: "Summarize with AI"
+description: "Generate a written summary of the data at this point in the pipeline, regenerated only when the underlying data changes."
+---
+
+The **Summarize with AI** step produces a written summary of the data as it stands at that point in the pipeline. The summary is stored in the step and can be surfaced in dashboards alongside the numbers it describes.
+
+## What gets sent
+
+The step does **not** send the full dataset. It computes a statistical profile — shape, column types, descriptive statistics, and the first and last few rows — and summarizes that.
+
+<Note>
+This matters for two reasons. Large datasets summarize without hitting size limits, and the raw body of your data is not transmitted — only its statistical shape and a small sample of rows.
+</Note>
+
+## Regeneration
+
+The summary is cached against a hash of the data profile:
+
+- **Data unchanged** — the existing summary is kept, so a scheduled rerun doesn't produce a slightly different wording every time.
+- **Data changed** — a new summary is generated.
+- **Summary edited by hand** — your edit is stored and preserved. You are not overwritten by the next run.
+
+<Tip>
+That last behavior makes the step usable for published commentary: let it draft, edit what it got wrong, and your version stays until the underlying data actually moves.
+</Tip>
+
+<Warning>
+The summary describes what the numbers do, not why. Treat generated commentary as a first draft to check rather than analysis to publish unread — particularly when the output is going somewhere your readers will take as authoritative.
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Add markdown text" icon="file-lines" href="/steps/markdown">
+    Write commentary yourself instead.
+  </Card>
+  <Card title="Transform with AI" icon="sparkles" href="/steps/ai-transform">
+    Have AI transform the data rather than describe it.
+  </Card>
+</CardGroup>

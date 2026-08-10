@@ -1,0 +1,81 @@
+---
+title: "Merge with Dataset"
+sidebarTitle: "Merge with dataset"
+description: "Join two datasets on their common entities, choosing which rows survive when they don't match."
+---
+
+The **Merge with Dataset** step combines datasets through their shared entities. You choose which entities match, and what happens to rows that have no counterpart in the other dataset.
+
+## Why not a spreadsheet
+
+If you have joined data sources before, you have probably done it with some combination of `VLOOKUP`, `HLOOKUP` and `MATCH`. That works well until:
+
+1. You have **many** rows — `VLOOKUP` gets slow.
+2. You need to match on more than one field.
+3. The position of rows or columns changes.
+4. You only want the rows present in both datasets.
+5. A source changes its number of rows and you have to re-copy or adjust formulas.
+
+A pipeline merge handles all five, and keeps the datasets connected so the result updates when the sources do.
+
+## How to merge
+
+<Steps>
+  <Step title="Choose a data source">
+    Go to **Create new → Pipeline**, select the repository and a name. In **Fetch dataset**, pick the first dataset and press **Save**.
+  </Step>
+
+  <Step title="Select the dataset to merge">
+    Click **Add step below** and choose **Merge with Dataset**, then select the second dataset.
+
+    <Tip>
+    Merges work best when both datasets share a frequency. If they don't, run [Change frequency](/steps/resample) first.
+    </Tip>
+  </Step>
+
+  <Step title="Choose the common fields">
+    Tell the system which fields join the two datasets.
+
+    - Usually there is a single **Date** field, and the datasets merge on it.
+    - Datasets can have more than one entity — data by date *and* by country, for example. In that case identify which field of the second dataset corresponds to the country field of the first.
+    - If no second field is selected, the join happens on date alone. Rows from dataset B may then appear duplicated when a date occurs more than once in dataset A.
+
+    <Frame>
+      <img src="/images/steps/merge-1.png" alt="Selecting the common fields for a merge" />
+    </Frame>
+
+    In this example two monthly datasets share the same entity (Argentina). With **Left join**, all rows from the first dataset (EMAE) are kept, and Consumer Price Index values are attached wherever date and entity match.
+  </Step>
+
+  <Step title="Choose the matching type">
+    <Frame>
+      <img src="/images/steps/merge-2.png" alt="The four join types" />
+    </Frame>
+
+    | Join | Result |
+    |---|---|
+    | **Inner** | Only rows that match in both datasets. |
+    | **Left** | All rows of dataset A; unmatched rows of B are discarded. |
+    | **Right** | All rows of dataset B; unmatched rows of A are discarded. |
+    | **Outer** | All rows from both datasets, matched or not. |
+  </Step>
+
+  <Step title="Publish">
+    The result combines the columns of both datasets. Carry on transforming it, or [publish](/steps/publish) it as a new dataset.
+  </Step>
+</Steps>
+
+<Note>
+To stack datasets vertically rather than join them side by side, use [Append branches](/steps/append-dataset).
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Append branches" icon="layer-group" href="/steps/append-dataset">
+    Combine datasets with the same structure end to end.
+  </Card>
+  <Card title="Calculate variable" icon="function" href="/steps/calculate-variable">
+    Compute new columns across the merged data.
+  </Card>
+</CardGroup>

@@ -1,0 +1,124 @@
+---
+title: "Apply Transform"
+sidebarTitle: "Apply transform"
+description: "Apply prebuilt economic transformations — year-over-year change, constant prices, per capita, % of GDP, seasonal adjustment and currency conversion."
+---
+
+The **Apply Transform** step applies prebuilt transformations to the data, and lets you combine several at once.
+
+<Note>
+The options available depend on the **frequency of the input data**. A daily dataset offers rolling-window transforms; a monthly one offers seasonal adjustment and sum-last-12-months; a yearly one offers neither. Every frequency includes **Original Variable**, which keeps the untransformed column alongside the transformed ones.
+</Note>
+
+Some transformations need reference data that Alphacast supplies automatically — inflation indices for constant prices, population for per capita, GDP series for % of GDP, and exchange rates for currency conversion. These require the dataset to carry a country entity so the right reference series can be matched.
+
+Each transformation adds a new column named after the original plus the transformation's internal key — `EMBI Global Diversified Subindices - 30d_change`. The original column is kept, so you can apply several transformations to the same variable and compare them side by side.
+
+<AccordionGroup>
+
+  <Accordion title="Daily data">
+
+    | Transformation | What it does |
+    |---|---|
+    | **1 day change** | Change against the previous day. |
+    | **7 days change** | Change against the same day one week earlier. |
+    | **7 days average** | Rolling mean over the last 7 days. |
+    | **30 days change** | Change against the same day 30 days earlier. |
+    | **30 days average** | Rolling mean over the last 30 days. |
+    | **30 days average - Month over Month** | Monthly change of the 30-day rolling mean. |
+    | **30 days sum** | Total over the last 30 days. |
+    | **Month to Date Change** | Change from the start of the current month to date. |
+    | **Month to Date Sum** | Total from the start of the current month to date. |
+    | **Year to Date Change** | Change from the start of the current year to date. |
+    | **Year to Date Sum** | Total from the start of the current year to date. |
+    | **Currency conversion LCU / USD - daily** | Converts local currency units to US dollars. |
+    | **Currency conversion BCS / USD** | Argentina only. |
+
+  </Accordion>
+
+  <Accordion title="Monthly data">
+
+    | Transformation | What it does |
+    |---|---|
+    | **Year over Year** | Change against the same month one year earlier. |
+    | **Month over Month** | Change against the previous month. |
+    | **Year over Year - 3 months moving average** | Year-over-year change of the 3-month moving average. |
+    | **12 months average** | Rolling annual mean. |
+    | **Sum last 12 months** | Total over the previous twelve months. |
+    | **Sum last 12 months - Year over Year** | Year-over-year change of that rolling total. |
+    | **Sum last 12 months - Month over Month** | Monthly change of that rolling total. |
+    | **Sum last 12 months - % of GDP** | The rolling annual total as a share of GDP. |
+    | **% of GDP** | The variable as a share of Gross Domestic Product. |
+    | **Constant prices** | Removes the effect of inflation. |
+    | **Constant prices - Year over Year** | Year-over-year change in real terms. |
+    | **Constant prices - Month over Month** | Monthly change in real terms. |
+    | **Constant prices - Year over Year - 3 months moving average** | Real year-over-year change of the 3-month moving average. |
+    | **Seasonally adjusted** | Removes seasonal variation. |
+    | **Seasonally adjusted - Month over Month** | Monthly change of the seasonally adjusted series. |
+    | **Constant prices - Seasonally adjusted** | Both adjustments combined. |
+    | **Constant prices - Seasonally adjusted - Month over Month** | Monthly change of the real, seasonally adjusted series. |
+    | **Per Capita** | Divided by the country's population. |
+    | **Constant prices - Per Capita** | Per capita in real terms. |
+    | **Year to Date Change** / **Year to Date Sum** | From the start of the current year to date. |
+    | **Currency conversion LCU / USD - monthly** | Converts to US dollars. |
+    | **Currency conversion BCS / USD** | Argentina only. |
+
+  </Accordion>
+
+  <Accordion title="Quarterly data">
+
+    | Transformation | What it does |
+    |---|---|
+    | **Year over Year** | Change against the same quarter one year earlier. |
+    | **Quarter over Quarter** | Change against the previous quarter. |
+    | **Sum last 4 quarters** | Total over the previous four quarters. |
+    | **4 quarters average** | Rolling mean over the last four quarters. |
+    | **% of GDP** | The variable as a share of Gross Domestic Product. |
+    | **Constant prices** | Removes the effect of inflation. |
+    | **Constant prices - Year over Year** | Year-over-year change in real terms. |
+    | **Seasonally adjusted** | Removes seasonal variation. |
+    | **Seasonally adjusted - Quarter over Quarter** | Quarterly change of the seasonally adjusted series. |
+    | **Per Capita** | Divided by the country's population. |
+    | **Constant prices - Per Capita** | Per capita in real terms. |
+    | **Year to Date Change** / **Year to Date Sum** | From the start of the current year to date. |
+    | **Currency conversion LCU / USD - quarterly** | Converts to US dollars. |
+    | **Currency conversion BCS / USD** | Argentina only. |
+
+  </Accordion>
+
+  <Accordion title="Yearly data">
+
+    | Transformation | What it does |
+    |---|---|
+    | **Year over Year** | Change against the previous year. |
+    | **Constant prices** | Removes the effect of inflation. |
+    | **Constant prices - Year over Year** | Year-over-year change in real terms. |
+    | **% of GDP** | The variable as a share of Gross Domestic Product. |
+    | **% of Current USD GDP** | As a share of GDP measured in current US dollars. |
+    | **Per Capita** | Divided by the country's population. |
+    | **Constant prices - Per Capita** | Per capita in real terms. |
+    | **Currency conversion LCU / USD** | Converts to US dollars. |
+    | **Currency conversion BCS / USD** | Argentina only. |
+
+  </Accordion>
+
+</AccordionGroup>
+
+<Note>
+For seasonal adjustment with control over the underlying model — including trend and irregular components — use the **X13 ARIMA Seasonal Adjustment** step rather than the prebuilt **Seasonally adjusted** transformation.
+</Note>
+
+<Tip>
+Country-specific unit conversions are also available on their own through the **Apply Country Transform** step. If none of the prebuilt options fit, [Calculate Variable](/steps/calculate-variable) lets you write the transformation yourself — see the [formula reference](/steps/formula-reference).
+</Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Calculate variable" icon="function" href="/steps/calculate-variable">
+    Write custom formulas when a prebuilt transform doesn't fit.
+  </Card>
+  <Card title="Change frequency" icon="clock" href="/steps/resample">
+    Resample first to unlock frequency-specific transforms.
+  </Card>
+</CardGroup>

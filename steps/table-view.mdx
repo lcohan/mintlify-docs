@@ -1,0 +1,30 @@
+---
+title: "Create a Table"
+sidebarTitle: "Create a table"
+description: "Render pipeline output as a formatted table that can be embedded in a dashboard."
+---
+
+The **Create a Table** step renders the data as a table, ready to include in a dashboard. It is an output step: the data passes through unchanged to any steps that follow.
+
+## Configuration
+
+| Field | Description |
+|---|---|
+| Columns | The columns to show. Leave empty to include all of them. |
+
+Column order in the table follows the order of the data reaching the step, so put a [Reorder Columns](/steps/reorder-columns) step before it if you need a specific layout. Row order works the same way — see [Sort Rows](/steps/sort-rows) and [Reorder Rows](/steps/reorder-rows).
+
+<Note>
+The rendered table image is cached. Rerunning the step clears the cache so the dashboard picks up the new data rather than serving a stale image.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Create a Chart" icon="chart-simple" href="/steps/chart-data">
+    Render the same data as a chart.
+  </Card>
+  <Card title="Create a Deck of views" icon="rectangle-list" href="/steps/deck-view">
+    Combine several charts and tables with shared filters.
+  </Card>
+</CardGroup>

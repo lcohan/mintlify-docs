@@ -1,0 +1,32 @@
+---
+title: "Data Snapshot"
+sidebarTitle: "Data snapshot"
+description: "Capture the pipeline output as a downloadable, embeddable snapshot in CSV, XLSX or TSV."
+---
+
+**Data Snapshot** is one of the pipeline's output steps. It takes a snapshot of the data as it stands at that point in the pipeline.
+
+<Frame>
+  <img src="/images/steps/data-snapshot-1.png" alt="Data Snapshot step in the pipeline editor" />
+</Frame>
+
+The step provides a download link, a code snippet for embedding the data on a website or in an insight, and optionally an excerpt of the pipeline result. Links are available in CSV, XLSX and TSV.
+
+<Frame>
+  <img src="/images/steps/data-snapshot-2.png" alt="Download and embed options for a data snapshot" />
+</Frame>
+
+<Note>
+A snapshot is a point-in-time capture. If you need output that stays current as sources update, use [Publish dataset](/steps/publish) instead.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Publish dataset" icon="upload" href="/steps/publish">
+    Produce an auto-updating dataset rather than a snapshot.
+  </Card>
+  <Card title="Chart data" icon="chart-simple" href="/steps/chart-data">
+    Visualize the same output.
+  </Card>
+</CardGroup>

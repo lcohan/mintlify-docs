@@ -1,0 +1,113 @@
+---
+title: "Pipeline Steps"
+sidebarTitle: "Overview"
+description: "How pipelines work in Alphacast, and a map of every step available — from importing data to publishing the result."
+---
+
+A **pipeline** is an ordered chain of steps that turns source data into something you can publish, chart or download. Each step takes the output of the previous one as its input, so the data is reshaped progressively from the first step to the last.
+
+Pipelines are reproducible: when a source dataset updates, the pipeline reruns and everything downstream follows. That is what makes a [published dataset](/steps/publish) stay current without anyone touching it.
+
+## The shape of a pipeline
+
+<Steps>
+  <Step title="Import">
+    Every pipeline starts by bringing data in — from an existing Alphacast dataset, or from an external source like FRED or Yahoo Finance.
+  </Step>
+  <Step title="Filter and reshape">
+    Narrow the data to what you need and get it into the right shape: select columns, filter rows and entities, resample, join or pivot.
+  </Step>
+  <Step title="Transform and analyze">
+    Compute new variables, apply economic transformations, or run a domain model.
+  </Step>
+  <Step title="Output">
+    Publish a dataset, build a chart, or produce a downloadable snapshot.
+  </Step>
+</Steps>
+
+## Every step
+
+### Import data
+
+| Step | What it does |
+|---|---|
+| [Fetch Alphacast Dataset](/steps/fetch-dataset) | Pull an existing Alphacast dataset into the pipeline. |
+| [Fetch FRED Data](/steps/fetch-fred) | Import economic series from the St. Louis Fed by series code. |
+| [Fetch Financial Data](/steps/fetch-yahoo) | Import stocks, ETFs and indices by ticker. |
+| [Fetch Alphacast Series](/steps/fetch-series) | Import individual series by ID, wide or long. |
+| [Fetch API Explorer Data](/steps/fetch-api-provider) | Import directly from a connected external provider. |
+
+### Filter and select
+
+| Step | What it does |
+|---|---|
+| [Select Columns](/steps/select-columns) | Keep only the columns you need. |
+| [Filter Entity](/steps/filter-entity) | Keep only certain countries, categories or tickers. |
+| [Filter Dates](/steps/filter-dates) | Restrict to an absolute or relative date range. |
+| [Filter Rows](/steps/filter-rows) | Drop rows that don't meet a condition. |
+| [Sort Rows](/steps/sort-rows) | Order rows by one or more columns, each with its own direction. |
+| [Select Series](/steps/select-series) | Reduce the data to specific variable and entity combinations. |
+
+### Reshape
+
+| Step | What it does |
+|---|---|
+| [Reorder Columns](/steps/reorder-columns) | Set the order columns appear in. |
+| [Rename Columns](/steps/rename-columns) | Give columns new names. |
+| [Regroup Entities](/steps/regroup-entities) | Drop an entity and aggregate — the equivalent of GROUP BY. |
+| [Change Frequency](/steps/resample) | Resample to a different time frequency. |
+| [Merge with Dataset](/steps/merge) | Join two datasets on their common entities. |
+| [Append Dataset](/steps/append-dataset) | Stack datasets with the same structure. |
+| [Long to Wide (Unstack)](/steps/unstack-dataset) | Pivot from long format to wide. |
+| [Wide to Long (Melt)](/steps/melt-dataset) | Collapse from wide format to long. |
+| [Rename Values](/steps/rename-values) | Replace values inside an entity or string column. |
+| [Reorder Rows](/steps/reorder-rows) | Put entity values in a deliberate, non-alphabetical order. |
+
+### Transform and analyze
+
+| Step | What it does |
+|---|---|
+| [Apply Transform](/steps/transform) | Prebuilt transformations — YoY change, moving averages, per capita, constant prices. |
+| [Apply Country Transform](/steps/change-units) | Country-specific conversions, with explicit control over the country. |
+| [Apply Formula](/steps/apply-formula) | Apply one formula to many columns at once. |
+| [Calculate variable](/steps/calculate-variable) | Create columns with an Excel-like formula parser. |
+| [X13 ARIMA Seasonal Adjustment](/steps/arima-sa) | Seasonal adjustment with full model control. |
+| [Validate Countries](/steps/country-validator) | Normalize country names against a canonical list. |
+| [Technical Analysis](/steps/talib) | 132 technical indicators for financial assets. |
+| [Portfolio Analysis](/steps/portfolio-analysis) | Tear sheets and rolling performance stats. |
+
+The [formula reference](/steps/formula-reference) documents the grammar shared by **Calculate variable**, **Filter rows** and **Apply Formula**.
+
+### AI steps
+
+| Step | What it does |
+|---|---|
+| [Transform with AI](/steps/ai-transform) | Describe a transformation and let AI write the Python. |
+| [Summarize with AI](/steps/ai-summary) | Generate a written summary of the data. |
+| [Create AI View](/steps/ai-visualization) | Build a view from the output of several earlier steps. |
+
+### Outputs
+
+| Step | What it does |
+|---|---|
+| [Publish to Dataset](/steps/publish) | Write the result to an auto-updating dataset. |
+| [Create a Chart](/steps/chart-data) | Build and customize a chart. |
+| [Create a Table](/steps/table-view) | Render the data as a table for a dashboard. |
+| [Create a Deck of views](/steps/deck-view) | Several views over one dataset, with shared filters. |
+| [Data Snapshot](/steps/data-snapshot) | Produce a downloadable, embeddable snapshot. |
+| [Add markdown text](/steps/markdown) | Document the pipeline inline. |
+
+<Note>
+Pipelines can also be built and run by AI agents. The Alphacast MCP server exposes the full pipeline lifecycle — creating pipelines, adding and editing steps, previewing output and triggering runs. See [Pipeline tools](/mcp/tools/pipelines).
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Fetch dataset" icon="database" href="/steps/fetch-dataset">
+    Start a pipeline from an existing dataset.
+  </Card>
+  <Card title="Formula reference" icon="function" href="/steps/formula-reference">
+    Every operator and function available in a formula field.
+  </Card>
+</CardGroup>

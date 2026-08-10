@@ -1,0 +1,54 @@
+---
+title: "Change Frequency"
+sidebarTitle: "Change frequency"
+description: "Resample a dataset to a different time frequency, interpolating up or aggregating down."
+---
+
+Every dataset has a frequency — daily, weekly, monthly, quarterly or yearly. The **Change Frequency** step converts between them and recalculates the values accordingly.
+
+Moving from a higher to a lower frequency requires an **aggregation** formula, such as average or end of period. Moving from a lower to a higher frequency requires an **interpolation** formula, such as linear interpolation or splines.
+
+<Frame>
+  <img src="/images/steps/resample-1.png" alt="Diagram of resampling between time frequencies" />
+</Frame>
+
+## How to resample
+
+<Steps>
+  <Step title="Create a pipeline and choose the data source" />
+
+  <Step title="Add a Change Sample Frequency step">
+    The system detects the input frequency automatically.
+
+    <Frame>
+      <img src="/images/steps/resample-2.png" alt="Change Sample Frequency step configuration" />
+    </Frame>
+  </Step>
+
+  <Step title="Select the output frequency">
+    This determines whether the step interpolates or downscales.
+
+    **Going up in frequency** (monthly to daily) offers 9 interpolation options: Repeat, Linear, Quadratic, Cubic, Polynomial order 3, Piecewise Polynomial, Spline, Krogh, and Fill with 0.
+
+    **Going down in frequency** (monthly to quarterly) offers 6 aggregations: Average, Sum, Min, Max, Last and First.
+
+    <Frame>
+      <img src="/images/steps/resample-3.png" alt="Available interpolation and aggregation methods" />
+    </Frame>
+  </Step>
+</Steps>
+
+<Warning>
+Interpolating to a higher frequency invents data points that were never observed. It is appropriate for aligning series before a join, but the interpolated values should not be treated as measurements.
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Merge branches" icon="code-merge" href="/steps/merge">
+    Join series once they share a frequency.
+  </Card>
+  <Card title="Apply transform" icon="wand-magic-sparkles" href="/steps/transform">
+    Frequency-aware transformations like year-over-year change.
+  </Card>
+</CardGroup>

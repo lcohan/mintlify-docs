@@ -1,0 +1,58 @@
+---
+title: "Unstack (Long to Wide)"
+sidebarTitle: "Unstack dataset"
+description: "Pivot a long-format dataset to wide format, turning the values of an entity column into columns of their own."
+---
+
+Sooner or later you find the data you need, but not in the shape you need it — values that should be columns are rows, or the other way round. Transposing doesn't fix it, because the entity columns have to be preserved. **Unstack** and [Melt](/steps/melt-dataset) do.
+
+<Frame>
+  <img src="/images/steps/reshape-long-wide.png" alt="Diagram showing long format and wide format side by side" />
+</Frame>
+
+**Unstack** goes from long to wide: the values of an entity column become new columns.
+
+## Example
+
+<Steps>
+  <Step title="Load long-format data">
+    Start with some Yahoo Finance data. The tickers (Apple, Microsoft, Google and so on) are values inside a single `Ticker` column. Suppose you need them side by side as columns, and only want the closing price rather than open-high-low-close.
+
+    <Frame>
+      <img src="/images/steps/unstack-dataset-2.png" alt="Yahoo Finance data in long format, tickers as row values" />
+    </Frame>
+  </Step>
+
+  <Step title="Add the Long to Wide (Unstack) step">
+    <Frame>
+      <img src="/images/steps/unstack-dataset-3.png" alt="Configuring the Long to Wide step" />
+    </Frame>
+  </Step>
+
+  <Step title="Review the result">
+    Each ticker now has its own column.
+
+    <Frame>
+      <img src="/images/steps/unstack-result.png" alt="The resulting wide-format dataset" />
+    </Frame>
+  </Step>
+</Steps>
+
+<Tip>
+See the [example pipeline](https://www.alphacast.io/pipelines/2022-6-10-UYhLlh/view) for both directions in one place.
+</Tip>
+
+## Reversing it
+
+To go back the other way, use [Melt (Wide to Long)](/steps/melt-dataset).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Melt (Wide to Long)" icon="arrows-left-right" href="/steps/melt-dataset">
+    The inverse operation.
+  </Card>
+  <Card title="Merge branches" icon="code-merge" href="/steps/merge">
+    Join the reshaped data with another dataset.
+  </Card>
+</CardGroup>

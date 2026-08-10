@@ -1,0 +1,40 @@
+---
+title: "Melt (Wide to Long)"
+sidebarTitle: "Melt dataset"
+description: "Convert a wide-format dataset to long format, collapsing value columns into rows under a new variable column."
+---
+
+**Melt** goes from wide to long: several value columns collapse into two — one holding the former column names, one holding the values. It is the inverse of [Unstack (Long to Wide)](/steps/unstack-dataset), which is where the shared long-versus-wide diagram lives.
+
+## Configuration
+
+Define:
+
+- The name of the column that will host the former column names — the tickers, in the example below.
+- The name of the column that will hold the values.
+- Which columns should be melted. Uncheck the ones that should stay as columns.
+
+<Frame>
+  <img src="/images/steps/melt-step-config.png" alt="Configuring the Wide to Long step" />
+</Frame>
+
+The result carries one row per combination of the retained entities and the melted variable:
+
+<Frame>
+  <img src="/images/steps/melt-result.png" alt="The resulting long-format dataset" />
+</Frame>
+
+<Note>
+Long format is usually what you want before [Regroup entities](/steps/regroup-entities) or before publishing a dataset that other people will filter by entity.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Unstack (Long to Wide)" icon="arrows-left-right" href="/steps/unstack-dataset">
+    The inverse operation, with the full worked example.
+  </Card>
+  <Card title="Regroup entities" icon="layer-group" href="/steps/regroup-entities">
+    Aggregate once the data is in long format.
+  </Card>
+</CardGroup>

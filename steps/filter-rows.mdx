@@ -1,0 +1,32 @@
+---
+title: "Filter Rows"
+sidebarTitle: "Filter rows"
+description: "Drop rows that don't meet a condition, using the same formula grammar as Calculate Variable."
+---
+
+The **Filter Rows** step keeps rows that satisfy a condition — either rows from a specific date onward, or rows whose values meet a criterion you define.
+
+<Frame>
+  <img src="/images/steps/filter-rows-1.png" alt="Filter Rows step configuration" />
+</Frame>
+
+The criterion can be a logical function, an arithmetic operation, or a comparison — anything that evaluates to true or false for a row.
+
+<Frame>
+  <img src="/images/steps/filter-rows-2.png" alt="Writing a filter condition" />
+</Frame>
+
+<Note>
+Conditions use the same grammar as [Calculate Variable](/steps/calculate-variable). See the [formula reference](/steps/formula-reference) for the full list of operators, comparisons and functions.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Formula reference" icon="function" href="/steps/formula-reference">
+    Every operator and function available in a condition.
+  </Card>
+  <Card title="Sort values" icon="arrow-down-short-wide" href="/steps/sort-rows">
+    Order the surviving rows.
+  </Card>
+</CardGroup>

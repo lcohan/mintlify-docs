@@ -1,0 +1,40 @@
+---
+title: "Fetch Alphacast Series"
+sidebarTitle: "Fetch series"
+description: "Pull individual Alphacast series into a pipeline by series ID, in wide or long format, with optional scale conversion."
+---
+
+The **Fetch Alphacast Series** step imports one or more individual series rather than a whole dataset. Use it when you need a handful of specific indicators that live in different datasets.
+
+## Configuration
+
+| Field | Description |
+|---|---|
+| Series | The series to import. Each entry is identified by its series ID. |
+| Output format | **Wide** gives one column per series, joined on date. **Long** gives `Date`, `Country` and `Value` columns, with the series stacked. |
+| Scale | Optional. Converts every series to a single unit scale so values are comparable. |
+
+## Wide vs long
+
+**Wide** is the default. Series are merged on `Date` with an outer join, so the output covers the union of all dates and leaves gaps where a series has no observation.
+
+**Long** stacks the series instead, adding a `Country` entity column. Pick this when the series share a meaning and differ by country — it keeps the data in the shape most Alphacast charts and dashboards expect.
+
+<Note>
+If every series resolves to the same country and that country is unknown, the `Country` column is dropped rather than filled with a placeholder.
+</Note>
+
+<Warning>
+The step fails if a configured series ID cannot be found, or if a scale conversion is impossible between the source and target units. It does not skip the series silently.
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Fetch Alphacast Dataset" icon="database" href="/steps/fetch-dataset">
+    Import a whole dataset instead of individual series.
+  </Card>
+  <Card title="Select Series" icon="filter" href="/steps/select-series">
+    Reduce an existing dataset down to specific series.
+  </Card>
+</CardGroup>

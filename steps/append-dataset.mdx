@@ -1,0 +1,49 @@
+---
+title: "Append Dataset"
+sidebarTitle: "Append dataset"
+description: "Stack datasets with the same structure on top of each other, with control over duplicate handling."
+---
+
+The **Append Dataset** step combines datasets with the same structure one on top of the other. Use it when the same data lives in separate datasets — different months or years, for example — and you need it as one series.
+
+Select the datasets to append and the variables to include, then choose how duplicates should be handled.
+
+<Frame>
+  <img src="/images/steps/append-dataset-1.jpg" alt="Selecting datasets and variables to append" />
+</Frame>
+
+<Warning>
+Check that the datasets really do share the same structure before appending. Mismatched column names produce sparse columns rather than an error.
+</Warning>
+
+## Fetching and modifying before appending
+
+You can also transform data before it is appended:
+
+<Steps>
+  <Step title="Fetch the source">
+    In the **Fetch** step, select the dataset you want to take data from, and apply any steps you need.
+  </Step>
+  <Step title="Configure duplicate handling">
+    In the **Append Dataset** step, choose how duplicate records are dropped: keep the first occurrence, keep the last occurrence, or drop all duplicates.
+
+    <Frame>
+      <img src="/images/steps/append-dataset-2.jpg" alt="Duplicate handling options in the Append Dataset step" />
+    </Frame>
+  </Step>
+</Steps>
+
+<Note>
+Appending stacks rows vertically. To join datasets side by side on shared entities, use [Merge branches](/steps/merge).
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Merge branches" icon="code-merge" href="/steps/merge">
+    Join datasets on common entities instead.
+  </Card>
+  <Card title="Sort values" icon="arrow-down-short-wide" href="/steps/sort-rows">
+    Restore chronological order after appending.
+  </Card>
+</CardGroup>
