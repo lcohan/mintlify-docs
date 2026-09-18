@@ -147,6 +147,12 @@ button{font:inherit;color:inherit;cursor:pointer;background:none;border:none}
 .btn.ghost:hover{color:var(--accent);border-color:var(--accent)}
 .hint{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-left:auto}
 .hint kbd{border:1px solid var(--line-2);border-radius:4px;padding:1px 5px;background:var(--card)}
+.cmp{width:100%;border-collapse:collapse;margin-top:14px;font-family:var(--mono);font-size:13px}
+.cmp td{border:1px solid var(--line);padding:7px 10px;width:50%;background:var(--card)}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px;font-family:var(--sans)}
+.tbl th{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:7px 10px;border-bottom:1px solid var(--line-2)}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);background:var(--card)}
+.tbl td:last-child,.tbl th:last-child{text-align:right;font-variant-numeric:tabular-nums}
 #pad{width:100%;min-height:120px;font-family:var(--mono);font-size:14px;background:var(--card);color:var(--ink);
   border:1px dashed var(--line-2);border-radius:10px;padding:12px;margin-top:16px;resize:vertical;line-height:1.7}
 
@@ -671,7 +677,7 @@ var AB = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 /* --- series numéricas --- */
 function gSeries(d){
-  var kinds = d <= 1 ? ['add','mul','add2'] : (d === 2 ? ['add2','alt','sq','mul'] : ['add2','alt','sq','fib','mix']);
+  var kinds = d <= 1 ? ['add','mul','add2'] : (d === 2 ? ['add2','alt','sq','mul','lin'] : ['add2','alt','sq','fib','mix','lin']);
   var k = pick(kinds), t = [], ans, why, i;
   if (k === 'add'){
     var s = ri(2,14), st = pick([3,4,6,7,8,9,11,12]);
@@ -703,6 +709,13 @@ function gSeries(d){
     for (i=0;i<3;i++) t.push(t[t.length-1] + t[t.length-2]);
     ans = t[t.length-1] + t[t.length-2];
     why = L('Cada término es la suma de los dos anteriores.', 'Each term is the sum of the two before it.');
+  } else if (k === 'lin'){
+    var c1 = pick([-3,-1,1,3]), s5 = ri(Math.abs(c1) + 2, 9);
+    t = [s5];
+    for (i=0;i<4;i++) t.push(t[t.length-1] * 2 + c1);
+    ans = t[t.length-1] * 2 + c1;
+    why = L('Cada término es el anterior ×2 ' + (c1 > 0 ? '+ ' + c1 : '− ' + Math.abs(c1)) + '.',
+            'Each term is the previous one ×2 ' + (c1 > 0 ? '+ ' + c1 : '− ' + Math.abs(c1)) + '.');
   } else {
     var s3 = ri(2,7), kk = pick([3,4,5]);
     t = [s3, s3*2, s3*2+kk, (s3*2+kk)*2, (s3*2+kk)*2+kk]; ans = ((s3*2+kk)*2+kk)*2;
@@ -1323,6 +1336,622 @@ function buildTest(n, cats){
   var ordered = byD[0].concat(byD[1], byD[2]);
   return ordered.map(function(p){ return makeQuestion([p.c], p.d); });
 }
+</script>
+
+<script>
+/* ============ FORMATOS TOMADOS DE EXÁMENES REALES ============
+   Cada uno es un generador: el molde viene de preguntas reales de
+   práctica, los números y las palabras se sortean en cada intento.
+   ============================================================= */
+
+/* ---------- fracciones como objetos {n,d} ---------- */
+function fr(n, d){ var g = gcd(n, d) || 1; return { n:n/g, d:d/g }; }
+function frMul(a, b){ return fr(a.n * b.n, a.d * b.d); }
+function frDisp(f){
+  if (f.d === 1) return String(f.n);
+  if (f.n > f.d){ var w = Math.floor(f.n / f.d), r = f.n - w * f.d; return w + ' ' + r + '/' + f.d; }
+  return f.n + '/' + f.d;
+}
+
+/* ---------- 1. analogías con pares de opciones ---------- */
+function gAnalogyPair(){
+  var p = takeItem('analogy');
+  var others = [], guard = 0;
+  while (others.length < 4 && guard++ < 40){
+    var o = pick(bank('analogy')).split('|');
+    if (o[0] === p[0] || others.some(function(x){ return x[0] === o[0]; })) continue;
+    others.push(o);
+  }
+  var isTo = L(' es a ', ' is to ');
+  var correct = p[2].toUpperCase() + isTo + p[3].toUpperCase();
+  var decoys = others.map(function(o){ return o[0].toUpperCase() + isTo + o[1].toUpperCase(); });
+  return { type:'analogypair',
+    stem: '<span class="mono" style="font-size:.9em">' + esc(p[0].toUpperCase()) + esc(isTo) + esc(p[1].toUpperCase()) + '</span> ' +
+          L('como…', 'as…'),
+    set: mk(correct, decoys),
+    explain: L('La relación es ', 'The relationship is ') + '<b>' + esc(p[0]) + ' → ' + esc(p[1]) + '</b>' +
+             L(', y el único par con esa misma relación es ', ', and the only pair with that same relationship is ') +
+             '<b>' + esc(p[2]) + ' → ' + esc(p[3]) + '</b>.' };
+}
+
+/* ---------- 2. comparar dos columnas (atención al detalle) ---------- */
+var SURN = { es:['Álvarez','Benítez','Cabrera','Duarte','Escobar','Ferreyra','Gutiérrez','Herrera','Ibarra','Juárez',
+                 'Lombardi','Medina','Navarro','Ortiz','Peralta','Quiroga','Ramírez','Sosa','Ugarte','Vidal'],
+            en:['Anderson','Baker','Cooper','Dawson','Ellis','Foster','Grant','Harris','Ingram','Jenkins',
+                'Keller','Lawson','Mitchell','Norris','Parker','Quinn','Ramsey','Stevens','Turner','Vaughn'] };
+function perturb(s){
+  var tries = 0;
+  while (tries++ < 20){
+    var i, out, mode = ri(0,3);
+    if (mode === 0){ i = ri(1, s.length-2); if (s[i] === s[i+1]) continue;
+      out = s.slice(0,i) + s[i+1] + s[i] + s.slice(i+2); }
+    else if (mode === 1){ i = ri(1, s.length-2); out = s.slice(0,i+1) + s[i] + s.slice(i+1); }
+    else if (mode === 2){ i = ri(1, s.length-2); if (' .-'.indexOf(s[i]) >= 0) continue; out = s.slice(0,i) + s.slice(i+1); }
+    else { i = ri(1, s.length-2);
+      var map = { a:'e', e:'a', i:'y', o:'u', u:'o', y:'i', s:'z', z:'s', c:'k', k:'c', n:'m', m:'n' };
+      var c = s[i].toLowerCase(); if (!map[c]) continue; out = s.slice(0,i) + map[c] + s.slice(i+1); }
+    if (out !== s) return out;
+  }
+  return s + s[s.length-1];
+}
+function gSameDiff(d){
+  var useNums = rnd() < .4, rows = [], same = 0, i;
+  var sameCount = ri(1,4);
+  var flags = shuffle([0,1,2,3,4].map(function(k){ return k < sameCount ? 1 : 0; }));
+  for (i=0;i<5;i++){
+    var left;
+    if (useNums){
+      var len = d >= 2 ? ri(7,9) : ri(5,6), s = '';
+      for (var j=0;j<len;j++) s += ri(0,9);
+      left = s.slice(0,3) + '-' + s.slice(3);
+    } else {
+      left = pick(NAMES[lang === 'en' ? 'en' : 'es']) + ' ' + AB[ri(0,25)] + '. ' + pick(SURN[lang === 'en' ? 'en' : 'es']);
+    }
+    var right = flags[i] ? left : perturb(left);
+    if (right === left) flags[i] = 1;
+    if (flags[i]) same++;
+    rows.push([left, right]);
+  }
+  var table = '<table class="cmp"><tbody>' + rows.map(function(r){
+    return '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>'; }).join('') + '</tbody></table>';
+  return { type:'samediff',
+    stem: L('¿Cuántos de estos cinco pares son exactamente iguales?',
+            'How many of these five pairs are exactly the same?') + table,
+    set: { options:['1','2','3','4','5'], answer: same - 1 },
+    explain: L('Coinciden exactamente ' + same + ' de los 5 pares. Las diferencias están en letras o dígitos sueltos: conviene leer de a pedazos cortos, no la línea entera.',
+               'Exactly ' + same + ' of the 5 pairs match. The differences are single letters or digits: read in short chunks, not whole lines.') };
+}
+
+/* ---------- 3. completar con dos blancos ---------- */
+var DBANK = {
+ es:[
+  "En su 30.º aniversario, una gran ___ de panaderías fue elegida como la más ___ del país.|cadena·popular|sucesión·mala,marco·mejor,fila·picante,cierre·linda",
+  "El informe llegó ___ y con datos ___, así que la reunión se postergó.|tarde·incompletos|temprano·completos,puntual·exactos,rápido·sobrantes,ayer·nuevos",
+  "Aunque el plan era ___, el equipo lo ejecutó con una precisión ___.|ambicioso·notable|simple·escasa,barato·mínima,breve·lenta,viejo·dudosa",
+  "La empresa ___ su producción y, al mismo tiempo, ___ los costos.|aumentó·redujo|frenó·subió,mantuvo·igualó,perdió·olvidó,cerró·abrió",
+  "El testigo se mostró ___ al principio, pero terminó siendo ___ con los detalles.|reticente·generoso|hostil·violento,alegre·triste,rápido·lento,claro·confuso",
+  "Es un barrio ___ de día y sorprendentemente ___ de noche.|tranquilo·ruidoso|caro·barato,nuevo·viejo,limpio·amplio,chico·grande",
+  "La medida es ___ en el papel, pero ___ de aplicar en la práctica.|sencilla·difícil|costosa·barata,legal·ilegal,rápida·urgente,clara·obvia",
+  "El candidato dio una respuesta ___ que dejó a todos igual de ___ que antes.|evasiva·confundidos|precisa·seguros,larga·contentos,breve·enojados,firme·tranquilos",
+  "Los ingresos crecieron de forma ___, mientras que los gastos se mantuvieron ___.|sostenida·estables|brusca·altos,lenta·bajos,rara·fijos,nula·firmes",
+  "Un buen resumen es ___ sin dejar de ser ___.|breve·completo|largo·claro,técnico·simple,formal·ameno,rápido·lindo",
+  "La ciudad ___ tras el terremoto y hoy luce más ___ que antes.|se reconstruyó·moderna|se vació·antigua,creció·chica,cayó·rota,cambió·igual",
+  "El acuerdo parecía ___, pero la letra chica lo volvía ___.|ventajoso·riesgoso|claro·evidente,corto·breve,justo·equitativo,nuevo·reciente"
+ ],
+ en:[
+  "On its 30th anniversary, a large ___ of bakeries was ranked the most ___ in the country.|chain·popular|succession·bad,frame·best,line·spicy,closing·nice",
+  "The report arrived ___ and with ___ data, so the meeting was postponed.|late·incomplete|early·complete,on time·exact,fast·spare,yesterday·new",
+  "Although the plan was ___, the team carried it out with ___ precision.|ambitious·remarkable|simple·scarce,cheap·minimal,brief·slow,old·doubtful",
+  "The company ___ its output while at the same time ___ its costs.|raised·cutting|halted·raising,kept·matching,lost·forgetting,closed·opening",
+  "The witness seemed ___ at first, but ended up being ___ with the details.|reluctant·generous|hostile·violent,cheerful·sad,quick·slow,clear·confusing",
+  "It is a ___ neighborhood by day and surprisingly ___ at night.|quiet·noisy|costly·cheap,new·old,clean·wide,small·large",
+  "The rule is ___ on paper but ___ to apply in practice.|simple·hard|costly·cheap,legal·illegal,quick·urgent,clear·obvious",
+  "The candidate gave an ___ answer that left everyone as ___ as before.|evasive·confused|exact·certain,long·happy,brief·angry,firm·calm",
+  "Revenue grew ___, while expenses stayed ___.|steadily·flat|sharply·high,slowly·low,oddly·fixed,barely·firm",
+  "A good summary is ___ without ceasing to be ___.|brief·complete|long·clear,technical·simple,formal·pleasant,quick·pretty",
+  "The city ___ after the earthquake and today looks more ___ than before.|rebuilt itself·modern|emptied out·ancient,grew·small,fell·broken,changed·same",
+  "The deal looked ___, but the fine print made it ___.|favorable·risky|clear·evident,short·brief,fair·equitable,new·recent"
+ ]
+};
+function gDoubleCloze(){
+  var list = DBANK[lang === 'en' ? 'en' : 'es'];
+  var free = list.filter(function(s){ return !USED['dcz' + s]; });
+  var item = pick(free.length ? free : list); USED['dcz' + item] = 1;
+  var p = item.split('|'), sep = ' … ';
+  var correct = p[1].split('·').join(sep);
+  var decoys = p[2].split(',').map(function(x){ return x.split('·').join(sep); });
+  return { type:'dcloze',
+    stem: esc(p[0]).replace(/___/g, '<b class="mono">____</b>'),
+    set: mk(correct, decoys),
+    explain: L('Las dos palabras tienen que funcionar juntas: <b>', 'Both words have to work together: <b>') +
+             esc(correct) + '</b>' + L(' es la única combinación que sostiene el sentido de la oración.',
+                                        ' is the only pair that holds the meaning of the sentence.') };
+}
+
+/* ---------- 4. series de bloques de letras ---------- */
+function gLetterBlocks(d){
+  var size = d >= 3 ? ri(3,4) : ri(2,3), steps = [], i, j;
+  for (i=0;i<size;i++){
+    if (d >= 2 && rnd() < .35) steps.push([pick([4,5,6,7]), -pick([6,7,8])]);
+    else steps.push([pick([1,1,2,3,-1,-2]), null]);
+  }
+  var startIdx = [];
+  for (i=0;i<size;i++) startIdx.push(ri(0,25));
+  function blockAt(k){
+    var out = '';
+    for (j=0;j<size;j++){
+      var v = startIdx[j], st = steps[j], n;
+      if (st[1] === null) v += st[0] * k;
+      else { for (n=0;n<k;n++) v += (n % 2 === 0 ? st[0] : st[1]); }
+      out += AB[((v % 26) + 26) % 26];
+    }
+    return out;
+  }
+  var shown = [0,1,2,3].map(blockAt), ans = blockAt(4);
+  var dec = [], guard = 0;
+  while (dec.length < 4 && guard++ < 60){
+    var arr = ans.split(''), pos = ri(0, size-1);
+    arr[pos] = AB[((AB.indexOf(arr[pos]) + pick([1,-1,2,-2]) % 26) + 26) % 26];
+    var cand = arr.join('');
+    if (cand !== ans && dec.indexOf(cand) < 0) dec.push(cand);
+  }
+  var human = steps.map(function(st, k){
+    return L('la letra ' + (k+1) + ': ', 'letter ' + (k+1) + ': ') +
+      (st[1] === null ? (st[0] > 0 ? '+' + st[0] : String(st[0]))
+                      : (st[0] > 0 ? '+' + st[0] : st[0]) + ' / ' + st[1]);
+  }).join(' · ');
+  return { type:'blocks',
+    stem: L('¿Qué grupo de letras sigue en la serie?', 'Which group of letters comes next?') +
+          '<br><span class="mono" style="font-size:.92em">' + shown.join(' … ') + ' … ?</span>',
+    set: mk(ans, dec),
+    explain: L('Cada posición avanza por su cuenta — ', 'Each position moves on its own — ') + human +
+             L(' — así que sigue <b>', ' — so the next group is <b>') + ans + '</b>.' };
+}
+
+/* ---------- 5. porcentaje inverso ---------- */
+function gReversePercent(){
+  var p = pick([5,10,15,20,25,40,50,75,80]), x = ri(2,25) * 20, v = x * p / 100;
+  return { type:'percent',
+    stem: L(v + ' es el ' + p + '% de ¿qué número?', v + ' is ' + p + '% of what number?'),
+    set: mk(String(x), numDecoys(x, [v * p / 100, v + p, x / 2, x * 2, v * 100 / (p + 5)]).map(String)),
+    explain: v + ' ÷ ' + (p / 100) + ' = <b>' + x + '</b>' +
+             L(' (el porcentaje se divide, no se multiplica).', ' (divide by the percentage, do not multiply).') };
+}
+
+/* ---------- 6. aumento porcentual acumulado ---------- */
+function gPercentMore(){
+  var base = ri(2,15) * 20, p = pick([10,20,25,30,40,50]), day2 = base + base * p / 100;
+  return { type:'percent',
+    stem: L('El lunes se vendieron ' + base + ' entradas. El martes se vendieron un ' + p + '% más que el lunes. ¿Cuántas entradas se vendieron entre los dos días?',
+            'On Monday ' + base + ' tickets were sold. On Tuesday ' + p + '% more than Monday were sold. How many tickets were sold over the two days?'),
+    set: mk(String(base + day2), numDecoys(base + day2, [day2, base * p / 100, base * 2, base + base * p / 200]).map(String)),
+    explain: L('El martes: ', 'Tuesday: ') + base + ' + ' + (base * p / 100) + ' = ' + day2 + '. ' +
+             L('Total: ', 'Total: ') + base + ' + ' + day2 + ' = <b>' + (base + day2) + '</b>' +
+             L(' (la pregunta pide los dos días, no sólo el martes).', ' (the question asks for both days, not just Tuesday).') };
+}
+
+/* ---------- 7. descuento por cantidad ---------- */
+function gBulkDiscount(){
+  var unit = pick([4,5,6,8,10]), minQty = pick([3,4,5]), disc = pick([10,20,25]), qty = minQty * ri(2,4);
+  var total = qty * unit * (1 - disc / 100);
+  return { type:'money',
+    stem: L('Un kilo de arroz cuesta $' + unit + '. Comprando ' + minQty + ' kilos o más, el vendedor hace un ' + disc + '% de descuento sobre todo el pedido. ¿Cuánto pagó quien compró ' + qty + ' kilos?',
+            'A kilo of rice costs $' + unit + '. Buying ' + minQty + ' kilos or more gets a ' + disc + '% discount on the whole order. How much did someone who bought ' + qty + ' kilos pay?'),
+    set: mk('$' + fmt(total), numDecoys(total, [qty * unit, qty * unit * disc / 100, total + unit, total - unit, minQty * unit]).map(function(x){ return '$' + x; })),
+    explain: qty + ' × ' + unit + ' = ' + (qty * unit) + '; ' + (qty * unit) + ' × ' + (1 - disc / 100) + ' = <b>$' + fmt(total) + '</b>.' };
+}
+
+/* ---------- 8. promoción "el cuarto es gratis" ---------- */
+function gFreeItem(){
+  var payFor = pick([2,3,4]), price = pick([1.5, 2, 2.5, 3, 4, 5]), groups = ri(2,3);
+  var qty = (payFor + 1) * groups, paid = qty - groups, total = fmt(paid * price);
+  return { type:'money',
+    stem: L('Una bocha de helado cuesta $' + price + '. Hay una promoción: por cada ' + payFor + ' bochas compradas, la siguiente es gratis. ¿Cuánto se paga por ' + qty + ' bochas?',
+            'A scoop of ice cream costs $' + price + '. There is a promotion: for every ' + payFor + ' scoops bought, the next one is free. How much do ' + qty + ' scoops cost?'),
+    set: mk('$' + total, numDecoys(total, [fmt(qty * price), fmt((paid - 1) * price), fmt((paid + 1) * price), fmt(qty * price / 2)]).map(function(x){ return '$' + x; })),
+    explain: L('De las ' + qty + ' bochas, ' + groups + ' son gratis, así que se pagan ' + paid + '. ',
+               'Of the ' + qty + ' scoops, ' + groups + ' are free, so ' + paid + ' are paid for. ') +
+             paid + ' × ' + price + ' = <b>$' + total + '</b>.' };
+}
+
+/* ---------- 9. combinatoria: regla del producto ---------- */
+function gCombinations(){
+  var items = lang === 'en'
+    ? [['shirts','shirt'],['ties','tie'],['trousers','pair of trousers'],['jackets','jacket'],['hats','hat']]
+    : [['camisas','camisa'],['corbatas','corbata'],['pantalones','pantalón'],['sacos','saco'],['sombreros','sombrero']];
+  var howMany = ri(3,4), chosen = sample(items, howMany), counts = chosen.map(function(){ return ri(2,6); });
+  var total = counts.reduce(function(a, b){ return a * b; }, 1);
+  var list = chosen.map(function(c, i){ return counts[i] + ' ' + c[0]; }).join(', ');
+  return { type:'combinatorics',
+    stem: L('En un placard hay ' + list + '. ¿Cuántos conjuntos distintos puede armar usando una prenda de cada categoría?',
+            'A wardrobe holds ' + list + '. How many different outfits can be put together using one item from each category?'),
+    set: mk(String(total), numDecoys(total, [counts.reduce(function(a,b){ return a + b; }, 0), total / 2, total * 2, total + counts[0]]).map(String)),
+    explain: counts.join(' × ') + ' = <b>' + total + '</b>' +
+             L(' (se multiplican las opciones, no se suman).', ' (multiply the choices, do not add them).') };
+}
+
+/* ---------- 10. apretones de manos ---------- */
+function gHandshakes(){
+  var n = ri(5,9), total = n * (n - 1) / 2, asMatches = rnd() < .5;
+  return { type:'combinatorics',
+    stem: asMatches
+      ? L('En un torneo de ' + n + ' jugadores, cada uno juega una vez contra cada uno de los demás. ¿Cuántos partidos se juegan?',
+          'In a tournament with ' + n + ' players, each plays every other player once. How many matches are played?')
+      : L('En una reunión de ' + n + ' personas, todas se saludan con un apretón de manos entre sí. ¿Cuántos apretones hubo?',
+          'At a gathering of ' + n + ' people, everyone shakes hands with everyone else. How many handshakes are there?'),
+    set: mk(String(total), numDecoys(total, [n * (n - 1), n * n, n, total + n, total - n]).map(String)),
+    explain: n + ' × ' + (n - 1) + ' ÷ 2 = <b>' + total + '</b>' +
+             L(' (se divide por 2 porque cada par se cuenta una sola vez).', ' (divide by 2 because each pair counts once).') };
+}
+
+/* ---------- 11. hora de llegada ---------- */
+function gArrival(){
+  var v = pick([60,70,80,90,100]), mins = pick([40,60,80,90,100,120,140,150]);
+  var dist = v * mins / 60;
+  if (dist !== Math.round(dist)) { mins = 120; dist = v * 2; }
+  var h0 = ri(7,16), end = h0 * 60 + mins;
+  function hhmm(t){ var h = Math.floor(t / 60) % 24, m = t % 60; return h + ':' + (m < 10 ? '0' : '') + m; }
+  var correct = hhmm(end);
+  var dec = [hhmm(end + 20), hhmm(end - 20), hhmm(end + 40), hhmm(end - 60), hhmm(end + 60)];
+  return { type:'time',
+    stem: L('Un tren sale de la estación a las ' + hhmm(h0 * 60) + ' y viaja a ' + v + ' km/h. ¿A qué hora llega a la próxima estación, que está a ' + dist + ' km?',
+            'A train leaves the station at ' + hhmm(h0 * 60) + ' and travels at ' + v + ' km/h. What time does it reach the next station, ' + dist + ' km away?'),
+    set: mk(correct, dec),
+    explain: dist + ' km ÷ ' + v + L(' km/h = ', ' km/h = ') +
+             ((mins >= 60 ? Math.floor(mins / 60) + ' h ' : '') + (mins % 60 ? (mins % 60) + ' min' : '')).trim() + '. ' +
+             hhmm(h0 * 60) + ' + ' + mins + ' min = <b>' + correct + '</b>.' };
+}
+
+/* ---------- 12. llenar un tanque parcialmente lleno ---------- */
+function gFillTank(){
+  var fracs = [[1,4],[1,3],[1,2],[2,5],[3,5]], rates = [5,10,12,15,20,25], hrs = [2,2.5,3,3.5,4,4.5,5,5.25,6];
+  var f, rate, hours, minutes, remaining, cap, guard = 0;
+  do {
+    f = pick(fracs); rate = pick(rates); hours = pick(hrs);
+    minutes = hours * 60; remaining = rate * minutes;
+    cap = remaining * f[1] / (f[1] - f[0]);
+  } while ((cap !== Math.round(cap) || cap > 100000) && guard++ < 50);
+  if (cap !== Math.round(cap)){ f = [1,4]; rate = 10; hours = 5.25; minutes = 315; remaining = 3150; cap = 4200; }
+  return { type:'rate',
+    stem: L('Una pileta tiene capacidad para ' + cap + ' litros y está llena hasta ' + f[0] + '/' + f[1] + '. ¿Cuántas horas tarda en terminar de llenarla un caño que aporta ' + rate + ' litros por minuto?',
+            'A pool holds ' + cap + ' liters and is ' + f[0] + '/' + f[1] + ' full. How many hours will a pipe supplying ' + rate + ' liters per minute take to finish filling it?'),
+    set: mk(String(hours), numDecoys(hours, [fmt(cap / rate / 60), hours + 1, hours - 1, fmt(hours / 2), fmt(hours + .5)]).map(String)),
+    explain: L('Falta llenar ', 'Still to fill: ') + remaining + L(' litros (el resto ya está). ', ' liters (the rest is already there). ') +
+             remaining + ' ÷ ' + rate + ' = ' + minutes + L(' minutos ÷ 60 = <b>', ' minutes ÷ 60 = <b>') + hours + ' h</b>.' };
+}
+
+/* ---------- 13. diferencia de tiempos en una carrera ---------- */
+function gRaceGap(){
+  var dist = pick([20,30,40,60]), t1 = pick([100,120,140,150,180]), gap = pick([10,20,30,40]);
+  var t2 = t1 - gap, half = dist / 2;
+  var d1 = t1 * half / dist, d2 = t2 * half / dist;
+  if (d1 !== Math.round(d1) || d2 !== Math.round(d2)) { dist = 30; t1 = 180; t2 = 140; half = 15; d1 = 90; d2 = 70; }
+  var n = two(), diff = d1 - d2;
+  return { type:'speed',
+    stem: L(n[0] + ' recorre ' + dist + ' km en ' + d1 * 2 + ' minutos y ' + n[1] + ' hace la misma distancia en ' + d2 * 2 + ' minutos. Si ambos corren ' + half + ' km al mismo ritmo, ¿cuántos minutos antes llega ' + n[1] + '?',
+            n[0] + ' covers ' + dist + ' km in ' + d1 * 2 + ' minutes and ' + n[1] + ' covers the same distance in ' + d2 * 2 + ' minutes. If both run ' + half + ' km at the same pace, how many minutes earlier does ' + n[1] + ' finish?'),
+    set: mk(diff + ' min', numDecoys(diff, [diff * 2, diff / 2, d1 - d2 + 10, d1, d2]).map(function(x){ return x + ' min'; })),
+    explain: L('En ' + half + ' km: ', 'Over ' + half + ' km: ') + n[0] + ' = ' + d1 + L(' min, ', ' min, ') + n[1] + ' = ' + d2 +
+             L(' min. La diferencia es <b>', ' min. The gap is <b>') + diff + ' min</b>.' };
+}
+
+/* ---------- 14. escalar una receta ---------- */
+function gRecipeScale(){
+  var amounts = [[3,4],[1,2],[2,3],[1,4],[5,8],[3,2],[1,1]];
+  var ratios = [[4,3],[3,2],[2,1],[1,2],[2,3],[3,4]];
+  var a = pick(amounts), r = pick(ratios), base = pick([12,18,24,16,20]);
+  var target = base * r[0] / r[1];
+  if (target !== Math.round(target) || target < 4) { base = 18; r = [4,3]; target = 24; }
+  var amt = fr(a[0], a[1]), res = frMul(amt, fr(r[0], r[1]));
+  function withUnit(f){
+    if (f.n / f.d > 1) return frDisp(f) + ' ' + L('tazas', 'cups');
+    if (f.d === 1) return frDisp(f) + ' ' + L('taza', 'cup');
+    return frDisp(f) + L(' de taza', ' cup');
+  }
+  var dec = [withUnit(amt), withUnit(frMul(amt, fr(r[1], r[0]))), withUnit(frMul(res, fr(2,1))), withUnit(frMul(res, fr(1,2))), withUnit(frMul(amt, fr(2,1)))];
+  return { type:'recipe',
+    stem: L('Una receta para ' + base + ' galletitas lleva ' + withUnit(amt) + ' de azúcar. ¿Cuánta azúcar hace falta para ' + target + ' galletitas con la misma receta?',
+            'A recipe for ' + base + ' cookies uses ' + withUnit(amt) + ' of sugar. How much sugar is needed for ' + target + ' cookies with the same recipe?'),
+    set: mk(withUnit(res), dec),
+    explain: target + ' ÷ ' + base + ' = ' + frDisp(fr(r[0], r[1])) + L(' veces la receta. ', ' times the recipe. ') +
+             frDisp(amt) + ' × ' + frDisp(fr(r[0], r[1])) + ' = <b>' + withUnit(res) + '</b>.' };
+}
+
+/* ---------- 15. comparar fracciones sin simplificar ---------- */
+function gFracCompare(){
+  var seeds = [[1,2],[1,3],[1,4],[2,3],[2,5],[3,4],[3,5],[3,7],[4,5],[5,6],[5,8],[2,7]];
+  var chosen = [], vals = [], guard = 0;
+  while (chosen.length < 5 && guard++ < 60){
+    var s = pick(seeds), v = s[0] / s[1];
+    if (vals.some(function(x){ return Math.abs(x - v) < 1e-9; })) continue;
+    var k = ri(2,9);
+    vals.push(v); chosen.push({ v:v, s:(s[0] * k) + '/' + (s[1] * k), r:s[0] + '/' + s[1] });
+  }
+  var askMax = rnd() < .5;
+  var sorted = chosen.slice().sort(function(a, b){ return a.v - b.v; });
+  var target = askMax ? sorted[sorted.length - 1] : sorted[0];
+  var opts = shuffle(chosen).map(function(o){ return o.s; });
+  return { type:'compare',
+    stem: askMax ? L('¿Cuál de estas fracciones representa el valor MÁS ALTO?', 'Which of these fractions has the HIGHEST value?')
+                 : L('¿Cuál de estas fracciones representa el valor MÁS BAJO?', 'Which of these fractions has the LOWEST value?'),
+    set: { options: opts, answer: opts.indexOf(target.s) },
+    explain: L('Simplificadas: ', 'Simplified: ') + sorted.map(function(o){ return o.s + ' = ' + o.r; }).join(' · ') +
+             '. ' + L('La ', 'The ') + (askMax ? L('mayor', 'largest') : L('menor', 'smallest')) + ' es <b>' + target.s + '</b>.' };
+}
+
+/* ---------- 16. comparar decimales ---------- */
+function gDecCompare(){
+  var pool = [0.04, 0.09, 0.4, 0.09, 0.045, 0.5, 1.004, 1.008, 1.04, 1.08, 1.12, 1.8, 0.108, 0.98, 0.109];
+  var chosen = [], guard = 0;
+  while (chosen.length < 5 && guard++ < 80){
+    var v = pick(pool);
+    if (chosen.indexOf(v) < 0) chosen.push(v);
+  }
+  var askMax = rnd() < .5, sorted = chosen.slice().sort(function(a, b){ return a - b; });
+  var target = askMax ? sorted[4] : sorted[0];
+  var opts = shuffle(chosen).map(String);
+  return { type:'compare',
+    stem: askMax ? L('¿Cuál de estos valores es el MAYOR?', 'Which of these values is the LARGEST?')
+                 : L('¿Cuál de estos valores es el MENOR?', 'Which of these values is the SMALLEST?'),
+    set: { options: opts, answer: opts.indexOf(String(target)) },
+    explain: L('Ordenados de menor a mayor: ', 'In ascending order: ') + sorted.join(' < ') + '. ' +
+             L('Conviene igualar la cantidad de decimales antes de comparar.', 'Line up the decimal places before comparing.') };
+}
+
+/* ---------- 17. dos eventos independientes ---------- */
+function gIndepProb(){
+  var p = pick([10,20,25,30,40,50]), q = 100 - p, neither = q * q / 100, both = p * p / 100;
+  var askNeither = rnd() < .6;
+  var correct = fmt(askNeither ? neither : both) + '%';
+  return { type:'probability',
+    stem: L('Un analista estima que un vuelo tiene un ' + p + '% de probabilidad de demorarse. Si alguien hace un viaje de ida y vuelta (dos vuelos independientes), ¿qué probabilidad hay de que ' + (askNeither ? 'ninguno' : 'los dos') + ' se demore' + (askNeither ? '' : 'n') + '?',
+            'An analyst estimates a flight has a ' + p + '% chance of being delayed. On a round trip of two independent flights, what is the probability that ' + (askNeither ? 'neither' : 'both') + ' will be delayed?'),
+    set: mk(correct, numDecoys(askNeither ? neither : both, [p * 2, q, p, fmt(q * q / 200), 100 - neither]).map(function(x){ return x + '%'; })),
+    explain: askNeither
+      ? L('Que no se demore uno: ', 'One flight on time: ') + q + '%. ' + q + '% × ' + q + '% = <b>' + fmt(neither) + '%</b>.'
+      : p + '% × ' + p + '% = <b>' + fmt(both) + '%</b>' + L(' (las probabilidades independientes se multiplican).', ' (independent probabilities multiply).') };
+}
+
+/* ---------- 18. tasa simple ---------- */
+function gSimpleRate(){
+  var per = ri(8,24), hrs = ri(3,9), total = per * hrs;
+  var thing = lang === 'en' ? pick(['parts','labels','boxes','bottles']) : pick(['piezas','etiquetas','cajas','botellas']);
+  return { type:'rate',
+    stem: L('Una máquina produce ' + per + ' ' + thing + ' por hora. ¿Cuántas produce en ' + hrs + ' horas?',
+            'A machine makes ' + per + ' ' + thing + ' per hour. How many does it make in ' + hrs + ' hours?'),
+    set: mk(String(total), numDecoys(total, [per + hrs, total - per, total + per, per * (hrs + 1)]).map(String)),
+    explain: per + ' × ' + hrs + ' = <b>' + total + '</b>.' };
+}
+
+/* ---------- 19. lectura de tabla ---------- */
+function gTable(d){
+  var roles = lang === 'en'
+    ? ['Program manager','Equity analyst','Senior accountant','Data engineer','Account executive']
+    : ['Jefe de proyecto','Analista de inversiones','Contador senior','Ingeniero de datos','Ejecutivo de cuentas'];
+  var chosen = sample(roles, 4), sal = chosen.map(function(){ return ri(6,13) * 10; });
+  var three = [0,1,2], sum = sal[0] + sal[1] + sal[2];
+  while (sum % 3 !== 0){ sal[2] += 10; sum = sal[0] + sal[1] + sal[2]; }
+  var avg = sum / 3;
+  var rows = chosen.map(function(r, i){ return '<tr><td>' + esc(r) + '</td><td>$' + sal[i] + 'K</td></tr>'; }).join('');
+  var table = '<table class="tbl"><thead><tr><th>' + L('Puesto', 'Role') + '</th><th>' + L('Salario anual', 'Annual salary') + '</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  return { type:'table',
+    stem: L('Según la tabla, ¿cuál es el salario promedio de ' + chosen[0].toLowerCase() + ', ' + chosen[1].toLowerCase() + ' y ' + chosen[2].toLowerCase() + '?',
+            'According to the table, what is the average salary of ' + chosen[0].toLowerCase() + ', ' + chosen[1].toLowerCase() + ' and ' + chosen[2].toLowerCase() + '?') + table,
+    set: mk('$' + avg + 'K', numDecoys(avg, [fmt((sum + sal[3]) / 4), sal[0], sal[1], avg + 10, avg - 10]).map(function(x){ return '$' + x + 'K'; })),
+    explain: '(' + sal[0] + ' + ' + sal[1] + ' + ' + sal[2] + ') ÷ 3 = <b>$' + avg + 'K</b>' +
+             L(' (la cuarta fila no entra en el promedio).', ' (the fourth row is not part of the average).') };
+}
+
+/* ---------- 20. depreciación encadenada ---------- */
+function gChained(){
+  var price = ri(10,40) * 1000, d1 = pick([10,15,20,25]), d2 = pick([10,15,20,25]);
+  var y1 = price * (1 - d1 / 100), y2 = y1 * (1 - d2 / 100);
+  return { type:'percent',
+    stem: L('Un auto se compra en $' + price + '. Pierde el ' + d1 + '% de su valor el primer año y el ' + d2 + '% del valor restante el segundo. ¿Cuánto vale después de 2 años?',
+            'A car is bought for $' + price + '. It loses ' + d1 + '% of its value the first year and ' + d2 + '% of the remaining value the second. What is it worth after 2 years?'),
+    set: mk('$' + fmt(y2), numDecoys(y2, [price * (1 - (d1 + d2) / 100), y1, fmt(y2 + price / 100), fmt(y2 - price / 100), price - d1 - d2]).map(function(x){ return '$' + x; })),
+    explain: price + ' × ' + (1 - d1 / 100) + ' = ' + fmt(y1) + '; ' + fmt(y1) + ' × ' + (1 - d2 / 100) + ' = <b>$' + fmt(y2) + '</b>' +
+             L(' (los porcentajes encadenados no se suman).', ' (chained percentages do not add up).') };
+}
+
+/* ---------- 21. porcentaje después de sumar integrantes ---------- */
+function gClassPercent(){
+  var N = pick([20,25,40,50,60]), fr0 = pick([[1,5],[1,4],[1,2],[3,10],[2,5]]);
+  var have = N * fr0[0] / fr0[1], ks = [], k;
+  for (k=2;k<=8;k++) if (have === Math.round(have) && (100 * k) % N === 0 && have + k < N) ks.push(k);
+  if (have !== Math.round(have) || !ks.length){ N = 40; fr0 = [1,5]; have = 8; ks = [2,4,6]; }
+  var join = pick(ks), res = (have + join) * 100 / N;
+  var what = lang === 'en' ? pick(['the football team','the choir','the robotics club']) : pick(['el equipo de fútbol','el coro','el club de robótica']);
+  return { type:'percent',
+    stem: L('En un curso de ' + N + ' alumnos, ' + fr0[0] + '/' + fr0[1] + ' están en ' + what + '. Si se suman ' + join + ' alumnos más del mismo curso, ¿qué porcentaje del curso va a estar en ' + what + '?',
+            'In a class of ' + N + ' students, ' + fr0[0] + '/' + fr0[1] + ' are on ' + what + '. If ' + join + ' more students from the class join, what percentage of the class will be on ' + what + '?'),
+    set: mk(res + '%', numDecoys(res, [have * 100 / N, join * 100 / N, res + 5, res - 5, res + 10]).map(function(x){ return x + '%'; })),
+    explain: L('Ya estaban ', 'Already in: ') + have + ' (' + fr0[0] + '/' + fr0[1] + L(' de ', ' of ') + N + '). ' +
+             '(' + have + ' + ' + join + ') ÷ ' + N + ' = <b>' + res + '%</b>.' };
+}
+
+/* ---------- 22. tasa en varios pasos ---------- */
+function gMultiStepRate(){
+  var per = ri(20,45) + pick([0,.5]), hrs = pick([30,35,40,45,50]), weeks = pick([4,6,8,10,12]);
+  var total = per * hrs * weeks;
+  if (total !== Math.round(total)){ per = Math.round(per); total = per * hrs * weeks; }
+  return { type:'rate',
+    stem: L('Una impresora usa en promedio ' + per + ' hojas por hora. Sólo se usa mientras la oficina está abierta, que son ' + hrs + ' horas por semana. ¿Cuántas hojas se necesitan para ' + weeks + ' semanas?',
+            'A printer uses an average of ' + per + ' pages per hour. It is only used while the office is open, ' + hrs + ' hours a week. How many pages are needed for ' + weeks + ' weeks?'),
+    set: mk(String(total), numDecoys(total, [per * hrs, per * weeks, total / 2, total + hrs * per, total - hrs * per]).map(String)),
+    explain: per + ' × ' + hrs + ' = ' + fmt(per * hrs) + L(' hojas por semana. ', ' pages per week. ') +
+             fmt(per * hrs) + ' × ' + weeks + ' = <b>' + total + '</b>.' };
+}
+
+/* ---------- 23. cuántas reparaciones entre dos ---------- */
+var THRU = { 45:[2.5,3,5,9], 56:[3.5,4,7,8], 48:[2,3,4,6], 60:[2.5,3,4,5], 42:[3,3.5,6,7], 40:[2,4,5,8] };
+function gThroughput(){
+  var H = pick(Object.keys(THRU).map(Number)), ab = sample(THRU[H], 2);
+  var a = ab[0], b = ab[1], ra = H / a, rb = H / b, total = ra + rb, n = two();
+  return { type:'work',
+    stem: L(n[0] + ' hace una reparación en ' + a + ' horas y ' + n[1] + ' tarda ' + b + ' horas. Si los dos empiezan a la vez y cada uno trabaja ' + H + ' horas en la semana, ¿cuántas reparaciones completan entre los dos?',
+            n[0] + ' completes a repair in ' + a + ' hours and ' + n[1] + ' takes ' + b + ' hours. If both start at the same time and each works ' + H + ' hours in the week, how many repairs do they complete in total?'),
+    set: mk(String(total), numDecoys(total, [ra, rb, total + 2, total - 2, H / (a + b)]).map(String)),
+    explain: H + ' ÷ ' + a + ' = ' + ra + '; ' + H + ' ÷ ' + b + ' = ' + rb + '. ' + ra + ' + ' + rb + ' = <b>' + total + '</b>' +
+             L(' (cada uno trabaja sus propias horas: no se suman los tiempos).', ' (each works their own hours: do not add the times).') };
+}
+
+/* ---------- 24. acciones que suben dos años seguidos ---------- */
+function gAppreciation(){
+  var p0 = pick([4,5,8,10,20,25]), g1 = pick([10,20,25,40,50]), g2 = pick([10,20,25,40,50]);
+  var y1 = p0 * (1 + g1 / 100), y2 = fmt(y1 * (1 + g2 / 100));
+  return { type:'percent',
+    stem: L('Un inversor compra acciones a $' + p0 + ' cada una. El primer año suben ' + g1 + '% y el segundo año suben ' + g2 + '% más. ¿Cuánto vale la acción después de 2 años?',
+            'An investor buys shares at $' + p0 + ' each. They rise ' + g1 + '% the first year and a further ' + g2 + '% the second. What is the share worth after 2 years?'),
+    set: mk('$' + y2, numDecoys(y2, [fmt(p0 * (1 + (g1 + g2) / 100)), fmt(y1), fmt(y2 + 1), fmt(y2 - 1), p0]).map(function(x){ return '$' + x; })),
+    explain: p0 + ' × ' + (1 + g1 / 100) + ' = ' + fmt(y1) + '; ' + fmt(y1) + ' × ' + (1 + g2 / 100) + ' = <b>$' + y2 + '</b>' +
+             L(' (el segundo año se calcula sobre el valor ya subido).', ' (the second year applies to the already-raised value).') };
+}
+
+/* ---------- 25. cambio de ingresos al subir el precio ---------- */
+var REVCASES = [[15,20,90,20],[10,15,80,20],[10,12,95,14],[20,30,70,5],[25,30,90,8],[50,60,85,2]];
+function gRevenueChange(){
+  var c = pick(REVCASES), seats = pick([500,800,1000,1200]);
+  var r1 = seats * c[0], r2 = seats * c[2] / 100 * c[1], diff = c[3];
+  return { type:'percent',
+    stem: L('Un estadio sabe que vende las ' + seats + ' entradas si el precio es $' + c[0] + ', pero que a $' + c[1] + ' sólo vende el ' + c[2] + '% de las ubicaciones. ¿En qué porcentaje aumentan los ingresos si vende al precio más alto?',
+            'A venue knows it sells all ' + seats + ' tickets at $' + c[0] + ', but at $' + c[1] + ' it sells only ' + c[2] + '% of the seats. By what percentage does revenue increase at the higher price?'),
+    set: mk(diff + '%', numDecoys(diff, [100 - c[2], c[1] - c[0], diff + 5, diff * 2, diff + 10]).map(function(x){ return x + '%'; })),
+    explain: seats + ' × ' + c[0] + ' = ' + r1 + '; ' + (seats * c[2] / 100) + ' × ' + c[1] + ' = ' + r2 + '. (' + r2 + ' − ' + r1 + ') ÷ ' + r1 + ' = <b>' + diff + '%</b>.' };
+}
+
+/* ---------- 26. porcentaje de los que terminan ---------- */
+function gFinishers(){
+  var n = pick([10,12,15,20]), dnfA, dnfB, fA, fB, pct, guard = 0;
+  do { dnfA = ri(1, Math.floor(n/2)); dnfB = ri(1, Math.floor(n/2));
+       fA = n - dnfA; fB = n - dnfB; pct = fA * 100 / (fA + fB);
+  } while (pct !== Math.round(pct) && guard++ < 60);
+  if (pct !== Math.round(pct)){ n = 12; dnfA = 3; dnfB = 6; fA = 9; fB = 6; pct = 60; }
+  return { type:'percent',
+    stem: L('Una carrera empieza con ' + n + ' corredores del equipo A y ' + n + ' del equipo B. No terminan ' + dnfA + ' del equipo A y ' + dnfB + ' del equipo B. ¿Qué porcentaje de los que terminaron es del equipo A?',
+            'A race starts with ' + n + ' runners from team A and ' + n + ' from team B. ' + dnfA + ' from team A and ' + dnfB + ' from team B do not finish. What percentage of the finishers are from team A?'),
+    set: mk(pct + '%', numDecoys(pct, [Math.round(fA * 100 / (2 * n)), 100 - pct, pct + 5, pct - 5, Math.round(fB * 100 / (fA + fB))]).map(function(x){ return x + '%'; })),
+    explain: L('Terminan ', 'Finishers: ') + fA + ' + ' + fB + ' = ' + (fA + fB) + '. ' + fA + ' ÷ ' + (fA + fB) + ' = <b>' + pct + '%</b>' +
+             L(' (el denominador son los que terminaron, no los que largaron).', ' (the denominator is the finishers, not the starters).') };
+}
+
+/* ---------- 27. promedio de una lista ---------- */
+function gAvgOf(){
+  var n = pick([4,5]), nums = [], i, sum = 0;
+  for (i=0;i<n;i++){ var v = ri(1,40); nums.push(v); sum += v; }
+  var avg = fmt(sum / n);
+  return { type:'average',
+    stem: L('¿Cuál es el promedio de estos números? ' + nums.join(', '),
+            'What is the average of these numbers? ' + nums.join(', ')),
+    set: mk(String(avg), numDecoys(avg, [fmt(sum / (n + 1)), fmt(sum / (n - 1)), avg + 1, avg - 1, sum]).map(String)),
+    explain: nums.join(' + ') + ' = ' + sum + '; ' + sum + ' ÷ ' + n + ' = <b>' + avg + '</b>.' };
+}
+
+/* ---------- 28. de la probabilidad a la cantidad ---------- */
+function gMarbleCount(){
+  var k = pick([4,5,8,10,20]), red = ri(2,9), total = k * red;
+  return { type:'probability',
+    stem: L('Una bolsa tiene ' + total + ' bolitas y la probabilidad de sacar una roja es 1/' + k + '. ¿Cuántas bolitas rojas hay?',
+            'A bag holds ' + total + ' marbles and the chance of drawing a red one is 1/' + k + '. How many red marbles are there?'),
+    set: mk(String(red), numDecoys(red, [k, total - red, red * 2, total / 2, red + k]).map(String)),
+    explain: total + ' ÷ ' + k + ' = <b>' + red + '</b>' +
+             L(' (la probabilidad es la parte sobre el total).', ' (the probability is the part over the whole).') };
+}
+
+/* ---------- 29. acertijo de tres personas ---------- */
+var PERMS3 = [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+function gLogicGrid(){
+  var who = sample(NAMES[lang === 'en' ? 'en' : 'es'], 3);
+  var petBare = lang === 'en' ? ['dog','cat','parrot'] : ['perro','gato','loro'];
+  var petArt = petBare.map(function(x){ return (lang === 'en' ? 'a ' : 'un ') + x; });
+  var y0 = ri(2008, 2016), years = [y0, y0 + 2, y0 + 4];
+  var tp = pick(PERMS3), ty = pick(PERMS3);
+  var C = [];
+  C.push({ txt: who[0] + L(' tiene ', ' has ') + petArt[tp[0]] + '.', f:function(pp){ return pp[0] === tp[0]; } });
+  C.push({ txt: who[1] + L(' tiene ', ' has ') + petArt[tp[1]] + '.', f:function(pp){ return pp[1] === tp[1]; } });
+  C.push({ txt: who[1] + L(' lo adoptó en ', ' got theirs in ') + years[ty[1]] + '.', f:function(pp, yy){ return yy[1] === ty[1]; } });
+  C.push({ txt: who[2] + L(' lo adoptó en ', ' got theirs in ') + years[ty[2]] + '.', f:function(pp, yy){ return yy[2] === ty[2]; } });
+  C.push({ txt: who[0] + L(' no tiene ', ' does not have ') + petArt[(tp[0] + 1) % 3] + '.', f:function(pp){ return pp[0] !== (tp[0] + 1) % 3; } });
+  var firstPet = petBare[tp[ty.indexOf(0)]];
+  C.push({ txt: L('El dueño del ' + firstPet + ' fue el primero en adoptarlo.', 'The owner of the ' + firstPet + ' got theirs first.'),
+           f:function(pp, yy){ var i = pp.indexOf(petBare.indexOf(firstPet)); return yy[i] === 0; } });
+  var lastPet = petBare[tp[ty.indexOf(2)]];
+  C.push({ txt: L('El dueño del ' + lastPet + ' fue el último en adoptarlo.', 'The owner of the ' + lastPet + ' got theirs last.'),
+           f:function(pp, yy){ var i = pp.indexOf(petBare.indexOf(lastPet)); return yy[i] === 2; } });
+  C.push({ txt: who[0] + L(' lo adoptó antes que ', ' got theirs before ') + who[2] + '.',
+           f:function(pp, yy){ return yy[0] < yy[2]; }, need: ty[0] < ty[2] });
+
+  var valid = C.filter(function(c){ return c.need === undefined || c.need; });
+  function solutions(clues){
+    var out = [];
+    PERMS3.forEach(function(pp){ PERMS3.forEach(function(yy){
+      if (clues.every(function(c){ return c.f(pp, yy); })) out.push([pp, yy]);
+    }); });
+    return out;
+  }
+  var chosen = null, tries = 0;
+  while (!chosen && tries++ < 120){
+    var k = tries < 60 ? 3 : 4;
+    var cand = sample(valid, Math.min(k, valid.length));
+    if (solutions(cand).length === 1) chosen = cand;
+  }
+  if (!chosen) chosen = valid;
+  var sol = solutions(chosen)[0] || [tp, ty];
+  var sp = sol[0], sy = sol[1];
+  function say(i, p, y){ return who[i] + L(' tiene ', ' has ') + petArt[p] + L(' y lo adoptó en ', ' and got it in ') + years[y] + '.'; }
+  var correct = say(0, sp[0], sy[0]);
+  var dec = [], guard = 0;
+  while (dec.length < 4 && guard++ < 60){
+    var i = ri(0,2), p = ri(0,2), y = ri(0,2);
+    if (sp[i] === p && sy[i] === y) continue;
+    var txt = say(i, p, y);
+    if (txt !== correct && dec.indexOf(txt) < 0) dec.push(txt);
+  }
+  return { type:'grid',
+    stem: L('Tres personas tienen una mascota cada una y la adoptaron en años distintos. Sabiendo esto, ¿cuál de las afirmaciones es verdadera?',
+            'Three people each have one pet, adopted in different years. Given the facts below, which statement is true?') +
+          '<br><span style="display:block;margin-top:10px;font-size:.92em;line-height:1.7">' +
+          chosen.map(function(c){ return '· ' + esc(c.txt); }).join('<br>') + '</span>',
+    set: mk(correct, dec),
+    explain: L('La única combinación compatible con las pistas es: ', 'The only assignment consistent with the clues is: ') +
+             [0,1,2].map(function(i){ return who[i] + ' → ' + petBare[sp[i]] + ' (' + years[sy[i]] + ')'; }).join(' · ') + '.' };
+}
+
+[].push.apply(GENS, [
+  {cat:'math', fn:gClassPercent,  w:1, d:[2,3]},
+  {cat:'math', fn:gMultiStepRate, w:1, d:[2,3]},
+  {cat:'math', fn:gThroughput,    w:1, d:[3,3]},
+  {cat:'math', fn:gAppreciation,  w:1, d:[3,3]},
+  {cat:'math', fn:gRevenueChange, w:1, d:[3,3]},
+  {cat:'math', fn:gFinishers,     w:1, d:[3,3]},
+  {cat:'math', fn:gAvgOf,         w:1, d:[1,2]},
+  {cat:'math', fn:gMarbleCount,   w:1, d:[1,2]},
+  {cat:'math', fn:gLogicGrid,     w:2, d:[3,3]}
+]);
+
+/* ---------- alta en el catálogo ---------- */
+[].push.apply(GENS, [
+  {cat:'verbal',  fn:gAnalogyPair, w:3, d:[1,3]},
+  {cat:'verbal',  fn:gSameDiff,    w:3, d:[1,3]},
+  {cat:'verbal',  fn:gDoubleCloze, w:2, d:[2,3]},
+  {cat:'math',    fn:gLetterBlocks,w:2, d:[2,3]},
+  {cat:'math',    fn:gReversePercent, w:2, d:[1,2]},
+  {cat:'math',    fn:gPercentMore, w:1, d:[2,3]},
+  {cat:'math',    fn:gBulkDiscount,w:1, d:[2,3]},
+  {cat:'math',    fn:gFreeItem,    w:1, d:[2,3]},
+  {cat:'math',    fn:gCombinations,w:1, d:[2,3]},
+  {cat:'math',    fn:gHandshakes,  w:1, d:[3,3]},
+  {cat:'math',    fn:gArrival,     w:1, d:[1,2]},
+  {cat:'math',    fn:gFillTank,    w:1, d:[3,3]},
+  {cat:'math',    fn:gRaceGap,     w:1, d:[3,3]},
+  {cat:'math',    fn:gRecipeScale, w:1, d:[2,3]},
+  {cat:'math',    fn:gFracCompare, w:1, d:[1,2]},
+  {cat:'math',    fn:gDecCompare,  w:1, d:[1,1]},
+  {cat:'math',    fn:gIndepProb,   w:1, d:[3,3]},
+  {cat:'math',    fn:gSimpleRate,  w:1, d:[1,1]},
+  {cat:'math',    fn:gTable,       w:1, d:[2,3]},
+  {cat:'math',    fn:gChained,     w:1, d:[3,3]}
+]);
 </script>
 
 <script>
