@@ -13,3 +13,6 @@ concepts/pipelines.mdx
 
 # Drafts and Excel/Google Drive integrations are not exposed in the public docs.
 integrations/
+
+# Práctica de CCAT: app independiente, no es parte de la documentación.
+ccat-practice/

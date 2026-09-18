@@ -1,0 +1,1657 @@
+<title>Entrenador CCAT</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+:root{
+  --paper:#E9ECEE; --card:#FFFFFF; --card-2:#F4F6F7;
+  --ink:#101719; --ink-2:#465459; --ink-3:#7A898F;
+  --line:#D6DCDF; --line-2:#BCC7CB;
+  --accent:#0B6B63; --accent-ink:#064E48; --accent-soft:#D6EAE7;
+  --warn:#A9530C; --warn-soft:#F7E4D0;
+  --ok:#1A7A3E; --ok-soft:#D9EEE0;
+  --bad:#AF2B22; --bad-soft:#F6DEDB;
+  --shadow:0 1px 2px rgba(16,32,35,.07), 0 10px 26px -16px rgba(16,32,35,.4);
+  --fig:#0B6B63; --fig-2:#101719;
+  --sans:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1214; --card:#161E21; --card-2:#1D272B;
+    --ink:#E7EDEE; --ink-2:#A3B2B6; --ink-3:#77878C;
+    --line:#263237; --line-2:#36454B;
+    --accent:#49C6B8; --accent-ink:#8FE0D5; --accent-soft:#12312F;
+    --warn:#E4A15C; --warn-soft:#3A2512;
+    --ok:#5FCB84; --ok-soft:#12301D;
+    --bad:#EF7C71; --bad-soft:#391A17;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 30px -18px rgba(0,0,0,.9);
+    --fig:#49C6B8; --fig-2:#E7EDEE;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1214; --card:#161E21; --card-2:#1D272B;
+  --ink:#E7EDEE; --ink-2:#A3B2B6; --ink-3:#77878C;
+  --line:#263237; --line-2:#36454B;
+  --accent:#49C6B8; --accent-ink:#8FE0D5; --accent-soft:#12312F;
+  --warn:#E4A15C; --warn-soft:#3A2512;
+  --ok:#5FCB84; --ok-soft:#12301D;
+  --bad:#EF7C71; --bad-soft:#391A17;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 30px -18px rgba(0,0,0,.9);
+  --fig:#49C6B8; --fig-2:#E7EDEE;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+.wrap{max-width:740px;margin:0 auto;padding-inline:18px;padding-block:0 56px}
+h1,h2,h3{margin:0;text-wrap:balance;font-weight:700;letter-spacing:-.01em}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+
+/* ---------- top drain bar ---------- */
+#drain{position:fixed;top:0;left:0;height:3px;width:100%;background:var(--accent);transform-origin:0 50%;z-index:60;transition:transform .35s linear,background .3s}
+#drain.warn{background:var(--warn)}
+#drain.crit{background:var(--bad);transition:transform .35s linear}
+
+/* ---------- home ---------- */
+.masthead{padding-block:40px 26px;border-bottom:1px solid var(--line)}
+.masthead h1{font-size:clamp(30px,8vw,42px);line-height:1.04}
+.masthead h1 span{color:var(--accent)}
+.lede{margin-top:12px;color:var(--ink-2);max-width:56ch;font-size:15px}
+.spec{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:18px}
+.spec div{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.spec b{color:var(--ink);font-weight:600}
+
+.section{margin-top:30px}
+.section > .eyebrow{display:block;margin-bottom:10px}
+.modes{display:grid;gap:10px}
+.mode{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;width:100%;text-align:left;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);transition:border-color .15s,transform .15s}
+.mode:hover{border-color:var(--accent);transform:translateY(-1px)}
+.mode .num{font-family:var(--mono);font-size:12px;color:var(--accent);border:1px solid var(--line-2);border-radius:999px;padding:3px 9px}
+.mode .t{font-weight:600;font-size:15px}
+.mode .s{color:var(--ink-3);font-size:13px;margin-top:1px}
+.mode .go{color:var(--ink-3);font-size:18px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:520px){.grid2{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.panel h3{font-size:13px;font-family:var(--mono);font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px}
+
+.optrow{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line-2);border-radius:999px;padding:5px 12px;font-size:13px;color:var(--ink-2);background:var(--card-2)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip[aria-pressed="true"]{color:var(--card)}
+.field{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-block:9px;border-top:1px solid var(--line)}
+.field:first-of-type{border-top:none}
+.field label{font-size:13.5px;color:var(--ink-2)}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.stat{background:var(--card);padding:13px 14px}
+.stat .v{font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:-.02em}
+.stat .k{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.hist{display:flex;align-items:flex-end;gap:4px;height:44px;margin-top:12px}
+.hist i{flex:1;background:var(--accent-soft);border-top:2px solid var(--accent);border-radius:2px 2px 0 0;min-height:3px}
+.facts{margin:0;padding:0;list-style:none;display:grid;gap:9px}
+.facts li{display:grid;grid-template-columns:auto 1fr;gap:10px;font-size:13.5px;color:var(--ink-2)}
+.facts b{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600;padding-top:1px}
+
+/* ---------- quiz ---------- */
+.qbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:var(--paper);
+  display:flex;align-items:center;gap:12px;padding-block:12px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.clock{font-family:var(--mono);font-size:19px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.clock.warn{color:var(--warn)}.clock.crit{color:var(--bad)}
+.counter{font-family:var(--mono);font-size:13px;color:var(--ink-3)}
+.catpill{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);white-space:nowrap}
+.qbar .sp{flex:1}
+.iconbtn{border:1px solid var(--line-2);border-radius:8px;padding:5px 10px;font-size:12.5px;color:var(--ink-2);background:var(--card)}
+.iconbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+.stem{font-family:var(--serif);font-size:clamp(18px,4.6vw,21px);line-height:1.42;margin-bottom:18px;text-wrap:pretty}
+.stem em{font-style:normal;text-transform:uppercase;font-family:var(--sans);font-weight:600;font-size:.86em;letter-spacing:.02em}
+.figrow{display:flex;gap:8px;align-items:center;margin-bottom:20px;overflow-x:auto;padding-bottom:4px}
+.fig{flex:0 0 auto;width:78px;height:78px;background:var(--card);border:1px solid var(--line);border-radius:10px;display:grid;place-items:center}
+.fig svg{width:66px;height:66px;display:block}
+.fig.q{border-style:dashed;border-color:var(--line-2);font-family:var(--mono);font-size:26px;color:var(--ink-3)}
+.figsep{flex:0 0 auto;color:var(--ink-3);font-family:var(--mono);font-size:18px;padding-inline:2px}
+
+.opts{display:grid;gap:8px}
+.opts.figs{grid-template-columns:repeat(auto-fit,minmax(104px,1fr))}
+.opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);
+  border-radius:11px;padding:12px 14px;transition:border-color .12s,background .12s;font-size:15.5px}
+.opts.figs .opt{flex-direction:column;gap:8px;padding:12px 8px;text-align:center}
+.opt:hover{border-color:var(--accent)}
+.opt .k{flex:0 0 auto;width:25px;height:25px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;
+  font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.opt .body{flex:1}
+.opt .body svg{width:62px;height:62px;display:block;margin:0 auto}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.opt.sel .k{background:var(--accent);border-color:var(--accent);color:var(--card)}
+.opt.good{border-color:var(--ok);background:var(--ok-soft)}
+.opt.good .k{background:var(--ok);border-color:var(--ok);color:var(--card)}
+.opt.bad{border-color:var(--bad);background:var(--bad-soft)}
+.opt.bad .k{background:var(--bad);border-color:var(--bad);color:var(--card)}
+.opt[disabled]{cursor:default}
+
+.feedback{margin-top:16px;border-left:3px solid var(--accent);background:var(--card);border-radius:0 10px 10px 0;padding:13px 15px}
+.feedback .v{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+.feedback.ok .v{color:var(--ok)}.feedback.ok{border-color:var(--ok)}
+.feedback.no .v{color:var(--bad)}.feedback.no{border-color:var(--bad)}
+.feedback p{font-size:14px;color:var(--ink-2)}
+.qfoot{display:flex;gap:10px;align-items:center;margin-top:20px;flex-wrap:wrap}
+.btn{background:var(--accent);color:var(--card);border-radius:9px;padding:11px 20px;font-weight:600;font-size:15px}
+.btn:hover{background:var(--accent-ink)}
+.btn.ghost{background:none;color:var(--ink-2);border:1px solid var(--line-2)}
+.btn.ghost:hover{color:var(--accent);border-color:var(--accent)}
+.hint{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-left:auto}
+.hint kbd{border:1px solid var(--line-2);border-radius:4px;padding:1px 5px;background:var(--card)}
+#pad{width:100%;min-height:120px;font-family:var(--mono);font-size:14px;background:var(--card);color:var(--ink);
+  border:1px dashed var(--line-2);border-radius:10px;padding:12px;margin-top:16px;resize:vertical;line-height:1.7}
+
+/* ---------- results ---------- */
+.score{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;padding-block:26px 20px}
+.score .big{font-family:var(--mono);font-size:clamp(50px,15vw,74px);font-weight:600;line-height:.9;letter-spacing:-.04em}
+.score .big small{font-size:.36em;color:var(--ink-3);font-weight:400}
+.score .side{display:grid;gap:3px;padding-bottom:5px}
+.verdict{font-size:14px;color:var(--ink-2);max-width:48ch;margin-top:4px}
+.bars{display:grid;gap:11px}
+.bar{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:11px;font-size:13px}
+.bar .t{color:var(--ink-2)}
+.bar .track{height:9px;background:var(--card-2);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.bar .fill{display:block;height:100%;background:var(--accent);border-radius:999px}
+.bar .n{font-family:var(--mono);font-size:12.5px;color:var(--ink-3)}
+.sheet{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
+.sheet button{width:27px;height:27px;border-radius:50%;border:1px solid var(--line-2);font-family:var(--mono);font-size:11px;color:var(--ink-3);background:var(--card)}
+.sheet button.g{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.sheet button.b{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.rev{display:grid;gap:10px}
+.rev details{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+.rev details[open]{border-color:var(--line-2)}
+.rev summary{cursor:pointer;display:flex;gap:10px;align-items:flex-start;font-size:14px;list-style:none}
+.rev summary::-webkit-details-marker{display:none}
+.rev summary .n{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);padding-top:2px;flex:0 0 auto}
+.rev .mark{flex:0 0 auto;width:8px;height:8px;border-radius:50%;margin-top:6px}
+.rev .mark.g{background:var(--ok)}.rev .mark.b{background:var(--bad)}
+.rev .det{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:14px;color:var(--ink-2);display:grid;gap:8px}
+.rev .det .line{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.rev .det .tag{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.rev .det svg{width:52px;height:52px}
+.rev .det .figrow .fig{width:60px;height:60px}
+.rev .det .figrow .fig svg{width:50px;height:50px}
+.foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3)}
+.foot a{color:var(--accent)}
+</style>
+
+<div id="drain" hidden></div>
+<div class="wrap">
+  <main id="app"></main>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+/* ======================================================================
+   Entrenador CCAT — generador de práctica para el Criteria Cognitive
+   Aptitude Test (50 preguntas / 15 minutos, verbal + numérico + espacial).
+   Todo se genera en el navegador: no hay dos exámenes iguales.
+   ====================================================================== */
+
+/* ---------- estado y preferencias ---------- */
+var PREFS = {lang:'es', cats:{verbal:true, math:true, spatial:true}, count:20, perQ:0, pad:true};
+var HIST = [];
+function load(k, def){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : def; }catch(e){ return def; } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+PREFS = Object.assign(PREFS, load('ccat.prefs.v1', {}));
+HIST  = load('ccat.hist.v1', []) || [];
+var lang = PREFS.lang;
+function L(es, en){ return lang === 'en' ? en : es; }
+
+/* ---------- diccionario de interfaz ---------- */
+var T = {
+  tagline:      ['50 preguntas. 15 minutos. Sin calculadora.', '50 questions. 15 minutes. No calculator.'],
+  lede:         ['Simulador de práctica para el Criteria Cognitive Aptitude Test. Las preguntas se generan nuevas en cada intento, con el mismo reparto y el mismo ritmo que el examen real.',
+                 'Practice simulator for the Criteria Cognitive Aptitude Test. Every attempt generates fresh questions, with the same mix and the same pace as the real test.'],
+  modes:        ['Elegí cómo practicar', 'Choose how to practice'],
+  fullT:        ['Examen completo', 'Full test'],
+  fullS:        ['50 preguntas · 15:00 · sin volver atrás', '50 questions · 15:00 · no going back'],
+  sprintT:      ['Simulacro corto', 'Short sprint'],
+  sprintS:      ['15 preguntas · 4:30 · mismo ritmo', '15 questions · 4:30 · same pace'],
+  drillT:       ['Entrenamiento', 'Drill'],
+  drillS:       ['Categoría a elección, con explicación en cada respuesta', 'Pick a category, see an explanation after every answer'],
+  drillCfg:     ['Ajustes del entrenamiento', 'Drill settings'],
+  cats:         ['Categorías', 'Categories'],
+  verbal:       ['Verbal', 'Verbal'],
+  math:         ['Numérico', 'Math & logic'],
+  spatial:      ['Espacial', 'Spatial'],
+  howMany:      ['Preguntas', 'Questions'],
+  perQ:         ['Reloj por pregunta', 'Per-question clock'],
+  noClock:      ['Sin reloj', 'No clock'],
+  qlang:        ['Idioma de las preguntas', 'Question language'],
+  start:        ['Empezar', 'Start'],
+  yourRecord:   ['Tu historial', 'Your record'],
+  attempts:     ['Intentos', 'Attempts'],
+  best:         ['Mejor', 'Best'],
+  avg:          ['Promedio', 'Average'],
+  lastRuns:     ['Últimos exámenes completos (sobre 50)', 'Last full tests (out of 50)'],
+  noRuns:       ['Todavía no hay exámenes completos registrados.', 'No full tests recorded yet.'],
+  theTest:      ['Cómo es el examen real', 'What the real test looks like'],
+  f1:           ['50 preguntas en 15 minutos: unos 18 segundos por pregunta.', '50 questions in 15 minutes: about 18 seconds each.'],
+  f2:           ['Casi nadie termina. El promedio ronda las 24 respuestas correctas.', 'Almost nobody finishes. The average score is around 24 correct.'],
+  f3:           ['Tres áreas mezcladas: verbal, numérico-lógico y razonamiento espacial.', 'Three areas mixed together: verbal, math & logic, and spatial reasoning.'],
+  f4:           ['No se puede volver a una pregunta anterior. Lo que dejaste, quedó.', 'You cannot return to a previous question. What you skip stays skipped.'],
+  f5:           ['No hay penalización por error: nunca dejes una pregunta sin marcar.', 'There is no penalty for a wrong answer: never leave one blank.'],
+  f6:           ['Papel y lápiz sí; calculadora no.', 'Scratch paper yes; calculator no.'],
+  strategy:     ['Estrategia que funciona', 'What actually works'],
+  s1:           ['Si a los 20 segundos no ves el camino, marcá una opción y seguí.', 'If you do not see the path within 20 seconds, mark an option and move on.'],
+  s2:           ['En series numéricas, mirá primero la diferencia entre términos consecutivos.', 'On number series, look at the gaps between consecutive terms first.'],
+  s3:           ['En analogías, decí la relación en voz alta antes de mirar las opciones.', 'On analogies, say the relationship out loud before reading the options.'],
+  s4:           ['En espaciales, fijate en un solo detalle asimétrico y seguí ese detalle.', 'On spatial items, lock onto one asymmetric detail and track only that.'],
+  s5:           ['Descartar dos opciones y adivinar entre tres vale más que pensar de más.', 'Ruling out two options and guessing beats overthinking.'],
+  quit:         ['Salir', 'Quit'],
+  quitAsk:      ['¿Salir del examen? Se pierde el progreso.', 'Quit the test? Progress will be lost.'],
+  skip:         ['Saltear', 'Skip'],
+  next:         ['Siguiente', 'Next'],
+  finish:       ['Ver resultado', 'See results'],
+  correct:      ['Correcto', 'Correct'],
+  wrong:        ['Incorrecto', 'Incorrect'],
+  timeUp:       ['Se acabó el tiempo', 'Time is up'],
+  keys:         ['Teclas <kbd>1</kbd>–<kbd>5</kbd> · <kbd>Enter</kbd>', 'Keys <kbd>1</kbd>–<kbd>5</kbd> · <kbd>Enter</kbd>'],
+  pad:          ['Borrador', 'Scratch pad'],
+  padPh:        ['Espacio para hacer las cuentas…', 'Room for your working…'],
+  results:      ['Resultado', 'Results'],
+  ofTotal:      ['correctas de', 'correct out of'],
+  pctEst:       ['percentil estimado', 'estimated percentile'],
+  answered:     ['respondidas', 'answered'],
+  timeUsed:     ['tiempo usado', 'time used'],
+  perQuestion:  ['por pregunta', 'per question'],
+  byCat:        ['Por categoría', 'By category'],
+  sheet:        ['Hoja de respuestas', 'Answer sheet'],
+  review:       ['Repaso', 'Review'],
+  yourAnswer:   ['Tu respuesta', 'Your answer'],
+  rightAnswer:  ['Respuesta correcta', 'Correct answer'],
+  blank:        ['sin responder', 'left blank'],
+  why:          ['Por qué', 'Why'],
+  again:        ['Hacer otro', 'Run it again'],
+  home:         ['Inicio', 'Home'],
+  drillErrors:  ['Entrenar mis errores', 'Drill my misses'],
+  scaled:       ['proyectado a 50 preguntas', 'projected to 50 questions'],
+  v_low:        ['Por debajo del promedio del examen real (24). El ritmo se entrena: hacé tandas cortas todos los días.',
+                 'Below the real-test average (24). Pace is trainable: do short daily sets.'],
+  v_mid:        ['En torno al promedio del examen real (24). Ganar velocidad en tu categoría más floja es lo que más suma.',
+                 'Around the real-test average (24). Getting faster at your weakest category is what moves the needle.'],
+  v_high:       ['Por encima del promedio del examen real (24). Buen nivel para la mayoría de las búsquedas.',
+                 'Above the real-test average (24). A solid level for most roles.'],
+  v_top:        ['Muy por encima del promedio (24). Este rango es competitivo para puestos técnicos exigentes.',
+                 'Well above average (24). This range is competitive for demanding technical roles.'],
+  footNote:     ['Práctica no oficial, sin relación con Criteria Corp. El percentil es una estimación orientativa a partir de baremos publicados. Todo corre en tu navegador y nada se envía a ningún servidor.',
+                 'Unofficial practice, not affiliated with Criteria Corp. The percentile is a rough estimate based on published norms. Everything runs in your browser; nothing is sent to a server.']
+};
+function t(k){ var e = T[k]; return lang === 'en' ? e[1] : e[0]; }
+
+/* ---------- azar ---------- */
+function mulberry(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; var x = Math.imul(a ^ a >>> 15, 1 | a);
+  x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+var rnd = mulberry(Date.now() % 2147483647);
+function ri(a, b){ return a + Math.floor(rnd() * (b - a + 1)); }
+function pick(a){ return a[Math.floor(rnd() * a.length)]; }
+function shuffle(a){ a = a.slice(); for (var i = a.length - 1; i > 0; i--){ var j = Math.floor(rnd() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
+function sample(a, n){ return shuffle(a).slice(0, n); }
+function esc(s){ return String(s).replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
+function gcd(a, b){ a = Math.abs(a); b = Math.abs(b); while (b){ var x = b; b = a % b; a = x; } return a; }
+function fmt(n){ return Math.round(n * 100) / 100; }
+function money(n){ return lang === 'en' ? '$' + fmt(n) : '$' + fmt(n); }
+
+/* Arma el set de opciones: baraja y devuelve {options, answer}. */
+function mk(correct, decoys){
+  var all = [correct].concat(decoys.filter(function(d){ return String(d) !== String(correct); }));
+  var seen = {}, uniq = [];
+  all.forEach(function(o){ var k = String(o); if (!seen[k]){ seen[k] = 1; uniq.push(o); } });
+  uniq = uniq.slice(0, 5);
+  var opts = shuffle(uniq);
+  return { options: opts, answer: opts.indexOf(correct) };
+}
+/* Distractores numéricos: variaciones plausibles y no repetidas. */
+function numDecoys(correct, cands){
+  var out = [], seen = {};
+  seen[String(correct)] = 1;
+  cands.forEach(function(c){
+    if (c == null || !isFinite(c)) return;
+    c = fmt(c);
+    if (c < 0) return;
+    var k = String(c);
+    if (!seen[k]){ seen[k] = 1; out.push(c); }
+  });
+  var guard = 0;
+  while (out.length < 4 && guard++ < 60){
+    var d = fmt(correct + (rnd() < .5 ? -1 : 1) * ri(1, Math.max(2, Math.round(Math.abs(correct) * .22))));
+    if (d < 0) continue;
+    var kk = String(d);
+    if (!seen[kk]){ seen[kk] = 1; out.push(d); }
+  }
+  var off = 1;
+  while (out.length < 4 && off < 300){
+    var f1 = fmt(correct + off), f2 = fmt(correct - off);
+    [f1, f2].forEach(function(v){
+      if (out.length < 4 && v >= 0 && !seen[String(v)]){ seen[String(v)] = 1; out.push(v); }
+    });
+    off++;
+  }
+  return out.slice(0, 4);
+}
+</script>
+
+<script>
+/* ======================= BANCO VERBAL =======================
+   analogía  ->  "a|b|c|respuesta|d1,d2,d3,d4"
+   sin/ant   ->  "palabra|respuesta|d1,d2,d3,d4"
+   intruso   ->  "intruso|g1,g2,g3,g4|explicación"
+   completar ->  "frase con ___|respuesta|d1,d2,d3,d4"
+   ============================================================ */
+var BANK = {
+es:{
+ analogy:[
+  "médico|hospital|maestro|escuela|aula,alumno,pizarrón,libro",
+  "pluma|escribir|tijera|cortar|papel,filo,coser,metal",
+  "hambre|comer|sed|beber|agua,vaso,secar,calor",
+  "cachorro|perro|potrillo|caballo|establo,yegua,montura,galope",
+  "abeja|colmena|pájaro|nido|árbol,vuelo,pluma,huevo",
+  "isla|agua|oasis|desierto|arena,palmera,camello,sed",
+  "cobarde|valiente|tacaño|generoso|avaro,pobre,rico,honesto",
+  "reloj|tiempo|termómetro|temperatura|calor,mercurio,fiebre,grados",
+  "zapato|pie|guante|mano|dedo,lana,abrigo,cuero",
+  "pintor|cuadro|escritor|novela|lápiz,editorial,lector,biblioteca",
+  "renacuajo|rana|oruga|mariposa|capullo,hoja,ala,estanque",
+  "sequía|lluvia|hambruna|alimento|desierto,pobreza,cosecha,campo",
+  "libro|capítulo|edificio|piso|ladrillo,ascensor,techo,puerta",
+  "manada|lobos|cardumen|peces|red,mar,pecera,escamas",
+  "sordo|oír|ciego|ver|ojo,luz,bastón,oscuridad",
+  "minuto|hora|centímetro|metro|regla,kilómetro,largo,medida",
+  "ancla|barco|freno|auto|rueda,motor,pedal,camino",
+  "veneno|antídoto|enfermedad|cura|médico,dolor,hospital,virus",
+  "arquitecto|plano|compositor|partitura|orquesta,piano,concierto,melodía",
+  "director|orquesta|entrenador|equipo|cancha,pelota,árbitro,hinchada",
+  "prólogo|libro|obertura|ópera|telón,aria,teatro,final",
+  "termita|madera|polilla|tela|armario,seda,aguja,camisa",
+  "bosque|árbol|archipiélago|isla|mar,barco,playa,costa",
+  "paladar|gusto|retina|vista|ojo,luz,nervio,color",
+  "llave|cerradura|contraseña|cuenta|clave,usuario,correo,teclado",
+  "embudo|líquido|filtro|impureza|agua,café,papel,aire",
+  "abogado|juicio|cirujano|operación|bisturí,quirófano,paciente,receta",
+  "crónico|agudo|permanente|temporal|eterno,lento,grave,leve"
+ ],
+ antonym:[
+  "efímero|duradero|frágil,veloz,antiguo,invisible",
+  "escaso|abundante|pequeño,costoso,simple,oculto",
+  "audaz|tímido|fuerte,sabio,lento,amable",
+  "ficticio|real|antiguo,extraño,breve,escrito",
+  "rígido|flexible|duro,recto,firme,pesado",
+  "condenar|absolver|acusar,juzgar,castigar,denunciar",
+  "ampliar|reducir|abrir,estirar,mejorar,copiar",
+  "turbio|claro|sucio,denso,oscuro,frío",
+  "humilde|soberbio|pobre,sencillo,callado,amable",
+  "prohibir|permitir|ordenar,impedir,limitar,vigilar",
+  "ocaso|amanecer|noche,tarde,final,sombra",
+  "inerte|activo|muerto,quieto,pesado,frío",
+  "benigno|maligno|suave,amable,leve,sano",
+  "disminuir|aumentar|bajar,cortar,perder,gastar",
+  "perenne|pasajero|eterno,verde,anual,fijo",
+  "áspero|suave|duro,seco,rugoso,frío",
+  "confuso|nítido|raro,oscuro,mezclado,difícil",
+  "ahorrar|derrochar|guardar,juntar,invertir,contar",
+  "cauteloso|imprudente|lento,miedoso,atento,sereno",
+  "unánime|dividido|total,común,general,claro",
+  "opaco|transparente|oscuro,mate,denso,gris",
+  "fortalecer|debilitar|apoyar,endurecer,crecer,proteger",
+  "redundante|conciso|repetido,extenso,inútil,claro",
+  "hostil|amistoso|agresivo,frío,duro,ajeno",
+  "vasto|diminuto|ancho,largo,lleno,lejano",
+  "frecuente|infrecuente|común,diario,repetido,rápido"
+ ],
+ synonym:[
+  "tenaz|persistente|fuerte,rápido,amable,rígido",
+  "sagaz|astuto|noble,veloz,honesto,fuerte",
+  "mitigar|aliviar|aumentar,ocultar,romper,medir",
+  "arduo|difícil|largo,alto,raro,lento",
+  "conciso|breve|claro,exacto,simple,serio",
+  "vetar|prohibir|votar,elegir,aprobar,firmar",
+  "pueril|infantil|puro,alegre,simple,tonto",
+  "indagar|averiguar|dudar,ordenar,señalar,contar",
+  "exiguo|escaso|amplio,exacto,extraño,antiguo",
+  "acaudalado|rico|generoso,famoso,poderoso,noble",
+  "irascible|colérico|alegre,valiente,nervioso,ansioso",
+  "efusivo|expresivo|frío,breve,formal,tenso",
+  "pernicioso|dañino|urgente,constante,pesado,útil",
+  "franco|sincero|tímido,prolijo,cansado,amable",
+  "vituperar|criticar|elogiar,observar,mejorar,copiar",
+  "prolífico|fecundo|famoso,extenso,rápido,costoso",
+  "displicente|indiferente|atento,amable,severo,alegre",
+  "ecuánime|imparcial|severo,alegre,exacto,rápido",
+  "recóndito|oculto|lejano,profundo,antiguo,pequeño",
+  "paliar|atenuar|curar,evitar,pagar,explicar",
+  "fatuo|vanidoso|falso,triste,tonto,robusto",
+  "coartar|limitar|obligar,permitir,guiar,ampliar",
+  "inminente|próximo|urgente,seguro,enorme,lento",
+  "adusto|severo|alegre,viejo,sucio,amable",
+  "inocuo|inofensivo|venenoso,brillante,ruidoso,antiguo",
+  "lúcido|claro|ruidoso,afortunado,tardío,flojo"
+ ],
+ odd:[
+  "roble|rosa,tulipán,clavel,margarita|El roble es un árbol; los demás son flores.",
+  "ballena|tiburón,atún,salmón,trucha|La ballena es un mamífero; los demás son peces.",
+  "esmeralda|oro,plata,cobre,hierro|La esmeralda es una piedra preciosa; los demás son metales.",
+  "tomate|zanahoria,papa,remolacha,rábano|Los demás crecen bajo tierra.",
+  "violín|trompeta,saxofón,flauta,clarinete|El violín es de cuerda; los demás son de viento.",
+  "domingo|marzo,julio,octubre,enero|Domingo es un día; los demás son meses.",
+  "cuchara|martillo,destornillador,serrucho,pinza|Los demás son herramientas; la cuchara es un utensilio.",
+  "nadar|correr,saltar,caminar,trotar|Los demás se hacen en tierra firme.",
+  "rojo|círculo,cuadrado,triángulo,rombo|Rojo es un color; los demás son figuras.",
+  "alegría|mesa,silla,cama,estante|La alegría no es un objeto físico.",
+  "lluvia|nieve,granizo,escarcha,hielo|La lluvia es líquida; los demás son agua en estado sólido.",
+  "avestruz|halcón,gorrión,paloma,golondrina|El avestruz no vuela.",
+  "pincel|óleo,acuarela,témpera,acrílico|El pincel es la herramienta; los demás son pinturas.",
+  "arena|granito,mármol,basalto,pizarra|Los demás son rocas compactas.",
+  "cebolla|manzana,pera,durazno,ciruela|La cebolla es una hortaliza; las demás son frutas.",
+  "cuaderno|lápiz,birome,marcador,crayón|Los demás sirven para escribir; el cuaderno es la superficie."
+ ],
+ cloze:[
+  "El informe era extenso pero ___: repetía tres veces la misma idea.|redundante|conciso,riguroso,urgente,novedoso",
+  "Aunque llegó tarde, su explicación fue tan ___ que nadie protestó.|convincente|extensa,tardía,ruidosa,escueta",
+  "La evidencia era ___: no dejaba lugar a ninguna duda.|concluyente|parcial,confusa,escasa,dudosa",
+  "Prefiere una vida ___, lejos del ruido y de las cámaras.|discreta|ostentosa,agitada,pública,costosa",
+  "El acuerdo se firmó tras meses de ___ entre las dos partes.|negociación|silencio,distracción,improvisación,olvido",
+  "Sus argumentos eran sólidos, pero su tono resultó ___ para el jurado.|ofensivo|preciso,brillante,neutral,cordial",
+  "El plan parecía simple, pero su ejecución resultó ___.|compleja|barata,breve,obvia,inmediata",
+  "Nadie se ___ por el resultado: todas las encuestas lo anticipaban.|sorprendió|enojó,alegró,preocupó,quejó",
+  "El testigo ofreció un relato ___ que contradecía su declaración anterior.|distinto|idéntico,fiel,exacto,similar",
+  "Es una medida ___: resuelve el problema de hoy, no el de fondo.|provisoria|definitiva,radical,costosa,ilegal",
+  "Su curiosidad era ___: preguntaba por todo y a todos.|insaciable|escasa,fingida,pasajera,silenciosa",
+  "El equipo ganó gracias a una estrategia ___ que nadie había previsto.|audaz|habitual,previsible,lenta,defensiva",
+  "Leyó el contrato con atención para no pasar por alto ninguna ___.|cláusula|página,firma,copia,carpeta",
+  "La sequía fue tan ___ que el río quedó reducido a un hilo de agua.|severa|breve,leve,húmeda,reciente",
+  "A pesar de la derrota, el entrenador se mostró ___ con el rendimiento.|conforme|furioso,ausente,indiferente,confundido",
+  "Los datos son claros, pero su interpretación sigue siendo ___.|discutible|numérica,exacta,automática,imposible"
+ ]
+},
+en:{
+ analogy:[
+  "doctor|hospital|teacher|school|student,lesson,desk,book",
+  "pen|write|scissors|cut|paper,blade,sew,metal",
+  "hunger|eat|thirst|drink|water,glass,dry,heat",
+  "puppy|dog|foal|horse|stable,saddle,mare,gallop",
+  "bee|hive|bird|nest|tree,flight,feather,egg",
+  "island|water|oasis|desert|sand,palm,camel,thirst",
+  "coward|brave|stingy|generous|greedy,poor,rich,honest",
+  "clock|time|thermometer|temperature|heat,mercury,fever,degrees",
+  "shoe|foot|glove|hand|finger,wool,coat,leather",
+  "painter|canvas|writer|novel|pencil,publisher,reader,library",
+  "tadpole|frog|caterpillar|butterfly|cocoon,leaf,wing,pond",
+  "drought|rain|famine|food|desert,poverty,harvest,field",
+  "book|chapter|building|floor|brick,elevator,roof,door",
+  "pack|wolves|school|fish|net,sea,tank,scale",
+  "deaf|hear|blind|see|eye,light,cane,darkness",
+  "minute|hour|inch|foot|ruler,mile,length,measure",
+  "anchor|ship|brake|car|wheel,engine,pedal,road",
+  "poison|antidote|disease|cure|doctor,pain,hospital,virus",
+  "architect|blueprint|composer|score|orchestra,piano,concert,melody",
+  "conductor|orchestra|coach|team|field,ball,referee,crowd",
+  "prologue|book|overture|opera|curtain,aria,theater,finale",
+  "termite|wood|moth|cloth|closet,silk,needle,shirt",
+  "forest|tree|archipelago|island|sea,ship,beach,coast",
+  "palate|taste|retina|sight|eye,light,nerve,color",
+  "key|lock|password|account|code,user,email,keyboard",
+  "funnel|liquid|filter|impurity|water,coffee,paper,air",
+  "lawyer|trial|surgeon|operation|scalpel,ward,patient,prescription",
+  "chronic|acute|permanent|temporary|eternal,slow,severe,mild"
+ ],
+ antonym:[
+  "ephemeral|lasting|fragile,swift,ancient,hidden",
+  "scarce|plentiful|small,costly,simple,hidden",
+  "bold|timid|strong,wise,slow,kind",
+  "fictitious|real|ancient,strange,brief,written",
+  "rigid|flexible|hard,straight,firm,heavy",
+  "condemn|absolve|accuse,judge,punish,report",
+  "expand|shrink|open,stretch,improve,copy",
+  "murky|clear|dirty,dense,dark,cold",
+  "humble|arrogant|poor,simple,quiet,kind",
+  "forbid|permit|order,prevent,limit,watch",
+  "dusk|dawn|night,evening,end,shadow",
+  "inert|active|dead,still,heavy,cold",
+  "benign|malignant|mild,kind,slight,healthy",
+  "diminish|increase|lower,cut,lose,spend",
+  "transient|permanent|brief,quick,rare,passing",
+  "coarse|smooth|hard,dry,rough,cold",
+  "lucid|confusing|bright,odd,dark,mixed",
+  "hoard|squander|keep,gather,invest,count",
+  "cautious|reckless|slow,fearful,alert,calm",
+  "unanimous|divided|total,common,general,clear",
+  "opaque|transparent|dark,matte,dense,gray",
+  "strengthen|weaken|support,harden,grow,protect",
+  "verbose|concise|repeated,lengthy,useless,clear",
+  "hostile|friendly|aggressive,cold,harsh,foreign",
+  "vast|minuscule|wide,long,full,distant",
+  "frequent|infrequent|common,daily,repeated,rapid"
+ ],
+ synonym:[
+  "tenacious|persistent|strong,quick,kind,rigid",
+  "astute|shrewd|noble,swift,honest,strong",
+  "mitigate|ease|increase,hide,break,measure",
+  "arduous|difficult|long,tall,rare,slow",
+  "concise|brief|clear,exact,simple,serious",
+  "veto|reject|vote,elect,approve,sign",
+  "puerile|childish|pure,cheerful,plain,silly",
+  "probe|investigate|doubt,order,point,count",
+  "meager|scant|ample,exact,strange,ancient",
+  "affluent|wealthy|generous,famous,powerful,noble",
+  "irascible|hot-tempered|cheerful,brave,nervous,anxious",
+  "effusive|gushing|cold,brief,formal,tense",
+  "pernicious|harmful|urgent,constant,heavy,useful",
+  "candid|frank|shy,tidy,tired,kind",
+  "censure|criticize|praise,observe,improve,copy",
+  "prolific|productive|famous,lengthy,rapid,costly",
+  "aloof|distant|attentive,kind,severe,cheerful",
+  "impartial|unbiased|severe,cheerful,exact,rapid",
+  "abstruse|obscure|distant,deep,ancient,small",
+  "alleviate|relieve|cure,avoid,pay,explain",
+  "conceited|vain|false,sad,foolish,stout",
+  "curtail|shorten|force,allow,guide,extend",
+  "imminent|impending|urgent,certain,huge,slow",
+  "dour|stern|cheerful,old,dirty,kind",
+  "innocuous|harmless|venomous,bright,noisy,ancient",
+  "lucid|clear|loud,lucky,late,loose"
+ ],
+ odd:[
+  "oak|rose,tulip,carnation,daisy|An oak is a tree; the rest are flowers.",
+  "whale|shark,tuna,salmon,trout|A whale is a mammal; the rest are fish.",
+  "emerald|gold,silver,copper,iron|An emerald is a gemstone; the rest are metals.",
+  "tomato|carrot,potato,beet,radish|The rest grow underground.",
+  "violin|trumpet,saxophone,flute,clarinet|The violin has strings; the rest are wind instruments.",
+  "Sunday|March,July,October,January|Sunday is a day; the rest are months.",
+  "spoon|hammer,screwdriver,saw,pliers|The rest are tools; a spoon is a utensil.",
+  "swim|run,jump,walk,jog|The rest happen on solid ground.",
+  "red|circle,square,triangle,rhombus|Red is a color; the rest are shapes.",
+  "joy|table,chair,bed,shelf|Joy is not a physical object.",
+  "rain|snow,hail,frost,ice|Rain is liquid; the rest are frozen water.",
+  "ostrich|hawk,sparrow,pigeon,swallow|An ostrich cannot fly.",
+  "brush|oil,watercolor,tempera,acrylic|The brush is the tool; the rest are paints.",
+  "sand|granite,marble,basalt,slate|The rest are solid rocks.",
+  "onion|apple,pear,peach,plum|An onion is a vegetable; the rest are fruits.",
+  "notebook|pencil,pen,marker,crayon|The rest are for writing; the notebook is the surface."
+ ],
+ cloze:[
+  "The report was long but ___: it repeated the same idea three times.|redundant|concise,rigorous,urgent,novel",
+  "Although he arrived late, his explanation was so ___ that nobody objected.|convincing|lengthy,tardy,loud,terse",
+  "The evidence was ___: it left no room for doubt.|conclusive|partial,confusing,scant,doubtful",
+  "She prefers a ___ life, far from noise and cameras.|quiet|showy,hectic,public,costly",
+  "The deal was signed after months of ___ between the two parties.|negotiation|silence,distraction,improvisation,neglect",
+  "His arguments were sound, but his tone struck the jury as ___.|offensive|precise,brilliant,neutral,cordial",
+  "The plan looked simple, but carrying it out proved ___.|complex|cheap,brief,obvious,immediate",
+  "Nobody was ___ by the result: every poll had predicted it.|surprised|angered,pleased,worried,troubled",
+  "The witness gave a ___ account that contradicted his earlier statement.|different|identical,faithful,exact,similar",
+  "It is a ___ measure: it solves today's problem, not the underlying one.|temporary|permanent,radical,costly,illegal",
+  "Her curiosity was ___: she asked about everything and everyone.|insatiable|scant,feigned,fleeting,silent",
+  "The team won thanks to a ___ strategy nobody had foreseen.|daring|routine,predictable,slow,defensive",
+  "He read the contract closely so as not to overlook a single ___.|clause|page,signature,copy,folder",
+  "The drought was so ___ that the river shrank to a trickle.|severe|brief,mild,damp,recent",
+  "Despite the loss, the coach seemed ___ with the performance.|satisfied|furious,absent,indifferent,confused",
+  "The data are clear, but their interpretation remains ___.|debatable|numeric,exact,automatic,impossible"
+ ]
+}};
+
+var USED = {};
+function bank(kind){ return BANK[lang === 'en' ? 'en' : 'es'][kind]; }
+function takeItem(kind){
+  var list = bank(kind), free = list.filter(function(s){ return !USED[kind + s]; });
+  var item = pick(free.length ? free : list);
+  USED[kind + item] = 1;
+  return item.split('|');
+}
+function up(s){ return '<em>' + esc(s) + '</em>'; }
+
+/* ---------- generadores verbales ---------- */
+function gAnalogy(){
+  var p = takeItem('analogy'), dec = p[4].split(',');
+  return {
+    type:'analogy',
+    stem: L('¿Qué palabra completa la relación?', 'Which word completes the relationship?') +
+          '<br><span class="mono" style="font-size:.86em">' + esc(p[0].toUpperCase()) + ' → ' + esc(p[1].toUpperCase()) +
+          '  ·  ' + esc(p[2].toUpperCase()) + ' → ?</span>',
+    set: mk(p[3], dec),
+    explain: L('La relación es la misma en los dos pares: ', 'The relationship is the same in both pairs: ') +
+             '<b>' + esc(p[0]) + ' → ' + esc(p[1]) + '</b>' + L(', y por eso ', ', so ') +
+             '<b>' + esc(p[2]) + ' → ' + esc(p[3]) + '</b>.'
+  };
+}
+function gAntonym(){
+  var p = takeItem('antonym');
+  return {
+    type:'antonym',
+    stem: L('¿Cuál es el OPUESTO de ', 'Which word is the OPPOSITE of ') + up(p[0]) + '?',
+    set: mk(p[1], p[2].split(',')),
+    explain: '<b>' + esc(p[1]) + '</b>' + L(' es lo contrario de ', ' is the opposite of ') + '<b>' + esc(p[0]) + '</b>.'
+  };
+}
+function gSynonym(){
+  var p = takeItem('synonym');
+  return {
+    type:'synonym',
+    stem: L('¿Cuál palabra se acerca MÁS al significado de ', 'Which word is CLOSEST in meaning to ') + up(p[0]) + '?',
+    set: mk(p[1], p[2].split(',')),
+    explain: '<b>' + esc(p[0]) + '</b>' + L(' significa prácticamente lo mismo que ', ' means much the same as ') + '<b>' + esc(p[1]) + '</b>.'
+  };
+}
+function gOdd(){
+  var p = takeItem('odd');
+  return {
+    type:'odd',
+    stem: L('¿Cuál de estas palabras NO pertenece al grupo?', 'Which of these words does NOT belong?'),
+    set: mk(p[0], p[1].split(',')),
+    explain: esc(p[2])
+  };
+}
+function gCloze(){
+  var p = takeItem('cloze');
+  return {
+    type:'cloze',
+    stem: esc(p[0]).replace('___', '<b class="mono">____</b>'),
+    set: mk(p[1], p[2].split(',')),
+    explain: L('Con ', 'With ') + '<b>' + esc(p[1]) + '</b>' + L(' la frase mantiene el sentido que marca el resto de la oración.',
+              ' the sentence keeps the meaning the rest of the clause points to.')
+  };
+}
+</script>
+
+<script>
+/* ======================= NUMÉRICO Y LÓGICA ======================= */
+var NAMES = { es:['Ana','Bruno','Carla','Diego','Elena','Facundo','Gabriela','Hugo','Inés','Julián'],
+              en:['Ana','Ben','Clara','Dan','Elena','Frank','Grace','Hugo','Iris','Julian'] };
+function name1(){ return pick(NAMES[lang === 'en' ? 'en' : 'es']); }
+function two(){ var n = sample(NAMES[lang === 'en' ? 'en' : 'es'], 2); return n; }
+var AB = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+/* --- series numéricas --- */
+function gSeries(d){
+  var kinds = d <= 1 ? ['add','mul','add2'] : (d === 2 ? ['add2','alt','sq','mul'] : ['add2','alt','sq','fib','mix']);
+  var k = pick(kinds), t = [], ans, why, i;
+  if (k === 'add'){
+    var s = ri(2,14), st = pick([3,4,6,7,8,9,11,12]);
+    for (i=0;i<5;i++) t.push(s + st*i); ans = s + st*5;
+    why = L('Cada término suma ' + st + '.', 'Each term adds ' + st + '.');
+  } else if (k === 'mul'){
+    var s2 = ri(2,5), r = pick([2,3]);
+    for (i=0;i<5;i++) t.push(s2 * Math.pow(r,i)); ans = s2 * Math.pow(r,5);
+    why = L('Cada término se multiplica por ' + r + '.', 'Each term is multiplied by ' + r + '.');
+  } else if (k === 'add2'){
+    var cur = ri(1,9), st2 = ri(2,5), inc = ri(1,4);
+    for (i=0;i<5;i++){ t.push(cur); cur += st2 + inc*i; } ans = cur;
+    why = L('La diferencia crece ' + inc + ' cada vez: +' + st2 + ', +' + (st2+inc) + ', +' + (st2+2*inc) + '…',
+            'The gap grows by ' + inc + ' each step: +' + st2 + ', +' + (st2+inc) + ', +' + (st2+2*inc) + '…');
+  } else if (k === 'alt'){
+    var a = ri(3,15), p = pick([3,4,5,6]), b = ri(40,90), q = pick([4,5,6,7]);
+    t = [a, b, a+p, b-q, a+2*p, b-2*q]; ans = a + 3*p;
+    why = L('Son dos series entrelazadas: 1.ª, 3.ª y 5.ª suman ' + p + '; 2.ª, 4.ª y 6.ª restan ' + q + '.',
+            'Two interleaved series: the 1st, 3rd and 5th add ' + p + '; the 2nd, 4th and 6th subtract ' + q + '.');
+  } else if (k === 'sq'){
+    var n0 = ri(2,6), off = pick([0,0,1,-1,2]);
+    for (i=0;i<5;i++) t.push((n0+i)*(n0+i) + off); ans = (n0+5)*(n0+5) + off;
+    why = L('Son cuadrados perfectos' + (off ? ' ' + (off>0?'+':'−') + ' ' + Math.abs(off) : '') + ': ' +
+              t.map(function(x,j){ return (n0+j)+'²' + (off ? (off>0?'+'+off:off) : ''); }).join(', ') + '…',
+            'They are perfect squares' + (off ? ' ' + (off>0?'+':'−') + ' ' + Math.abs(off) : '') + ': ' +
+              t.map(function(x,j){ return (n0+j)+'²' + (off ? (off>0?'+'+off:off) : ''); }).join(', ') + '…');
+  } else if (k === 'fib'){
+    var x = ri(1,6), y = ri(2,9); t = [x,y];
+    for (i=0;i<3;i++) t.push(t[t.length-1] + t[t.length-2]);
+    ans = t[t.length-1] + t[t.length-2];
+    why = L('Cada término es la suma de los dos anteriores.', 'Each term is the sum of the two before it.');
+  } else {
+    var s3 = ri(2,7), kk = pick([3,4,5]);
+    t = [s3, s3*2, s3*2+kk, (s3*2+kk)*2, (s3*2+kk)*2+kk]; ans = ((s3*2+kk)*2+kk)*2;
+    why = L('Se alternan dos operaciones: ×2 y +' + kk + '.', 'Two operations alternate: ×2 and +' + kk + '.');
+  }
+  var step = Math.max(1, Math.abs(ans - t[t.length-1]));
+  return {
+    type:'series',
+    stem: L('¿Qué número sigue en la serie?', 'Which number comes next?') +
+          '<br><span class="mono" style="font-size:.92em">' + t.join(', ') + ', ?</span>',
+    set: mk(String(ans), numDecoys(ans, [ans+step, ans-step, ans+1, ans-1, t[t.length-1]+step*2, ans+Math.round(step/2)]).map(String)),
+    explain: why + ' ' + L('El siguiente es ', 'The next term is ') + '<b>' + ans + '</b>.'
+  };
+}
+
+/* --- series de letras --- */
+function gLetterSeries(d){
+  var out = [], ans, why, i, idx = ri(0,10);
+  var mode = d >= 2 ? pick(['step','grow','pair']) : pick(['step','grow']);
+  if (mode === 'step'){
+    var st = pick([2,3,4,5]);
+    for (i=0;i<5;i++) out.push(AB[(idx + st*i) % 26]); ans = AB[(idx + st*5) % 26];
+    why = L('Cada letra avanza ' + st + ' posiciones en el abecedario.', 'Each letter moves ' + st + ' places forward.');
+  } else if (mode === 'grow'){
+    var cur = idx, gap = ri(1,3);
+    for (i=0;i<5;i++){ out.push(AB[cur % 26]); cur += gap + i; } ans = AB[cur % 26];
+    why = L('El salto crece de a uno: +' + gap + ', +' + (gap+1) + ', +' + (gap+2) + '…',
+            'The jump grows by one each time: +' + gap + ', +' + (gap+1) + ', +' + (gap+2) + '…');
+  } else {
+    var a = idx, b = ri(14,22), p = 2;
+    out = [AB[a%26], AB[b%26], AB[(a+p)%26], AB[(b-1)%26], AB[(a+2*p)%26]]; ans = AB[(b-2+26)%26];
+    why = L('Se alternan dos series: una sube de a ' + p + ' y la otra baja de a 1.',
+            'Two series alternate: one moves up by ' + p + ', the other down by 1.');
+  }
+  var dec = [];
+  while (dec.length < 5){ var c = AB[ri(0,25)]; if (c !== ans && dec.indexOf(c) < 0) dec.push(c); }
+  return {
+    type:'letters',
+    stem: L('¿Qué letra sigue?', 'Which letter comes next?') +
+          '<br><span class="mono" style="font-size:.92em">' + out.join(', ') + ', ?</span>',
+    set: mk(ans, dec),
+    explain: why + ' ' + L('Sigue la ', 'Next is ') + '<b>' + ans + '</b>.'
+  };
+}
+
+/* --- porcentajes --- */
+function gPercentOf(){
+  var p = pick([5,10,15,20,25,30,35,40,45,60,75,80]), base = ri(3,25) * 20, r = p * base / 100;
+  return { type:'percent',
+    stem: L('¿Cuánto es el ' + p + '% de ' + base + '?', 'What is ' + p + '% of ' + base + '?'),
+    set: mk(String(r), numDecoys(r, [r*2, r/2, base-r, r+base/10, r+10, r-5]).map(String)),
+    explain: base + ' × ' + p + '/100 = <b>' + r + '</b>.' };
+}
+function gPercentChange(){
+  var old = ri(2,15) * 20, c = pick([10,20,25,50,-10,-20,-25]), nw = old + old * c / 100;
+  var asc = c > 0;
+  return { type:'percent',
+    stem: L('Un valor pasa de ' + old + ' a ' + nw + '. ¿En qué porcentaje ' + (asc ? 'aumentó' : 'disminuyó') + '?',
+            'A value goes from ' + old + ' to ' + nw + '. By what percentage did it ' + (asc ? 'increase' : 'decrease') + '?'),
+    set: mk(Math.abs(c) + '%', numDecoys(Math.abs(c), [Math.abs(c)+5, Math.abs(c)-5, Math.abs(c)*2, Math.abs(nw-old), 100-Math.abs(c)]).map(function(x){ return x + '%'; })),
+    explain: L('La diferencia es ', 'The difference is ') + Math.abs(nw-old) + '. ' + Math.abs(nw-old) + ' ÷ ' + old +
+             ' = ' + fmt(Math.abs(nw-old)/old) + ' → <b>' + Math.abs(c) + '%</b>' +
+             L(' (siempre se divide por el valor original).', ' (always divide by the original value).') };
+}
+function gDiscount(d){
+  var price = ri(3,25) * 20, d1 = pick([10,20,25,30,40,50]), after = price * (1 - d1/100), two = d >= 2 && after % 10 === 0;
+  var d2 = 10, fin = two ? after * (1 - d2/100) : after;
+  return { type:'percent',
+    stem: two
+      ? L('Un artículo de $' + price + ' tiene un ' + d1 + '% de descuento y, sobre ese precio, otro ' + d2 + '%. ¿Cuánto se paga?',
+          'An item priced $' + price + ' is discounted ' + d1 + '%, and then another ' + d2 + '% off that price. What is the final price?')
+      : L('Un artículo de $' + price + ' tiene un ' + d1 + '% de descuento. ¿Cuánto se paga?',
+          'An item priced $' + price + ' is discounted ' + d1 + '%. What is the final price?'),
+    set: mk(String(fmt(fin)), numDecoys(fin, [price - price*(d1+(two?d2:0))/100, after, price*(d1/100), fin+10, fin-10]).map(String)),
+    explain: two
+      ? price + ' × ' + (1-d1/100) + ' = ' + after + '; ' + after + ' × 0.9 = <b>' + fmt(fin) + '</b>. ' +
+        L('Los descuentos encadenados no se suman.', 'Chained discounts do not simply add up.')
+      : price + ' × ' + (1-d1/100) + ' = <b>' + fmt(fin) + '</b>.' };
+}
+
+/* --- promedios --- */
+function gAverage(d){
+  var n = pick([4,5]), avg = ri(10,30), total = n * avg, i;
+  var missing = Math.max(2, avg + ri(-7,7)), left = total - missing, others = [];
+  for (i=0;i<n-2;i++){
+    var room = left - (n - 2 - i);
+    var v = Math.max(1, Math.min(room, avg + ri(-5,5)));
+    others.push(v); left -= v;
+  }
+  others.push(left);
+  var sum = total - missing;
+  if (d >= 2 && rnd() < .45){
+    var extra = ri(5,40), newAvg = fmt((total + extra) / (n + 1));
+    return { type:'average',
+      stem: L('El promedio de ' + n + ' números es ' + avg + '. Si se agrega un número igual a ' + extra + ', ¿cuál es el nuevo promedio?',
+              'The average of ' + n + ' numbers is ' + avg + '. If a number equal to ' + extra + ' is added, what is the new average?'),
+      set: mk(String(newAvg), numDecoys(newAvg, [avg, fmt((avg+extra)/2), newAvg+1, newAvg-1, fmt(total/(n+1))]).map(String)),
+      explain: L('Suma total: ', 'Total sum: ') + n + ' × ' + avg + ' = ' + total + '. (' + total + ' + ' + extra + ') ÷ ' + (n+1) + ' = <b>' + newAvg + '</b>.' };
+  }
+  return { type:'average',
+    stem: L('El promedio de ' + n + ' números es ' + avg + '. ' + (n-1) + ' de ellos son ' + others.join(', ') + '. ¿Cuál es el que falta?',
+            'The average of ' + n + ' numbers is ' + avg + '. ' + (n-1) + ' of them are ' + others.join(', ') + '. What is the missing one?'),
+    set: mk(String(missing), numDecoys(missing, [avg, missing+avg, total-sum-avg, missing+2, missing-3]).map(String)),
+    explain: L('La suma de los ' + n + ' números es ', 'The ' + n + ' numbers sum to ') + n + ' × ' + avg + ' = ' + total +
+             '. ' + total + ' − ' + sum + ' = <b>' + missing + '</b>.' };
+}
+
+/* --- razones y proporciones --- */
+function gRatio(){
+  var a = ri(2,5), b = ri(2,7), k = ri(4,25), total = (a+b)*k;
+  return { type:'ratio',
+    stem: L('Se reparten $' + total + ' en razón ' + a + ':' + b + '. ¿Cuánto recibe la parte mayor?',
+            '$' + total + ' is split in a ' + a + ':' + b + ' ratio. How much does the larger share get?'),
+    set: mk(String(Math.max(a,b)*k), numDecoys(Math.max(a,b)*k, [Math.min(a,b)*k, total/2, (Math.max(a,b)+1)*k, total - Math.max(a,b)*k*2]).map(String)),
+    explain: L('Son ', 'There are ') + (a+b) + L(' partes iguales: ', ' equal parts: ') + total + ' ÷ ' + (a+b) + ' = ' + k +
+             L(' por parte. La mayor lleva ', ' per part. The larger share takes ') + Math.max(a,b) + ' × ' + k + ' = <b>' + Math.max(a,b)*k + '</b>.' };
+}
+function gProportion(){
+  var m1 = ri(2,6), h1 = ri(2,8), rate = ri(3,12), total = m1 * h1 * rate;
+  var m2 = ri(2,9), h2 = ri(2,9);
+  if (m2 === m1) m2 = m1 < 9 ? m1 + 1 : m1 - 1;
+  var res = m2 * h2 * rate;
+  return { type:'ratio',
+    stem: L(m1 + ' máquinas producen ' + total + ' piezas en ' + h1 + ' horas. ¿Cuántas piezas producen ' + m2 + ' máquinas en ' + h2 + ' horas?',
+            m1 + ' machines make ' + total + ' parts in ' + h1 + ' hours. How many parts do ' + m2 + ' machines make in ' + h2 + ' hours?'),
+    set: mk(String(res), numDecoys(res, [total, res*2, total*m2/m1, res+rate*10, res-rate*5]).map(String)),
+    explain: L('Una máquina hace ', 'One machine makes ') + total + ' ÷ (' + m1 + '×' + h1 + ') = ' + rate + L(' piezas por hora. ', ' parts per hour. ') +
+             rate + ' × ' + m2 + ' × ' + h2 + ' = <b>' + res + '</b>.' };
+}
+function gWork(){
+  var pairs = [[6,12,4],[4,12,3],[3,6,2],[10,15,6],[12,24,8],[5,20,4],[9,18,6],[20,30,12],[8,8,4],[6,3,2],[15,10,6]];
+  var p = pick(pairs), n = two();
+  return { type:'work',
+    stem: L(n[0] + ' termina un trabajo en ' + p[0] + ' horas y ' + n[1] + ' en ' + p[1] + ' horas. Trabajando juntos, ¿cuánto tardan?',
+            n[0] + ' finishes a job in ' + p[0] + ' hours and ' + n[1] + ' in ' + p[1] + ' hours. Working together, how long does it take?'),
+    set: mk(p[2] + ' h', numDecoys(p[2], [(p[0]+p[1])/2, p[0]+p[1], p[2]+1, p[2]-1, Math.min(p[0],p[1])]).map(function(x){ return x + ' h'; })),
+    explain: L('En una hora hacen 1/' + p[0] + ' + 1/' + p[1] + ' del trabajo. Juntos tardan ',
+               'In one hour they do 1/' + p[0] + ' + 1/' + p[1] + ' of the job. Together: ') + '<b>' + p[2] + ' h</b>.' };
+}
+function gSpeed(){
+  var v = pick([40,45,50,60,70,75,80,90,120]), t1 = ri(2,5), t2 = ri(2,9), dkm = v * t1;
+  return { type:'speed',
+    stem: L('Un vehículo recorre ' + dkm + ' km en ' + t1 + ' horas. Si mantiene la misma velocidad, ¿cuántos km recorre en ' + t2 + ' horas?',
+            'A vehicle covers ' + dkm + ' km in ' + t1 + ' hours. At the same speed, how far does it go in ' + t2 + ' hours?'),
+    set: mk(String(v*t2), numDecoys(v*t2, [dkm, v*t2+v, v*t2-v, dkm*t2, v]).map(String)),
+    explain: dkm + ' ÷ ' + t1 + ' = ' + v + L(' km/h. ', ' km/h. ') + v + ' × ' + t2 + ' = <b>' + v*t2 + ' km</b>.' };
+}
+
+/* --- dinero --- */
+function gProfit(){
+  var cost = ri(2,20) * 20, m = pick([10,20,25,50,40,15]), price = cost * (1 + m/100);
+  if (rnd() < .5){
+    return { type:'money',
+      stem: L('Un producto cuesta $' + cost + ' y se vende a $' + fmt(price) + '. ¿Qué porcentaje de ganancia deja sobre el costo?',
+              'An item costs $' + cost + ' and sells for $' + fmt(price) + '. What is the profit as a percentage of cost?'),
+      set: mk(m + '%', numDecoys(m, [m+5, m-5, fmt((price-cost)/price*100), m*2, 100-m]).map(function(x){ return x + '%'; })),
+      explain: L('Ganancia: ', 'Profit: ') + fmt(price-cost) + '. ' + fmt(price-cost) + ' ÷ ' + cost + ' = <b>' + m + '%</b>' +
+               L(' (se divide por el costo, no por el precio de venta).', ' (divide by cost, not by the selling price).') };
+  }
+  return { type:'money',
+    stem: L('Un producto cuesta $' + cost + '. ¿A qué precio hay que venderlo para ganar un ' + m + '% sobre el costo?',
+            'An item costs $' + cost + '. What price gives a ' + m + '% profit on cost?'),
+    set: mk('$' + fmt(price), numDecoys(price, [cost + m, cost*(1+m/50), price+10, price-10, cost]).map(function(x){ return '$' + x; })),
+    explain: cost + ' × ' + (1 + m/100) + ' = <b>$' + fmt(price) + '</b>.' };
+}
+function gInterest(){
+  var C = ri(3,30) * 100, r = pick([3,4,5,6,8,10]), y = ri(2,5), I = C * r * y / 100;
+  return { type:'money',
+    stem: L('Un capital de $' + C + ' gana un ' + r + '% de interés simple por año. ¿Cuánto interés genera en ' + y + ' años?',
+            'A principal of $' + C + ' earns ' + r + '% simple interest per year. How much interest does it earn in ' + y + ' years?'),
+    set: mk('$' + I, numDecoys(I, [C*r/100, I+C*r/100, C+I, I/y, I*2]).map(function(x){ return '$' + x; })),
+    explain: C + ' × ' + r + '% × ' + y + ' = <b>$' + I + '</b>.' };
+}
+
+/* --- fracciones y probabilidad --- */
+function fracStr(n, d){ var g = gcd(n,d) || 1; return (n/g) + '/' + (d/g); }
+function gFractionOf(){
+  var den = pick([3,4,5,6,8]), cands = [], x;
+  for (x=1;x<den;x++) if (gcd(x, den) === 1) cands.push(x);
+  var num = pick(cands), k = ri(3,15), whole = den * k, res = num * k;
+  if (rnd() < .5){
+    return { type:'fraction',
+      stem: L('¿Cuánto es ' + num + '/' + den + ' de ' + whole + '?', 'What is ' + num + '/' + den + ' of ' + whole + '?'),
+      set: mk(String(res), numDecoys(res, [whole - res, k, res + k, res - k, whole/den*(num+1)]).map(String)),
+      explain: whole + ' ÷ ' + den + ' = ' + k + '; ' + k + ' × ' + num + ' = <b>' + res + '</b>.' };
+  }
+  return { type:'fraction',
+    stem: L(num + '/' + den + ' de un número es ' + res + '. ¿Cuál es el número?', num + '/' + den + ' of a number is ' + res + '. What is the number?'),
+    set: mk(String(whole), numDecoys(whole, [res*den, res*num, whole+den, whole-den, res+den]).map(String)),
+    explain: (num === 1 ? '' : res + ' ÷ ' + num + ' = ' + k + L(' (una parte); ', ' (one part); ')) +
+             k + ' × ' + den + ' = <b>' + whole + '</b>.' };
+}
+function gProbability(){
+  var r = ri(2,8), b = ri(2,8), g = ri(1,6), tot = r + b + g;
+  var ask = pick(['r','notr','rb']);
+  var num = ask === 'r' ? r : (ask === 'notr' ? (b+g) : (r+b));
+  var label = ask === 'r' ? L('sea roja', 'is red') : (ask === 'notr' ? L('NO sea roja', 'is NOT red') : L('sea roja o azul', 'is red or blue'));
+  var cands = [fracStr(r,tot), fracStr(b,tot), fracStr(g,tot), fracStr(r+g,tot), fracStr(b+g,tot), fracStr(r,r+b)];
+  var correct = fracStr(num,tot);
+  return { type:'probability',
+    stem: L('Una bolsa tiene ' + r + ' bolitas rojas, ' + b + ' azules y ' + g + ' verdes. Se saca una al azar. ¿Cuál es la probabilidad de que ' + label + '?',
+            'A bag holds ' + r + ' red marbles, ' + b + ' blue and ' + g + ' green. One is drawn at random. What is the probability that it ' + label + '?'),
+    set: mk(correct, cands.filter(function(c){ return c !== correct; })),
+    explain: L('Casos favorables ', 'Favorable outcomes ') + num + L(' sobre ', ' out of ') + tot + ' = ' + num + '/' + tot +
+             (correct !== num + '/' + tot
+               ? L(', que se simplifica a <b>', ', which simplifies to <b>') + correct + '</b>.'
+               : ' → <b>' + correct + '</b>.') };
+}
+
+/* --- álgebra, edades, conjuntos --- */
+function gAlgebra(d){
+  var x = ri(2,14), a = ri(2,9), b = ri(3,25);
+  if (d >= 2 && rnd() < .5){
+    var c = a * (x + b);
+    return { type:'algebra',
+      stem: L('Si ' + a + '(x + ' + b + ') = ' + c + ', ¿cuánto vale x?', 'If ' + a + '(x + ' + b + ') = ' + c + ', what is x?'),
+      set: mk(String(x), numDecoys(x, [c/a, x+b, c-b, x+1, x-1]).map(String)),
+      explain: c + ' ÷ ' + a + ' = ' + (x+b) + '; ' + (x+b) + ' − ' + b + ' = <b>' + x + '</b>.' };
+  }
+  var cc = a * x + b;
+  return { type:'algebra',
+    stem: L('Si ' + a + 'x + ' + b + ' = ' + cc + ', ¿cuánto vale x?', 'If ' + a + 'x + ' + b + ' = ' + cc + ', what is x?'),
+    set: mk(String(x), numDecoys(x, [cc/a, cc-b, x+1, x-1, x*2]).map(String)),
+    explain: cc + ' − ' + b + ' = ' + (a*x) + '; ' + (a*x) + ' ÷ ' + a + ' = <b>' + x + '</b>.' };
+}
+function gAge(){
+  var combos = [[3,2,5],[3,2,7],[3,2,9],[4,3,6],[4,3,8],[5,3,4],[5,3,6],[5,4,3]];
+  var c = pick(combos), k = c[0], m = c[1], tt = c[2];
+  var b = tt * (m - 1) / (k - m), a = k * b, n = two();
+  return { type:'ages',
+    stem: L(n[0] + ' tiene ' + k + ' veces la edad de ' + n[1] + '. Dentro de ' + tt + ' años tendrá ' + m + ' veces su edad. ¿Cuántos años tiene ' + n[1] + ' hoy?',
+            n[0] + ' is ' + k + ' times as old as ' + n[1] + '. In ' + tt + ' years ' + n[0] + ' will be ' + m + ' times as old. How old is ' + n[1] + ' today?'),
+    set: mk(String(b), numDecoys(b, [a, b+tt, b*2, a-b, b+1]).map(String)),
+    explain: L('Si ' + n[1] + ' tiene b, ' + n[0] + ' tiene ' + k + 'b. Entonces ' + k + 'b + ' + tt + ' = ' + m + '(b + ' + tt + ') → b = <b>' + b + '</b> (y ' + n[0] + ' tiene ' + a + ').',
+               'If ' + n[1] + ' is b, ' + n[0] + ' is ' + k + 'b. So ' + k + 'b + ' + tt + ' = ' + m + '(b + ' + tt + ') → b = <b>' + b + '</b> (and ' + n[0] + ' is ' + a + ').') };
+}
+function gSets(){
+  var both = ri(3,12), onlyA = ri(5,20), onlyB = ri(4,18), neither = ri(2,12);
+  var total = both + onlyA + onlyB + neither, A = onlyA + both, B = onlyB + both;
+  var askNeither = rnd() < .6;
+  var correct = askNeither ? neither : both;
+  return { type:'sets',
+    stem: askNeither
+      ? L('En un equipo de ' + total + ' personas, ' + A + ' hablan inglés, ' + B + ' hablan portugués y ' + both + ' hablan los dos idiomas. ¿Cuántas no hablan ninguno?',
+          'On a team of ' + total + ', ' + A + ' speak English, ' + B + ' speak Portuguese and ' + both + ' speak both. How many speak neither?')
+      : L('En un equipo de ' + total + ' personas, ' + A + ' hablan inglés, ' + B + ' hablan portugués y ' + neither + ' no hablan ninguno de los dos. ¿Cuántas hablan los dos idiomas?',
+          'On a team of ' + total + ', ' + A + ' speak English, ' + B + ' speak Portuguese and ' + neither + ' speak neither. How many speak both?'),
+    set: mk(String(correct), numDecoys(correct, [total-A-B, A+B-total, correct+both, correct+3, correct-2, onlyA]).map(String)),
+    explain: askNeither
+      ? L('Hablan al menos uno: ', 'At least one language: ') + A + ' + ' + B + ' − ' + both + ' = ' + (A+B-both) + '. ' +
+        total + ' − ' + (A+B-both) + ' = <b>' + neither + '</b>.'
+      : L('Hablan al menos uno: ', 'At least one language: ') + total + ' − ' + neither + ' = ' + (total-neither) + '. ' +
+        A + ' + ' + B + ' − ' + (total-neither) + ' = <b>' + both + '</b>.' };
+}
+
+/* --- comparación de magnitudes --- */
+var VALS = [[0.25,'1/4'],[0.3,'3/10'],[1/3,'1/3'],[0.375,'3/8'],[0.4,'2/5'],[0.45,'9/20'],[0.5,'1/2'],
+            [0.55,'11/20'],[0.6,'3/5'],[0.625,'5/8'],[2/3,'2/3'],[0.7,'7/10'],[0.75,'3/4'],[0.8,'4/5']];
+function gCompare(){
+  var chosen = sample(VALS, 5), askMax = rnd() < .5;
+  var labels = chosen.map(function(v){
+    var mode = ri(0,2);
+    if (mode === 0) return { v:v[0], s:v[1] };
+    if (mode === 1) return { v:v[0], s:String(Math.round(v[0]*1000)/1000) };
+    return { v:v[0], s:Math.round(v[0]*1000)/10 + '%' };
+  });
+  var sorted = labels.slice().sort(function(a,b){ return a.v - b.v; });
+  var target = askMax ? sorted[sorted.length-1] : sorted[0];
+  var opts = shuffle(labels).map(function(o){ return o.s; });
+  return { type:'compare',
+    stem: askMax ? L('¿Cuál de estos valores es el MAYOR?', 'Which of these values is the LARGEST?')
+                 : L('¿Cuál de estos valores es el MENOR?', 'Which of these values is the SMALLEST?'),
+    set: { options: opts, answer: opts.indexOf(target.s) },
+    explain: L('Pasados todos a decimal: ', 'Converted to decimals: ') +
+             sorted.map(function(o){ return o.s + ' = ' + Math.round(o.v*1000)/1000; }).join(' · ') +
+             '. ' + L('El ', 'The ') + (askMax ? L('mayor', 'largest') : L('menor', 'smallest')) + ' es <b>' + target.s + '</b>.' };
+}
+
+/* --- intruso numérico --- */
+function gOddNumber(){
+  var kind = pick(['mult','square','prime','even']);
+  var group = [], odd, why;
+  if (kind === 'mult'){
+    var m = pick([3,4,6,7,8,9,11]);
+    while (group.length < 4){ var v = m * ri(2,12); if (group.indexOf(v) < 0) group.push(v); }
+    odd = m * ri(2,12) + pick([1,2,-1]);
+    why = L('Todos son múltiplos de ' + m + ', menos ' + odd + '.', 'All are multiples of ' + m + ' except ' + odd + '.');
+  } else if (kind === 'square'){
+    var sq = sample([4,9,16,25,36,49,64,81,100,121], 4); group = sq;
+    odd = pick([12,20,27,50,72,90,45]);
+    why = L('Todos son cuadrados perfectos, menos ' + odd + '.', 'All are perfect squares except ' + odd + '.');
+  } else if (kind === 'prime'){
+    group = sample([11,13,17,19,23,29,31,37,41,43], 4);
+    odd = pick([21,27,33,39,49,51,57]);
+    why = L('Todos son números primos, menos ' + odd + ' (es divisible por otro número).',
+            'All are prime numbers except ' + odd + ' (it has other divisors).');
+  } else {
+    while (group.length < 4){ var e = 2 * ri(6,40); if (group.indexOf(e) < 0) group.push(e); }
+    odd = 2 * ri(6,40) + 1;
+    why = L('Todos son pares, menos ' + odd + '.', 'All are even except ' + odd + '.');
+  }
+  if (group.indexOf(odd) >= 0) odd += 2;
+  return { type:'oddnum',
+    stem: L('¿Cuál de estos números NO pertenece al grupo?', 'Which of these numbers does NOT belong?'),
+    set: mk(String(odd), group.map(String)),
+    explain: why };
+}
+
+/* --- deducción: verdadero / falso / incierto --- */
+var DEDUC = {
+ es:{
+  rels:['mide más que','pesa más que','llegó antes que','corre más rápido que','vendió más que'],
+  topics:[
+   {allAB:'Todos los ingenieros son analistas.', someBC:'Algunos analistas trabajan de noche.',
+    someAC:'Algunos ingenieros trabajan de noche.', memberA:'{N} es ingeniero.', memberB:'{N} es analista.',
+    noAC:'Ningún ingeniero trabaja de noche.', isC:'{N} trabaja de noche.', isA:'{N} es ingeniero.',
+    catA:'los ingenieros', catB:'los analistas'},
+   {allAB:'Todos los pediatras son médicos.', someBC:'Algunos médicos atienden los sábados.',
+    someAC:'Algunos pediatras atienden los sábados.', memberA:'{N} es pediatra.', memberB:'{N} es médico.',
+    noAC:'Ningún pediatra atiende los sábados.', isC:'{N} atiende los sábados.', isA:'{N} es pediatra.',
+    catA:'los pediatras', catB:'los médicos'},
+   {allAB:'Todos los violinistas son músicos.', someBC:'Algunos músicos enseñan en la escuela.',
+    someAC:'Algunos violinistas enseñan en la escuela.', memberA:'{N} es violinista.', memberB:'{N} es músico.',
+    noAC:'Ningún violinista enseña en la escuela.', isC:'{N} enseña en la escuela.', isA:'{N} es violinista.',
+    catA:'los violinistas', catB:'los músicos'}
+  ],
+  left:'{A} está sentado a la izquierda de {B}.', right:'{A} está sentado a la derecha de {B}.'
+ },
+ en:{
+  rels:['is taller than','weighs more than','arrived before','runs faster than','sold more than'],
+  topics:[
+   {allAB:'All engineers are analysts.', someBC:'Some analysts work at night.',
+    someAC:'Some engineers work at night.', memberA:'{N} is an engineer.', memberB:'{N} is an analyst.',
+    noAC:'No engineer works at night.', isC:'{N} works at night.', isA:'{N} is an engineer.',
+    catA:'engineers', catB:'analysts'},
+   {allAB:'All pediatricians are doctors.', someBC:'Some doctors see patients on Saturdays.',
+    someAC:'Some pediatricians see patients on Saturdays.', memberA:'{N} is a pediatrician.', memberB:'{N} is a doctor.',
+    noAC:'No pediatrician sees patients on Saturdays.', isC:'{N} sees patients on Saturdays.', isA:'{N} is a pediatrician.',
+    catA:'pediatricians', catB:'doctors'},
+   {allAB:'All violinists are musicians.', someBC:'Some musicians teach at the school.',
+    someAC:'Some violinists teach at the school.', memberA:'{N} is a violinist.', memberB:'{N} is a musician.',
+    noAC:'No violinist teaches at the school.', isC:'{N} teaches at the school.', isA:'{N} is a violinist.',
+    catA:'violinists', catB:'musicians'}
+  ],
+  left:'{A} sits to the left of {B}.', right:'{A} sits to the right of {B}.'
+ }
+};
+function gDeduction(d){
+  var D = DEDUC[lang === 'en' ? 'en' : 'es'], n = sample(NAMES[lang === 'en' ? 'en' : 'es'], 3);
+  var tp = pick(D.topics), rel = pick(D.rels);
+  function fill(s, who){ return s.replace('{N}', who).replace('{A}', arguments[2] || who).replace('{B}', arguments[3] || ''); }
+  var schemas = [
+    function(){ return { p:[n[0] + ' ' + rel + ' ' + n[1] + '.', n[1] + ' ' + rel + ' ' + n[2] + '.'],
+      c: n[0] + ' ' + rel + ' ' + n[2] + '.', a:0,
+      why: L('La relación es transitiva: si ' + n[0] + ' supera a ' + n[1] + ', y ' + n[1] + ' supera a ' + n[2] + ', entonces ' + n[0] + ' supera a ' + n[2] + '.',
+             'The relation is transitive: ' + n[0] + ' beats ' + n[1] + ' and ' + n[1] + ' beats ' + n[2] + ', so ' + n[0] + ' beats ' + n[2] + '.') }; },
+    function(){ return { p:[n[0] + ' ' + rel + ' ' + n[1] + '.', n[1] + ' ' + rel + ' ' + n[2] + '.'],
+      c: n[2] + ' ' + rel + ' ' + n[0] + '.', a:1,
+      why: L('Las premisas dejan a ' + n[2] + ' en el último lugar, así que la conclusión es imposible.',
+             'The premises leave ' + n[2] + ' last, so the conclusion is impossible.') }; },
+    function(){ return { p:[tp.allAB, tp.someBC], c: tp.someAC, a:2,
+      why: L('Los ' + tp.catB.replace(/^los /,'') + ' de los que habla la segunda premisa podrían no incluir a ningún miembro de ' + tp.catA + '. Falta información.',
+             'The ' + tp.catB + ' in the second premise might not include any of the ' + tp.catA + '. Not enough information.') }; },
+    function(){ return { p:[tp.allAB, tp.memberA.replace('{N}', n[0])], c: tp.memberB.replace('{N}', n[0]), a:0,
+      why: L('Si toda la categoría está incluida, cada miembro también lo está.',
+             'If the whole category is included, every member is included too.') }; },
+    function(){ return { p:[tp.noAC, tp.isC.replace('{N}', n[0])], c: tp.isA.replace('{N}', n[0]), a:1,
+      why: L('Las dos categorías no se tocan, así que la conclusión contradice la primera premisa.',
+             'The two categories do not overlap, so the conclusion contradicts the first premise.') }; },
+    function(){ return { p:[D.left.replace('{A}', n[0]).replace('{B}', n[1]), D.left.replace('{A}', n[2]).replace('{B}', n[1])],
+      c: D.right.replace('{A}', n[2]).replace('{B}', n[0]), a:2,
+      why: L('Los dos están a la izquierda de ' + n[1] + ', pero no se sabe en qué orden quedan entre ellos.',
+             'Both sit to the left of ' + n[1] + ', but their order relative to each other is unknown.') }; }
+  ];
+  var s = (d >= 2 ? pick(schemas) : pick([schemas[0], schemas[1], schemas[3]]))();
+  var opts = [L('Verdadera','True'), L('Falsa','False'), L('Incierta','Uncertain')];
+  return { type:'deduction',
+    stem: L('Suponé que las dos primeras afirmaciones son verdaderas. ¿La tercera es verdadera, falsa o incierta?',
+            'Assume the first two statements are true. Is the third one true, false or uncertain?') +
+          '<br><span style="display:block;margin-top:10px;font-size:.92em;line-height:1.7">1. ' + esc(s.p[0]) +
+          '<br>2. ' + esc(s.p[1]) + '<br>3. <b>' + esc(s.c) + '</b></span>',
+    set: { options: opts, answer: s.a },
+    explain: s.why };
+}
+</script>
+
+<script>
+/* ======================= RAZONAMIENTO ESPACIAL ======================= */
+var GLYPH = {
+  flag:  '<rect x="24" y="12" width="7" height="76" rx="3" fill="var(--fig-2)"/><path d="M33 16 H78 L66 30 H78 L64 44 H33 Z" fill="var(--fig)"/>',
+  ell:   '<path d="M28 14 H50 V60 H76 V86 H28 Z" fill="var(--fig)"/><circle cx="39" cy="26" r="5" fill="var(--fig-2)"/>',
+  pac:   '<path d="M50 14 A36 36 0 1 0 86 50 L50 50 Z" fill="var(--fig)"/><rect x="24" y="58" width="15" height="15" fill="var(--fig-2)"/>',
+  arrow: '<path d="M16 40 H56 V22 L86 50 L56 78 V60 H16 Z" fill="var(--fig)"/><rect x="18" y="14" width="14" height="12" fill="var(--fig-2)"/>',
+  tri:   '<path d="M20 86 V18 L82 86 Z" fill="var(--fig)"/><rect x="62" y="18" width="18" height="18" rx="3" fill="var(--fig-2)"/>'
+};
+var GKEYS = Object.keys(GLYPH);
+
+function svgWrap(inner, tr){ return '<svg viewBox="0 0 100 100" aria-hidden="true"><g transform="' + tr + '">' + inner + '</g></svg>'; }
+function trOf(s){ return 'rotate(' + s.r + ' 50 50)' + (s.f ? ' translate(100,0) scale(-1,1)' : ''); }
+function figOf(kind, s){ return svgWrap(GLYPH[kind], trOf(s)); }
+function rot(s, k){ return { r:(s.r + k) % 360, f:s.f }; }
+function mir(s){ return { r:(360 - s.r) % 360, f:!s.f }; }
+function sameState(a, b){ return ((a.r % 360) + 360) % 360 === ((b.r % 360) + 360) % 360 && !!a.f === !!b.f; }
+
+function box(svg){ return '<div class="fig">' + svg + '</div>'; }
+function qbox(){ return '<div class="fig q">?</div>'; }
+function sepc(s){ return '<div class="figsep">' + s + '</div>'; }
+function figrow(items){ return '<div class="figrow">' + items.join('') + '</div>'; }
+
+function poly(n, r, filled){
+  var pts = [], i;
+  for (i=0;i<n;i++){ var a = (-90 + r + i*360/n) * Math.PI/180;
+    pts.push((50 + 37*Math.cos(a)).toFixed(1) + ',' + (50 + 37*Math.sin(a)).toFixed(1)); }
+  var dots = pts.map(function(pt){ var c = pt.split(',');
+    return '<circle cx="' + c[0] + '" cy="' + c[1] + '" r="5" fill="var(--fig-2)"/>'; }).join('');
+  return '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="' + pts.join(' ') +
+    '" fill="' + (filled ? 'var(--fig)' : 'none') + '" stroke="var(--fig)" stroke-width="5" stroke-linejoin="round"/>' + dots + '</svg>';
+}
+var DOTPOS = [[50,50],[28,28],[72,72],[72,28],[28,72],[50,22],[50,78],[22,50],[78,50]];
+function dotsFig(n){
+  var s = '', i;
+  for (i=0;i<n;i++) s += '<circle cx="' + DOTPOS[i][0] + '" cy="' + DOTPOS[i][1] + '" r="8" fill="var(--fig)"/>';
+  return '<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="6" y="6" width="88" height="88" rx="10" fill="none" stroke="var(--fig-2)" stroke-width="3" opacity=".45"/>' + s + '</svg>';
+}
+
+/* --- serie de rotación --- */
+function gRotSeries(d){
+  var kind = pick(GKEYS), step = pick(d >= 2 ? [45,90,-90,135,-45] : [90,-90]);
+  var st = { r:pick([0,45,90,180,270]), f:rnd() < .3 };
+  var shown = [], i;
+  for (i=0;i<4;i++) shown.push(box(figOf(kind, rot(st, step*i))));
+  shown.push(qbox());
+  var ansState = rot(st, step*4);
+  var wrong = [], grid = Math.abs(step) % 90 === 0 ? 90 : 45, guard = 0;
+  while (wrong.length < 4 && guard++ < 80){
+    var cand = rnd() < .25 ? mir(ansState) : rot(ansState, grid * ri(1,7));
+    var dup = sameState(cand, ansState) || wrong.some(function(w){ return sameState(w, cand); });
+    if (!dup) wrong.push(cand);
+  }
+  var opts = shuffle([ansState].concat(wrong)).map(function(s){ return { s:s, html:figOf(kind, s) }; });
+  return { type:'rotation', figs: figrow(shown), figOpts:true,
+    stem: L('¿Qué figura continúa la serie?', 'Which figure comes next in the series?'),
+    set: { options: opts.map(function(o){ return o.html; }),
+           answer: opts.findIndex(function(o){ return sameState(o.s, ansState); }) },
+    explain: L('La figura gira ' + Math.abs(step) + '° en sentido ' + (step > 0 ? 'horario' : 'antihorario') + ' en cada paso.',
+               'The figure turns ' + Math.abs(step) + '° ' + (step > 0 ? 'clockwise' : 'counter-clockwise') + ' at each step.') };
+}
+
+/* --- intruso entre figuras --- */
+function gOddFig(d){
+  var mode = pick(d >= 2 ? ['mirror','sides','fill','mirror'] : ['sides','fill','mirror']);
+  var items = [], correctHtml, why;
+  if (mode === 'mirror'){
+    var kind = pick(GKEYS), base = { r:0, f:rnd() < .5 };
+    var fam = pick([[0,90,180,270],[45,135,225,315]]);
+    items = shuffle(fam).map(function(r){ return figOf(kind, rot(base, r)); });
+    correctHtml = figOf(kind, mir(rot(base, pick(fam))));
+    why = L('Las otras cuatro son la misma figura girada. Ésta está espejada: no se puede obtener girándola.',
+            'The other four are the same figure rotated. This one is mirrored: no rotation produces it.');
+  } else if (mode === 'sides'){
+    var n = ri(3,6), m = pick([n+1, n-1 >= 3 ? n-1 : n+2]);
+    var prot = sample([0,11,23,34,47,58,71,83], 4);
+    items = prot.map(function(r){ return poly(n, r, false); });
+    correctHtml = poly(m, pick([5,17,29,41]), false);
+    why = L('Cuatro figuras tienen ' + n + ' lados; la intrusa tiene ' + m + '.',
+            'Four figures have ' + n + ' sides; the odd one has ' + m + '.');
+  } else {
+    var k2 = pick(GKEYS), b2 = { r:0, f:false };
+    var fam2 = pick([[0,90,180,270],[45,135,225,315]]);
+    var rr = shuffle(fam2);
+    items = rr.map(function(r){ return figOf(k2, rot(b2, r)); });
+    correctHtml = '<svg viewBox="0 0 100 100" aria-hidden="true"><g transform="' + trOf(rot(b2, pick(fam2))) + '" opacity=".999">' +
+      GLYPH[k2].replace(/fill="var\(--fig\)"/g, 'fill="none" stroke="var(--fig)" stroke-width="5"')
+               .replace(/fill="var\(--fig-2\)"/g, 'fill="none" stroke="var(--fig-2)" stroke-width="5"') + '</g></svg>';
+    why = L('Las otras cuatro están rellenas; la intrusa es sólo el contorno.',
+            'The other four are solid; the odd one is only an outline.');
+  }
+  var opts = shuffle(items.concat([correctHtml]));
+  return { type:'oddfig', figOpts:true,
+    stem: L('¿Cuál de estas figuras NO pertenece al grupo?', 'Which of these figures does NOT belong?'),
+    set: { options: opts, answer: opts.indexOf(correctHtml) },
+    explain: why };
+}
+
+/* --- analogía de figuras: A es a B como C es a ? --- */
+function gMatrix(d){
+  var kind = pick(GKEYS);
+  var ops = d >= 2 ? ['r90','r180','r270','mir','mir90'] : ['r90','r180','mir'];
+  var op = pick(ops);
+  function apply(s){
+    if (op === 'r90') return rot(s, 90);
+    if (op === 'r180') return rot(s, 180);
+    if (op === 'r270') return rot(s, 270);
+    if (op === 'mir') return mir(s);
+    return rot(mir(s), 90);
+  }
+  var A = { r:pick([0,45,90,180,270]), f:false }, B = apply(A);
+  var C = { r:pick([0,45,135,225,315]), f:rnd() < .4 }, ans = apply(C);
+  var wrong = [], guard = 0;
+  while (wrong.length < 4 && guard++ < 80){
+    var c = pick([rot(ans,90), rot(ans,180), rot(ans,270), mir(ans), rot(mir(ans),90), rot(ans,45)]);
+    if (!sameState(c, ans) && !wrong.some(function(w){ return sameState(w, c); })) wrong.push(c);
+  }
+  var opts = shuffle([ans].concat(wrong));
+  var names = { r90:L('gira 90° en sentido horario','turns 90° clockwise'), r180:L('gira 180°','turns 180°'),
+                r270:L('gira 90° en sentido antihorario','turns 90° counter-clockwise'),
+                mir:L('se refleja como en un espejo vertical','is flipped in a vertical mirror'),
+                mir90:L('se refleja y además gira 90°','is flipped and then turned 90°') };
+  return { type:'matrix', figOpts:true,
+    figs: figrow([box(figOf(kind,A)), sepc('→'), box(figOf(kind,B)), sepc('&nbsp;·&nbsp;'), box(figOf(kind,C)), sepc('→'), qbox()]),
+    stem: L('La primera figura se transforma en la segunda. ¿En qué se transforma la tercera?',
+            'The first figure becomes the second. What does the third one become?'),
+    set: { options: opts.map(function(s){ return figOf(kind, s); }),
+           answer: opts.findIndex(function(s){ return sameState(s, ans); }) },
+    explain: L('La transformación es la misma en los dos pares: la figura ', 'The same transformation applies to both pairs: the figure ') + names[op] + '.' };
+}
+
+/* --- serie de polígonos --- */
+function gPolySeries(){
+  var start = ri(3,5), step = 1, shown = [], i;
+  for (i=0;i<4;i++) shown.push(box(poly(start + step*i, i*20, false)));
+  shown.push(qbox());
+  var ansN = start + step*4;
+  var cands = [ansN-1, ansN+1, ansN-2, ansN+2, ansN-3].filter(function(n){ return n >= 3 && n !== ansN; });
+  var set = shuffle([ansN].concat(sample(cands, 4)));
+  return { type:'polyseries', figOpts:true, figs: figrow(shown),
+    stem: L('¿Qué figura continúa la serie?', 'Which figure comes next in the series?'),
+    set: { options: set.map(function(n){ return poly(n, 12, false); }), answer: set.indexOf(ansN) },
+    explain: L('Cada figura suma un lado: ' + start + ', ' + (start+1) + ', ' + (start+2) + ', ' + (start+3) + ' → <b>' + ansN + ' lados</b>.',
+               'Each figure gains one side: ' + start + ', ' + (start+1) + ', ' + (start+2) + ', ' + (start+3) + ' → <b>' + ansN + ' sides</b>.') };
+}
+
+/* --- serie de puntos --- */
+function gDotSeries(){
+  var mode = pick(['add1','add2','dbl']), seq = [], i, n;
+  if (mode === 'add1'){ n = ri(1,4); for (i=0;i<4;i++) seq.push(n+i); }
+  else if (mode === 'add2'){ n = ri(1,2); for (i=0;i<4;i++) seq.push(n+2*i); }
+  else { n = 1; seq = [1,2,4,8]; }
+  var ans = mode === 'add1' ? seq[3]+1 : (mode === 'add2' ? seq[3]+2 : 9);
+  if (ans > 9) ans = 9;
+  var shown = seq.map(function(k){ return box(dotsFig(k)); }); shown.push(qbox());
+  var cands = [ans-1, ans+1, ans-2, ans+2, ans-3].filter(function(k){ return k >= 1 && k <= 9 && k !== ans; });
+  var set = shuffle([ans].concat(sample(cands, 4)));
+  return { type:'dotseries', figOpts:true, figs: figrow(shown),
+    stem: L('¿Qué figura continúa la serie?', 'Which figure comes next in the series?'),
+    set: { options: set.map(dotsFig), answer: set.indexOf(ans) },
+    explain: L('La cantidad de puntos sigue la serie ' + seq.join(', ') + ' → <b>' + ans + '</b>.',
+               'The number of dots follows ' + seq.join(', ') + ' → <b>' + ans + '</b>.') };
+}
+
+/* ======================= CATÁLOGO ======================= */
+var GENS = [
+  {cat:'verbal',  fn:gAnalogy,     w:3, d:[1,3]},
+  {cat:'verbal',  fn:gAntonym,     w:2, d:[1,3]},
+  {cat:'verbal',  fn:gSynonym,     w:2, d:[1,3]},
+  {cat:'verbal',  fn:gOdd,         w:2, d:[1,2]},
+  {cat:'verbal',  fn:gCloze,       w:2, d:[2,3]},
+  {cat:'math',    fn:gSeries,      w:3, d:[1,3]},
+  {cat:'math',    fn:gLetterSeries,w:1, d:[2,3]},
+  {cat:'math',    fn:gPercentOf,   w:1, d:[1,1]},
+  {cat:'math',    fn:gPercentChange,w:1,d:[2,3]},
+  {cat:'math',    fn:gDiscount,    w:1, d:[1,3]},
+  {cat:'math',    fn:gAverage,     w:2, d:[1,3]},
+  {cat:'math',    fn:gRatio,       w:1, d:[2,2]},
+  {cat:'math',    fn:gProportion,  w:1, d:[2,3]},
+  {cat:'math',    fn:gWork,        w:1, d:[3,3]},
+  {cat:'math',    fn:gSpeed,       w:1, d:[1,2]},
+  {cat:'math',    fn:gProfit,      w:1, d:[2,3]},
+  {cat:'math',    fn:gInterest,    w:1, d:[2,2]},
+  {cat:'math',    fn:gFractionOf,  w:1, d:[1,2]},
+  {cat:'math',    fn:gProbability, w:1, d:[2,3]},
+  {cat:'math',    fn:gAlgebra,     w:1, d:[1,3]},
+  {cat:'math',    fn:gAge,         w:1, d:[3,3]},
+  {cat:'math',    fn:gSets,        w:1, d:[3,3]},
+  {cat:'math',    fn:gCompare,     w:1, d:[1,2]},
+  {cat:'math',    fn:gOddNumber,   w:1, d:[1,2]},
+  {cat:'math',    fn:gDeduction,   w:2, d:[1,3]},
+  {cat:'spatial', fn:gRotSeries,   w:4, d:[1,3]},
+  {cat:'spatial', fn:gOddFig,      w:3, d:[1,3]},
+  {cat:'spatial', fn:gMatrix,      w:3, d:[1,3]},
+  {cat:'spatial', fn:gPolySeries,  w:1, d:[1,2]},
+  {cat:'spatial', fn:gDotSeries,   w:1, d:[1,1]}
+];
+function pool(cats, d){
+  var out = [];
+  GENS.forEach(function(g){
+    if (cats.indexOf(g.cat) < 0) return;
+    if (d < g.d[0] || d > g.d[1]) return;
+    for (var i=0;i<g.w;i++) out.push(g);
+  });
+  return out.length ? out : GENS.filter(function(g){ return cats.indexOf(g.cat) >= 0; });
+}
+function makeQuestion(cats, d){
+  var g = pick(pool(cats, d)), q;
+  try { q = g.fn(d); } catch (e) { q = gSeries(1); g = GENS[5]; }
+  q.cat = g.cat; q.diff = d; q.gi = GENS.indexOf(g);
+  return q;
+}
+/* Arma un examen: mezcla por categoría y ordena de menor a mayor dificultad. */
+function buildTest(n, cats){
+  USED = {};
+  var plan = [], i;
+  var share = { verbal:.34, math:.34, spatial:.32 };
+  var active = cats.filter(function(c){ return share[c]; });
+  var per = {}, assigned = 0;
+  active.forEach(function(c, idx){
+    var k = idx === active.length - 1 ? n - assigned : Math.round(n * (share[c] / active.reduce(function(a,x){ return a + share[x]; }, 0)));
+    per[c] = k; assigned += k;
+  });
+  active.forEach(function(c){
+    for (i=0;i<per[c];i++){
+      var frac = i / Math.max(1, per[c] - 1);
+      var d = frac < .34 ? 1 : (frac < .7 ? 2 : 3);
+      plan.push({ c:c, d:d });
+    }
+  });
+  var byD = [1,2,3].map(function(d){ return shuffle(plan.filter(function(p){ return p.d === d; })); });
+  var ordered = byD[0].concat(byD[1], byD[2]);
+  return ordered.map(function(p){ return makeQuestion([p.c], p.d); });
+}
+</script>
+
+<script>
+/* ======================= INTERFAZ ======================= */
+var app = document.getElementById('app'), footEl = document.getElementById('foot'), drain = document.getElementById('drain');
+var S = null, timer = null, qStart = 0;
+var CATLBL = function(c){ return c === 'verbal' ? t('verbal') : (c === 'math' ? t('math') : t('spatial')); };
+var LET = ['A','B','C','D','E'];
+
+function mmss(sec){ sec = Math.max(0, Math.round(sec)); var m = Math.floor(sec/60), s = sec % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
+function pctile(score50){
+  var TBL = [[0,1],[8,3],[10,5],[12,9],[14,14],[16,20],[18,26],[20,34],[22,42],[24,50],[26,57],[28,63],
+             [30,70],[32,76],[34,81],[36,86],[38,90],[40,93],[42,96],[44,97],[46,98],[50,99]];
+  if (score50 <= 0) return 1;
+  for (var i=1;i<TBL.length;i++){
+    if (score50 <= TBL[i][0]){
+      var a = TBL[i-1], b = TBL[i], f = (score50 - a[0]) / (b[0] - a[0]);
+      return Math.max(1, Math.min(99, Math.round(a[1] + f * (b[1] - a[1]))));
+    }
+  }
+  return 99;
+}
+
+/* ---------- inicio ---------- */
+function home(){
+  stopTimer(); S = null; drain.hidden = true;
+  var full = HIST.filter(function(h){ return h.mode === 'full'; });
+  var all = HIST.slice();
+  var best = all.length ? Math.max.apply(null, all.map(function(h){ return h.score50; })) : 0;
+  var avg = all.length ? Math.round(all.reduce(function(a,h){ return a + h.score50; }, 0) / all.length) : 0;
+  var last = all.slice(-8);
+  var facts = ['f1','f2','f3','f4','f5','f6'].map(function(k, i){ return '<li><b>' + (i+1).toString().padStart(2,'0') + '</b><span>' + t(k) + '</span></li>'; }).join('');
+  var strat = ['s1','s2','s3','s4','s5'].map(function(k){ return '<li><b>→</b><span>' + t(k) + '</span></li>'; }).join('');
+  var cs = PREFS.cats;
+  app.innerHTML =
+  '<header class="masthead">' +
+    '<div class="eyebrow">' + L('Práctica cronometrada', 'Timed practice') + '</div>' +
+    '<h1 style="margin-top:10px">' + L('Entrenador <span>CCAT</span>', '<span>CCAT</span> Trainer') + '</h1>' +
+    '<p class="lede">' + t('lede') + '</p>' +
+    '<div class="spec"><div><b>50</b> ' + L('preguntas','questions') + '</div><div><b>15:00</b> ' + L('de reloj','on the clock') + '</div>' +
+      '<div><b>~18 s</b> ' + L('por pregunta','per question') + '</div><div><b>3</b> ' + L('áreas','areas') + '</div></div>' +
+  '</header>' +
+
+  '<section class="section"><span class="eyebrow">' + t('modes') + '</span><div class="modes">' +
+    modeBtn('full', '01', t('fullT'), t('fullS')) +
+    modeBtn('sprint', '02', t('sprintT'), t('sprintS')) +
+    modeBtn('drill', '03', t('drillT'), t('drillS')) +
+  '</div></section>' +
+
+  '<section class="section"><div class="panel"><h3>' + t('drillCfg') + '</h3>' +
+    '<div class="field"><label>' + t('cats') + '</label><div class="optrow">' +
+      catChip('verbal', cs.verbal) + catChip('math', cs.math) + catChip('spatial', cs.spatial) + '</div></div>' +
+    '<div class="field"><label>' + t('howMany') + '</label><div class="optrow" id="cnt">' +
+      [10,20,30,50].map(function(n){ return '<button class="chip" data-n="' + n + '" aria-pressed="' + (PREFS.count === n) + '">' + n + '</button>'; }).join('') + '</div></div>' +
+    '<div class="field"><label>' + t('perQ') + '</label><div class="optrow" id="pq">' +
+      [[0, t('noClock')],[18,'18 s'],[30,'30 s'],[45,'45 s']].map(function(o){ return '<button class="chip" data-s="' + o[0] + '" aria-pressed="' + (PREFS.perQ === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div></div>' +
+    '<div class="field"><label>' + t('qlang') + '</label><div class="optrow" id="lg">' +
+      '<button class="chip" data-l="es" aria-pressed="' + (lang === 'es') + '">Español</button>' +
+      '<button class="chip" data-l="en" aria-pressed="' + (lang === 'en') + '">English</button></div></div>' +
+  '</div></section>' +
+
+  '<section class="section"><span class="eyebrow">' + t('yourRecord') + '</span>' +
+    '<div class="stats">' +
+      '<div class="stat"><div class="v">' + all.length + '</div><div class="k">' + t('attempts') + '</div></div>' +
+      '<div class="stat"><div class="v">' + (best || '—') + '</div><div class="k">' + t('best') + ' / 50</div></div>' +
+      '<div class="stat"><div class="v">' + (avg || '—') + '</div><div class="k">' + t('avg') + ' / 50</div></div>' +
+    '</div>' +
+    (last.length
+      ? '<div class="hist">' + last.map(function(h){ return '<i style="height:' + Math.max(6, Math.round(h.score50/50*44)) + 'px" title="' + h.score50 + '/50"></i>'; }).join('') + '</div>'
+      : '<p class="lede" style="font-size:13px;margin-top:10px">' + t('noRuns') + '</p>') +
+  '</section>' +
+
+  '<section class="section grid2">' +
+    '<div class="panel"><h3>' + t('theTest') + '</h3><ul class="facts">' + facts + '</ul></div>' +
+    '<div class="panel"><h3>' + t('strategy') + '</h3><ul class="facts">' + strat + '</ul></div>' +
+  '</section>';
+
+  footEl.textContent = t('footNote');
+
+  app.querySelectorAll('[data-mode]').forEach(function(b){ b.onclick = function(){ start(b.dataset.mode); }; });
+  app.querySelectorAll('[data-cat]').forEach(function(b){ b.onclick = function(){
+    var c = b.dataset.cat, on = b.getAttribute('aria-pressed') === 'true';
+    var others = ['verbal','math','spatial'].filter(function(x){ return x !== c; }).some(function(x){ return PREFS.cats[x]; });
+    if (on && !others) return;
+    PREFS.cats[c] = !on; save('ccat.prefs.v1', PREFS); home();
+  }; });
+  app.querySelectorAll('#cnt [data-n]').forEach(function(b){ b.onclick = function(){ PREFS.count = +b.dataset.n; save('ccat.prefs.v1', PREFS); home(); }; });
+  app.querySelectorAll('#pq [data-s]').forEach(function(b){ b.onclick = function(){ PREFS.perQ = +b.dataset.s; save('ccat.prefs.v1', PREFS); home(); }; });
+  app.querySelectorAll('#lg [data-l]').forEach(function(b){ b.onclick = function(){ lang = PREFS.lang = b.dataset.l; save('ccat.prefs.v1', PREFS); home(); }; });
+}
+function modeBtn(id, num, title, sub){
+  return '<button class="mode" data-mode="' + id + '"><span class="num">' + num + '</span>' +
+    '<span><span class="t">' + title + '</span><span class="s" style="display:block">' + sub + '</span></span><span class="go">→</span></button>';
+}
+function catChip(c, on){ return '<button class="chip" data-cat="' + c + '" aria-pressed="' + !!on + '">' + CATLBL(c) + '</button>'; }
+
+/* ---------- arranque de una tanda ---------- */
+function start(mode){
+  var cats = ['verbal','math','spatial'].filter(function(c){ return PREFS.cats[c]; });
+  if (!cats.length) cats = ['verbal','math','spatial'];
+  var n, limit, feedback, perQ;
+  if (mode === 'full'){ n = 50; limit = 900; feedback = false; perQ = 0; cats = ['verbal','math','spatial']; }
+  else if (mode === 'sprint'){ n = 15; limit = 270; feedback = false; perQ = 0; }
+  else { n = PREFS.count; limit = 0; feedback = true; perQ = PREFS.perQ; }
+  S = { mode:mode, cats:cats, qs:buildTest(n, cats), i:0, answers:[], limit:limit, perQ:perQ,
+        feedback:feedback, left:limit, qLeft:perQ, startedAt:Date.now(), lang:lang, locked:false };
+  drain.hidden = !limit;
+  renderQ();
+  if (limit || perQ) startTimer();
+}
+function startFromGens(gis, n){
+  S = { mode:'drill', cats:['verbal','math','spatial'], qs:buildFromGens(gis, n), i:0, answers:[], limit:0,
+        perQ:PREFS.perQ, feedback:true, left:0, qLeft:PREFS.perQ, startedAt:Date.now(), lang:lang, locked:false };
+  drain.hidden = true; renderQ(); if (S.perQ) startTimer();
+}
+function buildFromGens(gis, n){
+  USED = {}; var out = [], i;
+  for (i=0;i<n;i++){
+    var gi = gis[i % gis.length], g = GENS[gi], d = ri(g.d[0], g.d[1]), q;
+    try { q = g.fn(d); } catch (e) { continue; }
+    q.cat = g.cat; q.diff = d; q.gi = gi; out.push(q);
+  }
+  return shuffle(out);
+}
+
+/* ---------- reloj ---------- */
+function startTimer(){
+  stopTimer();
+  var last = Date.now();
+  timer = setInterval(function(){
+    var now = Date.now(), dt = (now - last) / 1000; last = now;
+    if (S.limit){
+      S.left -= dt;
+      if (S.left <= 0){ S.left = 0; paintClock(); finish(true); return; }
+    }
+    if (S.perQ && !S.locked){
+      S.qLeft -= dt;
+      if (S.qLeft <= 0){ S.qLeft = 0; paintClock(); answer(null); return; }
+    }
+    paintClock();
+  }, 250);
+}
+function stopTimer(){ if (timer){ clearInterval(timer); timer = null; } }
+function paintClock(){
+  var el = document.getElementById('clock'); if (!el || !S) return;
+  var total = S.limit || S.perQ, left = S.limit ? S.left : S.qLeft;
+  if (!total){ el.textContent = mmss((Date.now() - S.startedAt) / 1000); return; }
+  el.textContent = mmss(left);
+  var f = left / total;
+  el.className = 'clock' + (f < .08 ? ' crit' : (f < .25 ? ' warn' : ''));
+  if (S.limit){ drain.style.transform = 'scaleX(' + f + ')'; drain.className = f < .08 ? 'crit' : (f < .25 ? 'warn' : ''); }
+}
+
+/* ---------- pregunta ---------- */
+function renderQ(){
+  var q = S.qs[S.i]; if (!q) return finish(false);
+  S.locked = false; S.qLeft = S.perQ; qStart = Date.now();
+  app.innerHTML =
+  '<div class="qbar">' +
+    '<span class="clock mono" id="clock">' + (S.limit ? mmss(S.left) : (S.perQ ? mmss(S.qLeft) : '0:00')) + '</span>' +
+    '<span class="counter">' + (S.i + 1) + ' / ' + S.qs.length + '</span>' +
+    '<span class="sp"></span>' +
+    '<span class="catpill">' + CATLBL(q.cat) + '</span>' +
+    '<button class="iconbtn" id="quit">' + t('quit') + '</button>' +
+  '</div>' +
+  '<div class="stem">' + q.stem + '</div>' +
+  (q.figs || '') +
+  '<div class="opts' + (q.figOpts ? ' figs' : '') + '" id="opts">' +
+    q.set.options.map(function(o, k){
+      return '<button class="opt" data-k="' + k + '"><span class="k">' + LET[k] + '</span><span class="body">' + o + '</span></button>';
+    }).join('') +
+  '</div>' +
+  '<div id="fb"></div>' +
+  '<div class="qfoot" id="qfoot">' +
+    (S.feedback ? '' : '<button class="btn ghost" id="skip">' + t('skip') + '</button>') +
+    '<span class="hint">' + t('keys') + '</span>' +
+  '</div>' +
+  (PREFS.pad && !q.figOpts ? '<textarea id="pad" placeholder="' + t('padPh') + '" spellcheck="false"></textarea>' : '');
+
+  document.getElementById('quit').onclick = function(){ if (confirm(t('quitAsk'))){ stopTimer(); home(); } };
+  var sk = document.getElementById('skip'); if (sk) sk.onclick = function(){ answer(null); };
+  app.querySelectorAll('.opt').forEach(function(b){ b.onclick = function(){ answer(+b.dataset.k); }; });
+  paintClock();
+  window.scrollTo(0, 0);
+}
+
+function answer(k){
+  if (S.locked) return;
+  S.locked = true;
+  var q = S.qs[S.i], ok = k !== null && k === q.set.answer;
+  S.answers[S.i] = { sel:k, ok:ok, ms:Date.now() - qStart };
+  var btns = app.querySelectorAll('.opt');
+  if (S.feedback){
+    btns.forEach(function(b){ b.disabled = true; });
+    if (k !== null) btns[k].classList.add(ok ? 'good' : 'bad');
+    if (!ok) btns[q.set.answer].classList.add('good');
+    var fb = document.getElementById('fb');
+    fb.innerHTML = '<div class="feedback ' + (ok ? 'ok' : 'no') + '"><div class="v">' +
+      (k === null ? t('timeUp') : (ok ? t('correct') : t('wrong'))) + '</div><p>' + q.explain + '</p></div>';
+    var foot = document.getElementById('qfoot');
+    foot.innerHTML = '<button class="btn" id="nx">' + (S.i + 1 >= S.qs.length ? t('finish') : t('next')) + '</button>' +
+                     '<span class="hint">' + t('keys') + '</span>';
+    document.getElementById('nx').onclick = next;
+    document.getElementById('nx').focus();
+  } else {
+    if (k !== null) btns[k].classList.add('sel');
+    setTimeout(next, 130);
+  }
+}
+function next(){
+  S.i++;
+  if (S.i >= S.qs.length) return finish(false);
+  renderQ();
+}
+
+/* ---------- resultados ---------- */
+function finish(outOfTime){
+  stopTimer(); drain.hidden = true;
+  var n = S.qs.length, ans = S.answers;
+  var correct = 0, answered = 0, byCat = {};
+  S.qs.forEach(function(q, i){
+    var a = ans[i];
+    byCat[q.cat] = byCat[q.cat] || { c:0, n:0 };
+    byCat[q.cat].n++;
+    if (a){ if (a.sel !== null) answered++; if (a.ok){ correct++; byCat[q.cat].c++; } }
+  });
+  var secs = Math.round((Date.now() - S.startedAt) / 1000);
+  var score50 = S.mode === 'full' ? correct : Math.round(correct / n * 50);
+  var rec = { ts:Date.now(), mode:S.mode, n:n, correct:correct, answered:answered, secs:secs, score50:score50 };
+  HIST.push(rec); if (HIST.length > 60) HIST = HIST.slice(-60);
+  save('ccat.hist.v1', HIST);
+
+  var p = pctile(score50);
+  var verdict = score50 < 20 ? t('v_low') : (score50 < 28 ? t('v_mid') : (score50 < 38 ? t('v_high') : t('v_top')));
+  var perQ = answered ? Math.round(secs / Math.max(1, S.i + (S.i < n ? 0 : 0) || answered) * 10) / 10 : 0;
+  perQ = Math.round(secs / Math.max(1, ans.filter(Boolean).length) * 10) / 10;
+
+  var bars = Object.keys(byCat).map(function(c){
+    var b = byCat[c], f = b.n ? b.c / b.n : 0;
+    return '<div class="bar"><span class="t">' + CATLBL(c) + '</span><span class="track"><span class="fill" style="width:' +
+      Math.round(f*100) + '%"></span></span><span class="n">' + b.c + '/' + b.n + '</span></div>';
+  }).join('');
+
+  var sheet = S.qs.map(function(q, i){
+    var a = ans[i], cls = !a || a.sel === null ? '' : (a.ok ? 'g' : 'b');
+    return '<button class="' + cls + '" data-j="' + i + '">' + (i+1) + '</button>';
+  }).join('');
+
+  var rev = S.qs.map(function(q, i){
+    var a = ans[i], ok = a && a.ok;
+    var mine = a && a.sel !== null ? (LET[a.sel] + '. ' + optText(q, a.sel)) : t('blank');
+    return '<details id="r' + i + '"><summary><span class="n">' + (i+1) + '</span><span class="mark ' + (ok ? 'g' : 'b') + '"></span>' +
+      '<span>' + stripStem(q.stem) + '</span></summary>' +
+      '<div class="det">' + (q.figs || '') +
+        '<div class="line"><span class="tag">' + t('yourAnswer') + '</span><span>' + mine + '</span></div>' +
+        '<div class="line"><span class="tag">' + t('rightAnswer') + '</span><span>' + LET[q.set.answer] + '. ' + optText(q, q.set.answer) + '</span></div>' +
+        '<div class="line" style="display:block"><span class="tag">' + t('why') + '</span> ' + q.explain + '</div>' +
+      '</div></details>';
+  }).join('');
+
+  var missed = [];
+  S.qs.forEach(function(q, i){ var a = ans[i]; if ((!a || !a.ok) && q.gi >= 0 && missed.indexOf(q.gi) < 0) missed.push(q.gi); });
+
+  app.innerHTML =
+  '<div class="qbar"><span class="eyebrow">' + t('results') + '</span><span class="sp"></span>' +
+    (outOfTime ? '<span class="catpill" style="background:var(--warn-soft);color:var(--warn)">' + t('timeUp') + '</span>' : '') +
+    '<button class="iconbtn" id="gohome">' + t('home') + '</button></div>' +
+  '<div class="score"><div class="big">' + correct + '<small>/' + n + '</small></div>' +
+    '<div class="side"><div class="eyebrow">' + t('pctEst') + '</div><div class="mono" style="font-size:22px;font-weight:600">' + p + '</div></div>' +
+    '<div class="side"><div class="eyebrow">' + t('timeUsed') + '</div><div class="mono" style="font-size:22px;font-weight:600">' + mmss(secs) + '</div></div>' +
+    '<div class="side"><div class="eyebrow">' + t('perQuestion') + '</div><div class="mono" style="font-size:22px;font-weight:600">' + perQ + 's</div></div>' +
+  '</div>' +
+  '<p class="verdict">' + verdict + (S.mode !== 'full' ? ' <span style="color:var(--ink-3)">(' + score50 + '/50 ' + t('scaled') + ')</span>' : '') + '</p>' +
+  '<section class="section"><span class="eyebrow">' + t('byCat') + '</span><div class="bars">' + bars + '</div></section>' +
+  '<section class="section"><span class="eyebrow">' + t('sheet') + '</span><div class="sheet" id="sheet">' + sheet + '</div></section>' +
+  '<section class="section"><span class="eyebrow">' + t('review') + '</span><div class="rev">' + rev + '</div></section>' +
+  '<div class="qfoot" style="margin-top:26px">' +
+    '<button class="btn" id="again">' + t('again') + '</button>' +
+    (missed.length ? '<button class="btn ghost" id="drillmiss">' + t('drillErrors') + '</button>' : '') +
+    '<button class="btn ghost" id="home2">' + t('home') + '</button>' +
+  '</div>';
+
+  var mode = S.mode;
+  document.getElementById('gohome').onclick = home;
+  document.getElementById('home2').onclick = home;
+  document.getElementById('again').onclick = function(){ start(mode); };
+  var dm = document.getElementById('drillmiss');
+  if (dm) dm.onclick = function(){ startFromGens(missed, Math.max(8, Math.min(20, missed.length * 2))); };
+  app.querySelectorAll('#sheet button').forEach(function(b){ b.onclick = function(){
+    var d = document.getElementById('r' + b.dataset.j); d.open = true; d.scrollIntoView({ behavior:'smooth', block:'center' }); }; });
+  window.scrollTo(0, 0);
+  S.done = true;
+}
+function optText(q, k){
+  var o = q.set.options[k];
+  if (q.figOpts) return '<span style="display:inline-block;width:38px;height:38px;vertical-align:middle">' + o + '</span>';
+  return o;
+}
+function stripStem(h){
+  var d = document.createElement('div'); d.innerHTML = String(h).replace(/<br\s*\/?>/gi, ' — ');
+  var s = (d.textContent || '').replace(/\s+/g, ' ').trim();
+  return esc(s.length > 88 ? s.slice(0, 88) + '…' : s);
+}
+
+/* ---------- teclado ---------- */
+document.addEventListener('keydown', function(e){
+  if (!S || S.done) return;
+  if (e.target && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT')) return;
+  var q = S.qs[S.i]; if (!q) return;
+  var k = e.key.toUpperCase();
+  var idx = '12345'.indexOf(e.key);
+  if (idx < 0) idx = LET.indexOf(k);
+  if (idx >= 0 && idx < q.set.options.length && !S.locked){ e.preventDefault(); answer(idx); return; }
+  if ((e.key === 'Enter' || e.key === ' ') && S.locked && S.feedback){ e.preventDefault(); next(); }
+});
+
+/* ---------- arranque + republicación en caliente ---------- */
+function boot(data){
+  try {
+    if (data && data.S && data.S.qs && !data.S.done){
+      S = data.S; lang = S.lang || lang; drain.hidden = !S.limit;
+      renderQ(); if (S.limit || S.perQ) startTimer();
+      return;
+    }
+  } catch (e) {}
+  home();
+}
+if (window.claude && window.claude.hot){
+  try { window.claude.hot.snapshot(function(){ return { S:S }; }); } catch (e) {}
+  if (window.claude.hot.ready) window.claude.hot.ready(boot); else boot(window.claude.hot.data || {});
+} else { boot({}); }
+</script>
