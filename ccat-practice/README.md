@@ -8,7 +8,8 @@ manda nada a ningún servidor.
 
 - **Desde la compu**: abrí `index.html` en cualquier navegador.
 - **Desde el celular**: copiá el archivo al teléfono (o abrí el link publicado) y agregalo a la
-  pantalla de inicio para tenerlo a mano.
+  pantalla de inicio para tenerlo a mano. La interfaz está probada en pantallas de 320, 360 y
+  390 px: las figuras entran enteras, sin scroll lateral, y los controles llegan a 42 px de alto.
 
 ## Qué incluye
 
@@ -47,6 +48,10 @@ reparaciones, no 34). Acá cada respuesta se calcula, no se transcribe.
 
 Todos los generadores se verifican con una corrida de 40.000 preguntas en los dos idiomas, que
 controla que cada pregunta tenga respuesta válida, opciones únicas y sin valores imposibles.
+
+Las figuras espaciales se verifican aparte: se rasterizan los 16 estados de cada una (8 giros × con
+y sin espejado) al tamaño real de un celular y se mide cuánto cambia el dibujo entre cada par. El
+mínimo quedó en 11,7%, suficiente para distinguirlas de un vistazo en una pantalla chica.
 
 ## Idioma
 
