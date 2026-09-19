@@ -1,3 +1,14 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Simulador de practica del CCAT: 50 preguntas en 15 minutos, con preguntas nuevas en cada intento.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CCAT">
+<meta name="mobile-web-app-capable" content="yes">
+<style>html{-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Entrenador CCAT</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
@@ -214,6 +225,8 @@ button{font:inherit;color:inherit;cursor:pointer;background:none;border:none}
 }
 </style>
 
+</head>
+<body>
 <div id="drain" hidden></div>
 <div class="wrap">
   <main id="app"></main>
@@ -2311,3 +2324,5 @@ if (window.claude && window.claude.hot){
   if (window.claude.hot.ready) window.claude.hot.ready(boot); else boot(window.claude.hot.data || {});
 } else { boot({}); }
 </script>
+</body>
+</html>

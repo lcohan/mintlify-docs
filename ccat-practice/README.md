@@ -4,11 +4,22 @@ Simulador de práctica para el **Criteria Cognitive Aptitude Test** (50 pregunta
 Es un único archivo HTML sin dependencias: se abre con doble clic, funciona sin internet y no
 manda nada a ningún servidor.
 
+## Qué archivo usar
+
+| Archivo | Para qué |
+| --- | --- |
+| `entrenador-ccat.html` | **El que se descarga y se abre.** Documento completo, con su propio `<head>`. |
+| `index.html` | Sólo para publicar como artifact: la plataforma le agrega el `<head>` y el meta viewport. |
+| `build-standalone.py` | Genera el primero a partir del segundo. Correlo después de tocar `index.html`. |
+
+Sin el `<meta name="viewport">`, un celular dibuja la página a 980 px de ancho y se ve diminuta.
+Por eso `index.html` suelto **no** sirve para abrir desde el teléfono: usá `entrenador-ccat.html`.
+
 ## Cómo usarlo
 
-- **Desde la compu**: abrí `index.html` en cualquier navegador.
-- **Desde el celular**: copiá el archivo al teléfono (o abrí el link publicado) y agregalo a la
-  pantalla de inicio para tenerlo a mano. La interfaz está probada en pantallas de 320, 360 y
+- **Desde la compu**: abrí `entrenador-ccat.html` en cualquier navegador.
+- **Desde el celular**: copiá `entrenador-ccat.html` al teléfono (o abrí el link publicado) y
+  agregalo a la pantalla de inicio para tenerlo a mano. La interfaz está probada en pantallas de 320, 360 y
   390 px: las figuras entran enteras, sin scroll lateral, y los controles llegan a 42 px de alto.
 
 ## Qué incluye
